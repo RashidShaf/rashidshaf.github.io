@@ -31,9 +31,8 @@ const HeroBanner = () => {
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
         </div>
-        <div className="text-center mt-1 sm:mt-2">
-          <h2 className="text-lg sm:text-2xl lg:text-3xl font-display font-black text-white tracking-[0.2em]" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>مكتبــة اركـــآن</h2>
-          <p className="text-xs sm:text-sm lg:text-base font-black text-white tracking-[0.3em] mt-0.5" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>Arkaan Bookstore</p>
+        <div className="mt-1 sm:mt-2">
+          <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-32 sm:w-48 lg:w-64 drop-shadow-lg" />
         </div>
       </div>
     </section>
