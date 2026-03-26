@@ -1,0 +1,107 @@
+{
+  "common": {
+    "search": "بحث...",
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "date": "التاريخ",
+    "total": "الإجمالي",
+    "showing": "عرض",
+    "of": "من",
+    "results": "نتائج",
+    "noResults": "لا توجد نتائج",
+    "confirm": "هل أنت متأكد؟",
+    "yes": "نعم",
+    "no": "لا",
+    "export": "تصدير",
+    "filter": "تصفية",
+    "all": "الكل"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "books": "الكتب",
+    "orders": "الطلبات",
+    "users": "المستخدمون",
+    "categories": "التصنيفات",
+    "inventory": "المخزون",
+    "reports": "التقارير",
+    "reviews": "المراجعات",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "totalRevenue": "إجمالي الإيرادات",
+    "totalOrders": "إجمالي الطلبات",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalBooks": "إجمالي الكتب",
+    "recentOrders": "الطلبات الأخيرة",
+    "topBooks": "الكتب الأكثر مبيعاً",
+    "salesOverview": "نظرة عامة على المبيعات",
+    "inventoryAlerts": "تنبيهات المخزون"
+  },
+  "books": {
+    "title": "الكتب",
+    "addBook": "إضافة كتاب",
+    "editBook": "تعديل كتاب",
+    "bookTitle": "العنوان",
+    "author": "المؤلف",
+    "price": "السعر",
+    "stock": "المخزون",
+    "category": "التصنيف",
+    "featured": "مميز",
+    "active": "نشط"
+  },
+  "orders": {
+    "title": "الطلبات",
+    "orderNumber": "رقم الطلب",
+    "customer": "العميل",
+    "updateStatus": "تحديث الحالة",
+    "statuses": {
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكد",
+      "PROCESSING": "قيد المعالجة",
+      "SHIPPED": "تم الشحن",
+      "DELIVERED": "تم التوصيل",
+      "CANCELLED": "ملغي"
+    }
+  },
+  "users": {
+    "title": "المستخدمون",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "blocked": "محظور",
+    "block": "حظر",
+    "unblock": "إلغاء الحظر"
+  },
+  "inventory": {
+    "title": "المخزون",
+    "lowStock": "تنبيهات نقص المخزون",
+    "restock": "إعادة تخزين",
+    "adjust": "تعديل",
+    "quantity": "الكمية",
+    "currentStock": "المخزون الحالي"
+  },
+  "reports": {
+    "title": "التقارير",
+    "salesReport": "تقرير المبيعات",
+    "inventoryReport": "تقرير المخزون",
+    "dateRange": "نطاق التاريخ",
+    "from": "من",
+    "to": "إلى",
+    "generate": "إنشاء التقرير"
+  },
+  "auth": {
+    "login": "تسجيل دخول المدير",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "error": "بيانات غير صحيحة أو صلاحيات غير كافية"
+  }
+}

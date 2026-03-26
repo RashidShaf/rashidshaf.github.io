@@ -1,0 +1,54 @@
+const prisma = require('../config/database');
+const { getPagination, getPaginatedResponse } = require('../utils/pagination');
+
+exports.list = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPagination(req.query);
+    const { status } = req.query;
+
+    const where = {};
+    if (status) where.status = status;
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where, orderBy: { createdAt: 'desc' }, skip, take: limit,
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true } },
+          items: { select: { title: true, quantity: true, price: true } },
+        },
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    res.json(getPaginatedResponse(orders, total, page, limit));
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status.' });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    history.push({ status, timestamp: new Date().toISOString(), by: req.user.id });
+
+    const updateData = { status, statusHistory: history };
+    if (status === 'DELIVERED') updateData.deliveredAt = new Date();
+    if (status === 'CANCELLED') updateData.cancelledAt = new Date();
+
+    const updated = await prisma.order.update({
+      where: { id: req.params.id }, data: updateData,
+    });
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};

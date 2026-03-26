@@ -1,0 +1,107 @@
+{
+  "common": {
+    "search": "Search...",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "total": "Total",
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "noResults": "No results found",
+    "confirm": "Are you sure?",
+    "yes": "Yes",
+    "no": "No",
+    "export": "Export",
+    "filter": "Filter",
+    "all": "All"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "books": "Books",
+    "orders": "Orders",
+    "users": "Users",
+    "categories": "Categories",
+    "inventory": "Inventory",
+    "reports": "Reports",
+    "reviews": "Reviews",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalRevenue": "Total Revenue",
+    "totalOrders": "Total Orders",
+    "totalUsers": "Total Users",
+    "totalBooks": "Total Books",
+    "recentOrders": "Recent Orders",
+    "topBooks": "Top Selling Books",
+    "salesOverview": "Sales Overview",
+    "inventoryAlerts": "Inventory Alerts"
+  },
+  "books": {
+    "title": "Books",
+    "addBook": "Add Book",
+    "editBook": "Edit Book",
+    "bookTitle": "Title",
+    "author": "Author",
+    "price": "Price",
+    "stock": "Stock",
+    "category": "Category",
+    "featured": "Featured",
+    "active": "Active"
+  },
+  "orders": {
+    "title": "Orders",
+    "orderNumber": "Order #",
+    "customer": "Customer",
+    "updateStatus": "Update Status",
+    "statuses": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "PROCESSING": "Processing",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "blocked": "Blocked",
+    "block": "Block",
+    "unblock": "Unblock"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "lowStock": "Low Stock Alerts",
+    "restock": "Restock",
+    "adjust": "Adjust",
+    "quantity": "Quantity",
+    "currentStock": "Current Stock"
+  },
+  "reports": {
+    "title": "Reports",
+    "salesReport": "Sales Report",
+    "inventoryReport": "Inventory Report",
+    "dateRange": "Date Range",
+    "from": "From",
+    "to": "To",
+    "generate": "Generate Report"
+  },
+  "auth": {
+    "login": "Admin Login",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "error": "Invalid credentials or insufficient permissions"
+  }
+}

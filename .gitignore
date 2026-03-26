@@ -1,0 +1,22 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
+
+# Uploads (keep folders, ignore files)
+uploads/covers/*
+uploads/books/*
+uploads/previews/*
+uploads/categories/*
+!uploads/covers/.gitkeep
+!uploads/books/.gitkeep
+!uploads/previews/.gitkeep
+!uploads/categories/.gitkeep
+
+# Claude
+.claude/
