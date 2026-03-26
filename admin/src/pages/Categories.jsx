@@ -129,7 +129,7 @@ export default function Categories() {
           { icon: FiLayers, label: 'Total Categories', value: totalCategories, bg: 'bg-blue-600', color: 'text-white' },
           { icon: FiCheckCircle, label: 'Active', value: activeCategories, bg: 'bg-emerald-600', color: 'text-white' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>

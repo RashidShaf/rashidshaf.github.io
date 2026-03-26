@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiPackage, FiChevronRight, FiShoppingBag } from 'react-icons/fi';
+import { FiPackage, FiShoppingBag, FiChevronRight, FiCalendar } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
 
 const statusColors = {
-  PENDING: 'bg-yellow-100 text-yellow-700',
+  PENDING: 'bg-amber-100 text-amber-700',
   CONFIRMED: 'bg-blue-100 text-blue-700',
-  PROCESSING: 'bg-purple-100 text-purple-700',
+  PROCESSING: 'bg-violet-100 text-violet-700',
   SHIPPED: 'bg-indigo-100 text-indigo-700',
-  DELIVERED: 'bg-green-100 text-green-700',
+  DELIVERED: 'bg-emerald-100 text-emerald-700',
   CANCELLED: 'bg-red-100 text-red-700',
 };
 
@@ -22,88 +22,79 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/orders').then((res) => {
-      setOrders(res.data.data || []);
+    api.get('/orders?limit=50').then((res) => {
+      setOrders(res.data.data || res.data);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
+
   return (
     <PageTransition>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-display font-bold text-foreground mb-8">{t('orders.title')}</h1>
+      <AccountLayout>
+        <h1 className="text-2xl font-display font-bold text-foreground mb-6">{t('orders.title')}</h1>
 
         {loading ? (
           <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 bg-surface-alt rounded-xl animate-pulse" />
-            ))}
+            {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-surface-alt rounded-xl animate-pulse" />)}
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16">
-            <FiShoppingBag className="w-14 h-14 text-muted/30 mx-auto mb-4" />
-            <p className="text-muted">{t('common.noResults')}</p>
-            <Link to="/books" className="inline-block mt-4 text-sm text-accent hover:underline">{t('cart.continueShopping')}</Link>
+          <div className="text-center py-20">
+            <FiShoppingBag className="w-16 h-16 text-foreground/15 mx-auto mb-4" />
+            <p className="text-foreground/50 text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد طلبات بعد' : 'No orders yet'}</p>
+            <Link to="/books" className="inline-block mt-4 px-6 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent-light transition-colors">
+              {t('cart.continueShopping')}
+            </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {orders.map((order) => (
-              <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <Link
-                  to={`/orders/${order.id}`}
-                  className="block bg-surface rounded-xl border border-muted/10 p-5 hover:border-accent/20 hover:shadow-sm transition-all"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <FiPackage className="w-5 h-5 text-accent" />
-                      <span className="font-semibold text-foreground text-sm">{order.orderNumber}</span>
+              <Link
+                key={order.id}
+                to={`/orders/${order.id}`}
+                className="flex items-center gap-4 bg-surface rounded-xl border border-muted/10 shadow-sm p-4 sm:p-5 hover:shadow-lg hover:border-accent/20 transition-all group"
+              >
+                {/* Item Thumbnails */}
+                <div className="flex -space-x-3 flex-shrink-0">
+                  {(order.items || []).slice(0, 3).map((item, i) => {
+                    const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                    return (
+                      <div key={i} className="w-12 h-16 rounded-lg overflow-hidden border-2 border-background bg-surface-alt flex-shrink-0">
+                        {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-xs font-bold">{item.title?.[0]}</div>}
+                      </div>
+                    );
+                  })}
+                  {(order.items?.length || 0) > 3 && (
+                    <div className="w-12 h-16 rounded-lg border-2 border-background bg-surface-alt flex items-center justify-center text-xs font-bold text-foreground/40">
+                      +{order.items.length - 3}
                     </div>
-                    <span className={`px-2.5 py-1 text-[11px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-muted/10 text-muted'}`}>
-                      {t(`orders.statuses.${order.status.toLowerCase()}`)}
+                  )}
+                </div>
+
+                {/* Order Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-bold text-foreground">{order.orderNumber}</p>
+                    <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                      {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* Item thumbnails */}
-                      <div className="flex -space-x-2 rtl:space-x-reverse">
-                        {order.items.slice(0, 3).map((item, i) => (
-                          <div key={i} className="w-10 h-12 rounded bg-surface-alt border border-muted/10 overflow-hidden">
-                            {item.book?.coverImage ? (
-                              <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${item.book.coverImage}`} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-accent/30">
-                                {item.title.charAt(0)}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {order.items.length > 3 && (
-                          <div className="w-10 h-12 rounded bg-surface-alt border border-muted/10 flex items-center justify-center text-[10px] font-medium text-muted">
-                            +{order.items.length - 3}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted">
-                          {order.items.length} {language === 'ar' ? 'كتب' : 'items'}
-                        </p>
-                        <p className="text-xs text-muted">
-                          {language === 'ar' ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground">{formatPrice(order.total)}</span>
-                      <FiChevronRight className="w-4 h-4 text-muted" />
-                    </div>
+                  <div className="flex items-center gap-3 text-xs text-foreground/50">
+                    <span>{order.items?.length || 0} {language === 'ar' ? 'منتجات' : 'items'}</span>
+                    <span className="flex items-center gap-1"><FiCalendar size={10} /> {language === 'ar' ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}</span>
                   </div>
-                </Link>
-              </motion.div>
+                </div>
+
+                {/* Price + Arrow */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <p className="text-base font-extrabold text-foreground">{formatPrice(order.total)}</p>
+                  <FiChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-accent transition-colors rtl:rotate-180" />
+                </div>
+              </Link>
             ))}
           </div>
         )}
-      </div>
+      </AccountLayout>
     </PageTransition>
   );
 };

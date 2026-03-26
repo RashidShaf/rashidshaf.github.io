@@ -46,10 +46,10 @@ export const slideInFromRight = {
 };
 
 export const pageTransition = {
-  initial: { opacity: 0.6 },
-  animate: { opacity: 1 },
-  exit: { opacity: 1 },
-  transition: { duration: 0.15 },
+  initial: {},
+  animate: {},
+  exit: {},
+  transition: { duration: 0 },
 };
 
 export const drawerSlide = {

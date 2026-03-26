@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiList, FiPlus, FiTrash2, FiBook, FiChevronRight } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiList, FiPlus, FiTrash2, FiBook, FiChevronRight, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
@@ -11,83 +12,132 @@ const ReadingLists = () => {
   const { t, language } = useLanguageStore();
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    api.get('/reading-lists').then((res) => setLists(res.data)).catch(() => {}).finally(() => setLoading(false));
-  }, []);
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!newName.trim()) return;
+  const fetchLists = async () => {
     try {
-      const res = await api.post('/reading-lists', { name: newName });
-      setLists([res.data, ...lists]);
-      setNewName('');
-      setShowCreate(false);
+      const res = await api.get('/reading-lists');
+      setLists(res.data.data || res.data);
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchLists(); }, []);
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      await api.post('/reading-lists', { name: newName });
       toast.success(language === 'ar' ? 'تم إنشاء القائمة' : 'List created');
+      setNewName('');
+      setShowModal(false);
+      fetchLists();
     } catch (err) {
-      toast.error('Failed to create list');
-    }
+      toast.error(err.response?.data?.message || 'Failed to create');
+    } finally { setCreating(false); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm(language === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?')) return;
+    if (!confirm(language === 'ar' ? 'حذف هذه القائمة؟' : 'Delete this list?')) return;
     try {
       await api.delete(`/reading-lists/${id}`);
-      setLists(lists.filter((l) => l.id !== id));
       toast.success(language === 'ar' ? 'تم حذف القائمة' : 'List deleted');
-    } catch (err) {
-      toast.error('Failed to delete');
-    }
+      fetchLists();
+    } catch { toast.error('Failed to delete'); }
   };
 
   return (
     <PageTransition>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <AccountLayout>
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-display font-bold text-foreground">{t('profile.myReadingLists')}</h1>
-          <button onClick={() => setShowCreate(!showCreate)} className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">{t('profile.myReadingLists')}</h1>
+            {lists.length > 0 && <p className="text-sm text-foreground/50 mt-1">{lists.length} {language === 'ar' ? 'قوائم' : 'lists'}</p>}
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-xl hover:bg-accent-light transition-colors"
+          >
             <FiPlus size={16} /> {language === 'ar' ? 'قائمة جديدة' : 'New List'}
           </button>
         </div>
 
-        {showCreate && (
-          <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleCreate} className="flex gap-3 mb-6">
-            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={language === 'ar' ? 'اسم القائمة' : 'List name'} autoFocus className="flex-1 px-4 py-2.5 bg-surface border border-muted/20 rounded-lg text-foreground text-sm focus:outline-none focus:border-accent" />
-            <button type="submit" className="px-5 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light">{t('common.save')}</button>
-            <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2.5 text-muted text-sm hover:text-foreground">{t('common.cancel')}</button>
-          </motion.form>
-        )}
-
         {loading ? (
-          <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-surface-alt rounded-xl animate-pulse" />)}</div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[...Array(3)].map((_, i) => <div key={i} className="h-36 bg-surface-alt rounded-xl animate-pulse" />)}
+          </div>
         ) : lists.length === 0 ? (
-          <div className="text-center py-16">
-            <FiList className="w-14 h-14 text-muted/30 mx-auto mb-4" />
-            <p className="text-muted">{t('common.noResults')}</p>
+          <div className="text-center py-20">
+            <FiList className="w-16 h-16 text-foreground/15 mx-auto mb-4" />
+            <p className="text-foreground/50 text-lg font-medium mb-2">{language === 'ar' ? 'لا توجد قوائم قراءة' : 'No reading lists yet'}</p>
+            <p className="text-foreground/40 text-sm">{language === 'ar' ? 'أنشئ قائمة لتنظيم كتبك المفضلة' : 'Create a list to organize your favorite books'}</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid sm:grid-cols-2 gap-4">
             {lists.map((list) => (
-              <motion.div key={list.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-muted/10 hover:border-accent/20 transition-all">
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center text-accent flex-shrink-0">
-                  <FiBook size={20} />
+              <div key={list.id} className="bg-surface rounded-xl border border-muted/10 shadow-sm p-5 hover:shadow-lg hover:border-accent/20 transition-all group">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <FiBook className="w-5 h-5 text-accent" />
+                  </div>
+                  <button
+                    onClick={() => handleDelete(list.id)}
+                    className="p-1.5 text-foreground/30 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <FiTrash2 size={15} />
+                  </button>
                 </div>
-                <Link to={`/reading-lists/${list.id}`} className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-foreground hover:text-accent transition-colors">{list.name}</h3>
-                  <p className="text-xs text-muted mt-0.5">{list._count?.items || 0} {language === 'ar' ? 'كتب' : 'books'}</p>
+                <h3 className="text-base font-bold text-foreground mb-1">{list.name}</h3>
+                <p className="text-xs text-foreground/50 mb-4">
+                  {list.items?.length || 0} {language === 'ar' ? 'كتب' : 'books'}
+                </p>
+                <Link
+                  to={`/reading-lists/${list.id}`}
+                  className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors"
+                >
+                  {language === 'ar' ? 'عرض القائمة' : 'View List'} <FiChevronRight size={14} className="rtl:rotate-180" />
                 </Link>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleDelete(list.id)} className="p-2 text-muted hover:text-red-500 transition-colors"><FiTrash2 size={16} /></button>
-                  <Link to={`/reading-lists/${list.id}`}><FiChevronRight size={18} className="text-muted" /></Link>
-                </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         )}
-      </div>
+
+        {/* Create Modal */}
+        <AnimatePresence>
+          {showModal && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="fixed inset-0 bg-black/50 z-40" />
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="bg-surface rounded-2xl border border-muted/10 shadow-2xl w-full max-w-md p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-lg font-bold text-foreground">{language === 'ar' ? 'قائمة جديدة' : 'New Reading List'}</h3>
+                    <button onClick={() => setShowModal(false)} className="p-1 text-foreground/40 hover:text-foreground"><FiX size={18} /></button>
+                  </div>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder={language === 'ar' ? 'اسم القائمة' : 'List name'}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    autoFocus
+                    className="w-full px-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent mb-4"
+                  />
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 border border-muted/15 text-foreground/60 rounded-xl text-sm font-medium hover:bg-surface-alt transition-colors">
+                      {t('common.cancel')}
+                    </button>
+                    <button onClick={handleCreate} disabled={creating || !newName.trim()} className="flex-1 py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent-light transition-colors disabled:opacity-50">
+                      {creating ? t('common.loading') : t('common.create')}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </AccountLayout>
     </PageTransition>
   );
 };

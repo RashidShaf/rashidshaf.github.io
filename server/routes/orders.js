@@ -11,6 +11,10 @@ const createOrderSchema = Joi.object({
   shippingAddress: Joi.string().required(),
   shippingCity: Joi.string().required(),
   shippingNotes: Joi.string().allow('', null),
+  cartItems: Joi.array().items(Joi.object({
+    bookId: Joi.string().required(),
+    quantity: Joi.number().integer().min(1).required(),
+  })).min(1).required(),
 });
 
 router.post('/', auth, validate(createOrderSchema), orderController.create);

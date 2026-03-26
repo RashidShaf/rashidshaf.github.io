@@ -4,29 +4,35 @@ const { generateOrderNumber } = require('../utils/helpers');
 
 exports.create = async (req, res, next) => {
   try {
-    const { shippingName, shippingPhone, shippingAddress, shippingCity, shippingNotes } = req.body;
+    const { shippingName, shippingPhone, shippingAddress, shippingCity, shippingNotes, cartItems: clientCart } = req.body;
 
-    // Get cart items
-    const cartItems = await prisma.cartItem.findMany({
-      where: { userId: req.user.id },
-      include: { book: true },
-    });
-
-    if (cartItems.length === 0) {
+    // Accept cart items from request body (local cart)
+    if (!clientCart || clientCart.length === 0) {
       return res.status(400).json({ message: 'Cart is empty.' });
     }
 
-    // Validate stock
-    for (const item of cartItems) {
-      if (item.book.stock < item.quantity) {
+    // Fetch book details and validate stock
+    const bookIds = clientCart.map((item) => item.bookId);
+    const books = await prisma.book.findMany({ where: { id: { in: bookIds }, isActive: true } });
+    const bookMap = {};
+    books.forEach((b) => { bookMap[b.id] = b; });
+
+    const validItems = [];
+    for (const item of clientCart) {
+      const book = bookMap[item.bookId];
+      if (!book) {
+        return res.status(404).json({ message: `Book not found: ${item.bookId}` });
+      }
+      if (book.stock < item.quantity) {
         return res.status(400).json({
-          message: `Not enough stock for "${item.book.title}". Available: ${item.book.stock}`,
+          message: `Not enough stock for "${book.title}". Available: ${book.stock}`,
         });
       }
+      validItems.push({ book, quantity: item.quantity });
     }
 
     // Calculate totals
-    const subtotal = cartItems.reduce(
+    const subtotal = validItems.reduce(
       (sum, item) => sum + parseFloat(item.book.price) * item.quantity, 0
     );
     const shippingCost = subtotal >= 100 ? 0 : 15;
@@ -57,9 +63,10 @@ exports.create = async (req, res, next) => {
           shippingAddress,
           shippingCity,
           shippingNotes,
-          statusHistory: [{ status: 'PENDING', timestamp: new Date().toISOString() }],
+          status: 'CONFIRMED',
+          statusHistory: [{ status: 'CONFIRMED', timestamp: new Date().toISOString() }],
           items: {
-            create: cartItems.map((item) => ({
+            create: validItems.map((item) => ({
               bookId: item.book.id,
               quantity: item.quantity,
               price: item.book.price,
@@ -71,7 +78,7 @@ exports.create = async (req, res, next) => {
       });
 
       // Decrement stock
-      for (const item of cartItems) {
+      for (const item of validItems) {
         await tx.book.update({
           where: { id: item.book.id },
           data: {
@@ -91,9 +98,6 @@ exports.create = async (req, res, next) => {
           },
         });
       }
-
-      // Clear cart
-      await tx.cartItem.deleteMany({ where: { userId: req.user.id } });
 
       return newOrder;
     });

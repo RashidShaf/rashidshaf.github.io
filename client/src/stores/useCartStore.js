@@ -11,8 +11,10 @@ const useCartStore = create(
         const existing = items.find(i => i.bookId === book.id);
         if (existing) {
           set({ items: items.map(i => i.bookId === book.id ? { ...i, quantity: i.quantity + quantity } : i) });
+          return 'updated';
         } else {
           set({ items: [...items, { bookId: book.id, book, quantity }] });
+          return 'added';
         }
       },
 

@@ -22,8 +22,8 @@ import api from '../../utils/api';
 
 const Navbar = () => {
   const { t, language } = useLanguageStore();
-  const getItemCount = useCartStore((s) => s.getItemCount);
-  const wishlistCount = useWishlistStore((s) => s.getCount);
+  const cartItems = useCartStore((s) => s.items);
+  const wishlistItems = useWishlistStore((s) => s.items);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -90,8 +90,8 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const cartCount = getItemCount();
-  const wCount = wishlistCount();
+  const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const wCount = wishlistItems.length;
 
   const handleAccountEnter = () => {
     clearTimeout(accountTimeout.current);
@@ -128,10 +128,7 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+      <header
         className="relative z-50 bg-background border-b border-muted/10"
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -334,7 +331,7 @@ const Navbar = () => {
             </div>
           </div>
         </nav>
-      </motion.header>
+      </header>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>

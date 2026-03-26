@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { FiPhone, FiMail, FiMapPin, FiClock, FiSend } from 'react-icons/fi';
+import { FiPhone, FiMail, FiMapPin, FiSend, FiInstagram } from 'react-icons/fi';
+import { FaWhatsapp, FaFacebookF, FaTiktok, FaLinkedinIn, FaXTwitter, FaPinterestP } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
 
 const Contact = () => {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sending, setSending] = useState(false);
 
@@ -13,7 +14,6 @@ const Contact = () => {
     { icon: FiPhone, label: t('contact.phone'), value: '+974 5994 3131', dir: 'ltr' },
     { icon: FiMail, label: t('contact.email'), value: 'info@arkaan.com' },
     { icon: FiMapPin, label: t('contact.location'), value: t('contact.locationText') },
-    { icon: FiClock, label: t('contact.hours'), value: t('contact.hoursText') },
   ];
 
   const handleChange = (e) => {
@@ -71,6 +71,28 @@ const Contact = () => {
                 </div>
               </div>
             ))}
+
+            {/* Social Links */}
+            <div className="bg-surface rounded-xl p-4 border border-muted/10">
+              <p className="text-xs text-foreground/70 uppercase tracking-wider font-medium mb-3">
+                {language === 'ar' ? 'تابعنا' : 'Follow Us'}
+              </p>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {[
+                  { href: 'https://www.instagram.com/arkaan.bookstore?igsh=bW9qZmh0M3h5Ymd0', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
+                  { href: 'https://wa.me/97459943131', icon: FaWhatsapp, label: 'WhatsApp', bg: 'bg-green-500' },
+                  { href: 'https://www.facebook.com/profile.php?id=61569754228280', icon: FaFacebookF, label: 'Facebook', bg: 'bg-blue-600' },
+                  { href: 'https://www.tiktok.com/@arkaan.qa', icon: FaTiktok, label: 'TikTok', bg: 'bg-black' },
+                  { href: 'https://www.linkedin.com/in/arkaan-store-a97810347/', icon: FaLinkedinIn, label: 'LinkedIn', bg: 'bg-sky-700' },
+                  { href: 'https://x.com/Arkaanqa', icon: FaXTwitter, label: 'X', bg: 'bg-black' },
+                  { href: 'https://www.pinterest.com/arkaanqa/', icon: FaPinterestP, label: 'Pinterest', bg: 'bg-red-600' },
+                ].map((s) => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className={`w-9 h-9 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
+                    <s.icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Contact Form */}

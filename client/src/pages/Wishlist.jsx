@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiHeart, FiTrash2, FiShoppingCart, FiShoppingBag } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { FiHeart, FiShoppingCart, FiX } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
-import useAuthStore from '../stores/useAuthStore';
 import useCartStore from '../stores/useCartStore';
 import useWishlistStore from '../stores/useWishlistStore';
 import { formatPrice } from '../utils/formatters';
@@ -12,80 +12,123 @@ import api from '../utils/api';
 
 const Wishlist = () => {
   const { t, language } = useLanguageStore();
-  const user = useAuthStore((s) => s.user);
   const addToCart = useCartStore((s) => s.addItem);
-  const { items: localItems, removeItem } = useWishlistStore();
-  const [serverItems, setServerItems] = useState([]);
+  const { items: wishlistIds, removeItem } = useWishlistStore();
+  const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      api.get('/wishlist').then((res) => setServerItems(res.data)).catch(() => {}).finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    const fetchBooks = async () => {
+      if (wishlistIds.length === 0) { setBooks([]); setLoading(false); return; }
+      try {
+        const res = await api.get('/books?limit=100');
+        const allBooks = res.data.data || res.data;
+        setBooks(allBooks.filter((b) => wishlistIds.includes(b.id)));
+      } catch { setBooks([]); }
+      finally { setLoading(false); }
+    };
+    fetchBooks();
+  }, [wishlistIds]);
 
-  const books = user
-    ? serverItems.map((item) => item.book).filter(Boolean)
-    : [];
-
-  const handleRemove = async (bookId) => {
+  const handleRemove = (bookId) => {
     removeItem(bookId);
-    if (user) {
-      await api.delete(`/wishlist/${bookId}`).catch(() => {});
-      setServerItems((items) => items.filter((i) => i.bookId !== bookId));
-    }
+    toast.success(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist');
   };
 
-  const isEmpty = user ? books.length === 0 : localItems.length === 0;
+  const handleAddToCart = (book) => {
+    addToCart(book, 1);
+    toast.success(t('books.addedToCart'));
+  };
+
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
   return (
     <PageTransition>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-display font-bold text-foreground mb-8">{t('profile.myWishlist')}</h1>
+      <AccountLayout>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">{t('profile.myWishlist')}</h1>
+            {books.length > 0 && <p className="text-sm text-foreground/50 mt-1">{books.length} {language === 'ar' ? 'كتب' : 'books'}</p>}
+          </div>
+        </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-48 bg-surface-alt rounded-xl animate-pulse" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-surface-alt rounded-lg animate-pulse">
+                <div className="aspect-[5/6] bg-muted/10 rounded-t-lg" />
+                <div className="p-3 space-y-2"><div className="h-3 bg-muted/10 rounded w-2/3" /><div className="h-2.5 bg-muted/10 rounded w-1/2" /></div>
+              </div>
+            ))}
           </div>
-        ) : isEmpty ? (
-          <div className="text-center py-16">
-            <FiHeart className="w-14 h-14 text-muted/30 mx-auto mb-4" />
-            <p className="text-muted mb-2">{t('common.noResults')}</p>
-            <Link to="/books" className="inline-block mt-4 text-sm text-accent hover:underline">{t('cart.continueShopping')}</Link>
+        ) : books.length === 0 ? (
+          <div className="text-center py-20">
+            <FiHeart className="w-16 h-16 text-foreground/15 mx-auto mb-4" />
+            <p className="text-foreground/50 text-lg font-medium mb-2">{language === 'ar' ? 'قائمة المفضلة فارغة' : 'Your wishlist is empty'}</p>
+            <Link to="/books" className="inline-block mt-4 px-6 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent-light transition-colors">
+              {t('cart.continueShopping')}
+            </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {books.map((book) => {
               const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
               const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
-              const cover = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
+              const cover = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
 
               return (
-                <motion.div key={book.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-muted/10">
-                  <Link to={`/books/${book.slug}`} className="w-16 h-20 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
-                    {cover ? <img src={cover} alt={title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 font-bold text-xl">{title.charAt(0)}</div>}
+                <div key={book.id} className="group bg-surface rounded-lg border border-muted/10 overflow-hidden hover:shadow-lg transition-all">
+                  {/* Cover */}
+                  <Link to={`/books/${book.slug}`} className="block relative aspect-[5/6] bg-surface-alt overflow-hidden">
+                    {cover ? (
+                      <img src={cover} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
+                        <span className="text-4xl font-display font-bold text-accent/30">{title.charAt(0)}</span>
+                      </div>
+                    )}
+
+                    {/* Hover Actions */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
+                        <button
+                          onClick={(e) => { e.preventDefault(); handleAddToCart(book); }}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-accent text-white text-xs font-medium rounded-lg hover:bg-accent-light transition-colors"
+                        >
+                          <FiShoppingCart size={14} />
+                          {t('common.addToCart')}
+                        </button>
+                        <button
+                          onClick={(e) => { e.preventDefault(); handleRemove(book.id); }}
+                          className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Wishlist Badge */}
+                    <div className="absolute top-2 end-2">
+                      <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                        <FiHeart className="w-4 h-4 text-white fill-white" />
+                      </div>
+                    </div>
                   </Link>
-                  <div className="flex-1 min-w-0">
-                    <Link to={`/books/${book.slug}`} className="text-sm font-semibold text-foreground hover:text-accent line-clamp-1">{title}</Link>
-                    <p className="text-xs text-muted">{author}</p>
-                    <p className="text-sm font-bold text-foreground mt-1">{formatPrice(book.price)}</p>
+
+                  {/* Info */}
+                  <div className="px-3 py-3">
+                    <Link to={`/books/${book.slug}`}>
+                      <h3 className="text-[15px] font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">{title}</h3>
+                    </Link>
+                    <p className="text-[13px] text-foreground/50 mt-1 line-clamp-1">{author}</p>
+                    <p className="text-sm font-bold text-foreground mt-2">{formatPrice(book.price)}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => { addToCart(book, 1); }} className="p-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors" title={t('common.addToCart')}>
-                      <FiShoppingCart size={16} />
-                    </button>
-                    <button onClick={() => handleRemove(book.id)} className="p-2 text-muted hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-                      <FiTrash2 size={16} />
-                    </button>
-                  </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
         )}
-      </div>
+      </AccountLayout>
     </PageTransition>
   );
 };

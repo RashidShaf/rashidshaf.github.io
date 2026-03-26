@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
@@ -9,33 +9,27 @@ import useLanguageStore from './stores/useLanguageStore';
 import MainLayout from './components/layout/MainLayout';
 import PrivateRoute from './components/common/PrivateRoute';
 
-const Home = lazy(() => import('./pages/Home'));
-const Books = lazy(() => import('./pages/Books'));
-const BookDetail = lazy(() => import('./pages/BookDetail'));
-const Cart = lazy(() => import('./pages/Cart'));
-const Checkout = lazy(() => import('./pages/Checkout'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Profile = lazy(() => import('./pages/Profile'));
-const OrderHistory = lazy(() => import('./pages/OrderHistory'));
-const OrderDetail = lazy(() => import('./pages/OrderDetail'));
-const Wishlist = lazy(() => import('./pages/Wishlist'));
-const ReadingLists = lazy(() => import('./pages/ReadingLists'));
-const About = lazy(() => import('./pages/About'));
-const Contact = lazy(() => import('./pages/Contact'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="w-8 h-8 border-3 border-accent/30 border-t-accent rounded-full animate-spin" />
-  </div>
-);
+import Home from './pages/Home';
+import Books from './pages/Books';
+import BookDetail from './pages/BookDetail';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import OrderHistory from './pages/OrderHistory';
+import OrderDetail from './pages/OrderDetail';
+import Wishlist from './pages/Wishlist';
+import ReadingLists from './pages/ReadingLists';
+import ChangePassword from './pages/ChangePassword';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <Suspense fallback={<PageLoader />}>
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route element={<MainLayout />}>
@@ -93,13 +87,20 @@ const AnimatedRoutes = () => {
               </PrivateRoute>
             }
           />
+          <Route
+            path="change-password"
+            element={
+              <PrivateRoute>
+                <ChangePassword />
+              </PrivateRoute>
+            }
+          />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </AnimatePresence>
-    </Suspense>
   );
 };
 
@@ -115,7 +116,7 @@ const App = () => {
       <AnimatedRoutes />
       <ToastContainer
         position="top-right"
-        autoClose={1500}
+        autoClose={800}
         hideProgressBar={false}
         newestOnTop
         closeOnClick

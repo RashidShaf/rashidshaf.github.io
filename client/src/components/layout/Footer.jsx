@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FiMail, FiMapPin, FiPhone, FiSend, FiInstagram } from 'react-icons/fi';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaFacebookF, FaTiktok, FaLinkedinIn, FaXTwitter, FaPinterestP } from 'react-icons/fa6';
 import useLanguageStore from '../../stores/useLanguageStore';
 
 const Footer = () => {
@@ -27,9 +27,25 @@ const Footer = () => {
               </span>
               <div className="h-0.5 w-8 bg-accent rounded-full mt-1" />
             </div>
-            <p className="text-background/70 text-sm leading-relaxed max-w-xs">
+            <p className="text-background/70 text-sm leading-relaxed max-w-xs mb-5">
               {t('footer.about')}
             </p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-accent mb-3">{language === 'ar' ? 'تابعنا' : 'Follow Us'}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { href: 'https://www.instagram.com/arkaan.bookstore?igsh=bW9qZmh0M3h5Ymd0', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
+                { href: 'https://wa.me/97459943131', icon: FaWhatsapp, label: 'WhatsApp', bg: 'bg-green-500' },
+                { href: 'https://www.facebook.com/profile.php?id=61569754228280', icon: FaFacebookF, label: 'Facebook', bg: 'bg-blue-600' },
+                { href: 'https://www.tiktok.com/@arkaan.qa', icon: FaTiktok, label: 'TikTok', bg: 'bg-black' },
+                { href: 'https://www.linkedin.com/in/arkaan-store-a97810347/', icon: FaLinkedinIn, label: 'LinkedIn', bg: 'bg-sky-700' },
+                { href: 'https://x.com/Arkaanqa', icon: FaXTwitter, label: 'X', bg: 'bg-black' },
+                { href: 'https://www.pinterest.com/arkaanqa/', icon: FaPinterestP, label: 'Pinterest', bg: 'bg-red-600' },
+              ].map((s) => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className={`w-8 h-8 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
+                  <s.icon className="w-3.5 h-3.5" />
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -98,27 +114,6 @@ const Footer = () => {
               </button>
             </form>
 
-            {/* Social Icons */}
-            <div className="flex items-center gap-3 mt-5">
-              <a
-                href="https://www.instagram.com/arkaan_bookstore"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-orange-400 text-white transition-all duration-300 hover:opacity-80"
-                aria-label="Instagram"
-              >
-                <FiInstagram className="w-[18px] h-[18px]" />
-              </a>
-              <a
-                href="https://wa.me/97459943131"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-green-500 text-white transition-all duration-300 hover:opacity-80"
-                aria-label="WhatsApp"
-              >
-                <FaWhatsapp className="w-[18px] h-[18px]" />
-              </a>
-            </div>
           </div>
         </div>
       </div>

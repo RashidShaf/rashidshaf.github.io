@@ -11,11 +11,11 @@ const BookCard = ({ book, comingSoon = false }) => {
   const { t, language } = useLanguageStore();
   const addItem = useCartStore((s) => s.addItem);
   const toggleItem = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist);
+  const wishlistItems = useWishlistStore((s) => s.items);
 
   const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
   const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
-  const inWishlist = isInWishlist(book.id);
+  const inWishlist = wishlistItems.includes(book.id);
 
   const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
 
@@ -61,6 +61,7 @@ const BookCard = ({ book, comingSoon = false }) => {
                 onClick={(e) => {
                   e.preventDefault();
                   toggleItem(book.id);
+                  toast.success(inWishlist ? (language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist') : (language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Added to wishlist'));
                 }}
                 className={`p-2 rounded-lg transition-colors ${
                   inWishlist
