@@ -18,7 +18,7 @@ const HeroBanner = () => {
         className="w-full h-auto object-cover"
       />
       {/* Animated Logo */}
-      <div className="absolute top-1/2 left-20 sm:left-32 lg:left-48 -translate-y-1/2 z-10">
+      <div className="absolute top-1/2 left-20 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
         <div className="relative flex items-center justify-center">
           <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
           <div className="absolute w-[240px] h-[240px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
@@ -30,6 +30,10 @@ const HeroBanner = () => {
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
+        </div>
+        <div className="text-center mt-3 sm:mt-4">
+          <h2 className="text-lg sm:text-2xl lg:text-3xl font-display font-bold text-white tracking-[0.2em]" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>مكتبــة اركـــآن</h2>
+          <p className="text-xs sm:text-sm lg:text-base font-semibold tracking-[0.3em] mt-1" style={{ color: '#D4A574', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>Arkaan Bookstore</p>
         </div>
       </div>
     </section>
