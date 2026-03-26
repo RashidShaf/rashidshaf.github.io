@@ -18,14 +18,14 @@ const HeroBanner = () => {
         className="w-full h-auto object-cover"
       />
       {/* Animated Logo */}
-      <div className="absolute top-1/2 left-6 sm:left-10 lg:left-16 -translate-y-1/2 z-10">
+      <div className="absolute top-1/2 left-20 sm:left-32 lg:left-48 -translate-y-1/2 z-10">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] lg:w-[200px] lg:h-[200px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[120px] h-[120px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[240px] h-[240px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
           <motion.img
             src="/logo.jpg"
             alt="Arkaan"
-            className="w-16 h-16 sm:w-24 sm:h-24 lg:w-36 lg:h-36 rounded-full object-cover shadow-2xl"
+            className="w-32 h-32 sm:w-48 sm:h-48 lg:w-72 lg:h-72 rounded-full object-cover shadow-2xl"
             style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
