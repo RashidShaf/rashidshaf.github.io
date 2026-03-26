@@ -18,21 +18,21 @@ const HeroBanner = () => {
         className="w-full h-auto object-cover"
       />
       {/* Animated Logo */}
-      <div className="absolute top-1/2 left-20 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[240px] h-[240px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <div className="absolute w-[80px] h-[80px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[100px] h-[100px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
           <motion.img
             src="/logo.jpg"
             alt="Arkaan"
-            className="w-32 h-32 sm:w-48 sm:h-48 lg:w-72 lg:h-72 rounded-full object-cover shadow-2xl"
+            className="w-14 h-14 sm:w-48 sm:h-48 lg:w-72 lg:h-72 rounded-full object-cover shadow-2xl"
             style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
         </div>
         <div className="mt-1 sm:mt-2">
-          <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-32 sm:w-48 lg:w-64 drop-shadow-lg" />
+          <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-20 sm:w-48 lg:w-64 drop-shadow-lg" />
         </div>
       </div>
     </section>
