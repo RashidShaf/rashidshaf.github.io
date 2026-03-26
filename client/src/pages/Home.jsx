@@ -31,7 +31,7 @@ const HeroBanner = () => {
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
         </div>
-        <div className="mt-1 sm:mt-2">
+        <div className="-mt-1 sm:mt-0">
           <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-20 sm:w-48 lg:w-64 drop-shadow-lg" />
         </div>
       </div>
