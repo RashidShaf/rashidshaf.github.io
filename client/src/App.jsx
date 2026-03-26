@@ -106,7 +106,7 @@ const App = () => {
   }, [initLanguage, initTheme]);
 
   return (
-    <BrowserRouter basename="/arkaan">
+    <BrowserRouter>
       <AnimatedRoutes />
       <ToastContainer
         position="top-right"
