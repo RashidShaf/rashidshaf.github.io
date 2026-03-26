@@ -11,7 +11,7 @@ import { fetchBooks } from '../utils/openLibrary';
 
 const HeroBanner = () => {
   return (
-    <section className="relative overflow-hidden mt-4">
+    <section className="relative overflow-hidden">
       <img
         src="/hero-banner.jpg"
         alt="Arkaan Bookstore - توصيلنا بختصر المسافات"
