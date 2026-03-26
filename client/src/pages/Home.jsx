@@ -18,7 +18,7 @@ const HeroBanner = () => {
         className="w-full h-auto object-cover"
       />
       {/* Animated Logo */}
-      <div className="absolute top-1/2 left-4 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div className="absolute top-[40%] left-10 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
         <div className="relative flex items-center justify-center">
           <div className="absolute w-[80px] h-[80px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
           <div className="absolute w-[100px] h-[100px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
