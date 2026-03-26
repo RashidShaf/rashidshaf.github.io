@@ -4,10 +4,18 @@ const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { status } = req.query;
+    const { status, search } = req.query;
 
     const where = {};
     if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({

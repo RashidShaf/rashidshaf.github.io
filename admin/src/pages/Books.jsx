@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -13,6 +13,20 @@ export default function Books() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, featured: 0, lowStock: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/admin/dashboard/stats').catch(() => ({ data: {} })),
+      api.get('/admin/inventory/low-stock').catch(() => ({ data: [] })),
+    ]).then(([statsRes, lowRes]) => {
+      setStats({
+        total: statsRes.data.totalBooks || 0,
+        featured: 0,
+        lowStock: Array.isArray(lowRes.data) ? lowRes.data.length : 0,
+      });
+    });
+  }, []);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -31,11 +45,14 @@ export default function Books() {
 
   useEffect(() => { fetchBooks(); }, [page]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-    fetchBooks();
-  };
+  // Live search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchBooks();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleDelete = async (id) => {
     if (!confirm('Deactivate this book?')) return;
@@ -51,19 +68,34 @@ export default function Books() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-admin-text">{t('books.title')}</h2>
+        <h2 className="text-2xl font-bold text-admin-text">{t('books.title')}</h2>
         <Link to="/books/create" className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
           <FiPlus size={16} /> {t('books.addBook')}
         </Link>
       </div>
 
+      {/* Stat Cards */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[
+          { icon: FiBook, label: 'Total Books', value: stats.total, bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiStar, label: 'Active Books', value: pagination?.total || stats.total, bg: 'bg-amber-500', color: 'text-white' },
+          { icon: FiAlertTriangle, label: 'Low Stock', value: stats.lowStock, bg: 'bg-red-600', color: 'text-white' },
+        ].map((card, i) => (
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <card.icon className={`w-5 h-5 ${card.color}`} />
+            </div>
+            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Search */}
-      <form onSubmit={handleSearch} className="mb-4">
-        <div className="relative max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
-        </div>
-      </form>
+      <div className="relative max-w-sm mb-4">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+      </div>
 
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">

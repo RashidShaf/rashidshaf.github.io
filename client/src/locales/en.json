@@ -14,8 +14,7 @@
     "edit": "Edit",
     "back": "Back",
     "seeAll": "See All",
-    "language": "Language",
-    "theme": "Theme"
+    "language": "Language"
   },
   "nav": {
     "home": "Home",
@@ -186,11 +185,5 @@
     "message": "Your Message",
     "send": "Send Message",
     "sent": "Message sent! We'll get back to you soon."
-  },
-  "themes": {
-    "luxury": "Luxury Editorial",
-    "cultural": "Bold & Cultural",
-    "modern": "Clean & Modern",
-    "earthy": "Warm & Earthy"
   }
 }

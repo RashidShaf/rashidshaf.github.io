@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash } from 'react-icons/fi';
+import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -17,6 +17,11 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  useEffect(() => {
+    api.get('/admin/dashboard/stats').then((res) => setTotalUsers(res.data.totalUsers || 0)).catch(() => {});
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -34,15 +39,16 @@ export default function Users() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [page]);
+  useEffect(() => { fetchUsers(); }, [page]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-    fetchUsers();
-  };
+  // Live search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchUsers();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleToggleBlock = async (user) => {
     const action = user.isBlocked ? 'unblock' : 'block';
@@ -61,23 +67,35 @@ export default function Users() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-admin-text">{t('users.title')}</h2>
+      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('users.title')}</h2>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          { icon: FiUsers, label: 'Total Users', value: totalUsers, bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiUserCheck, label: 'Active Users', value: pagination?.total || totalUsers, bg: 'bg-emerald-600', color: 'text-white' },
+        ].map((card, i) => (
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <card.icon className={`w-5 h-5 ${card.color}`} />
+            </div>
+            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Search */}
-      <form onSubmit={handleSearch} className="mb-4">
-        <div className="relative max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('common.search')}
-            className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-          />
-        </div>
-      </form>
+      <div className="relative max-w-sm mb-4">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('common.search')}
+          className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+        />
+      </div>
 
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">

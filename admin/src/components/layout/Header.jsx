@@ -63,7 +63,7 @@ export default function Header({ onMenuClick }) {
           >
             <FiMenu size={20} />
           </button>
-          <h1 className="text-lg font-semibold text-admin-text">
+          <h1 className="text-xl font-extrabold text-admin-text">
             {getPageTitle()}
           </h1>
         </div>

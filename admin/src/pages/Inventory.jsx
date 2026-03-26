@@ -70,9 +70,7 @@ export default function Inventory() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-admin-text">{t('inventory.title')}</h2>
-      </div>
+      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('inventory.title')}</h2>
 
       {/* Low Stock Alerts */}
       {lowStock.length > 0 && (
@@ -115,9 +113,6 @@ export default function Inventory() {
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Book Title</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">
-                  {t('books.format')}
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Sales</th>
                 <th className="text-right px-4 py-3 font-medium text-admin-muted">
@@ -171,54 +166,49 @@ export default function Inventory() {
                           <span className="ml-2 text-xs text-red-400">Low</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 rounded">
-                          {item.format || 'PAPERBACK'}
-                        </span>
-                      </td>
                       <td className="px-4 py-3 text-admin-muted">
                         {item.salesCount ?? item.totalSold ?? '-'}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {restockId === bookId ? (
-                          <div className="flex items-center gap-2 justify-end">
-                            <input
-                              type="number"
-                              min="1"
-                              value={restockQty}
-                              onChange={(e) => setRestockQty(e.target.value)}
-                              placeholder="Qty"
-                              className="w-16 px-2 py-1.5 bg-admin-card border border-admin-border rounded text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-                            />
+                          <div className="flex items-center gap-3 justify-end">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-admin-muted">Qty:</span>
+                              <input
+                                type="number"
+                                min="1"
+                                value={restockQty}
+                                onChange={(e) => setRestockQty(e.target.value)}
+                                placeholder="0"
+                                className="w-20 px-3 py-2 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent text-center"
+                                autoFocus
+                              />
+                            </div>
                             <input
                               type="text"
                               value={restockNote}
                               onChange={(e) => setRestockNote(e.target.value)}
-                              placeholder="Note"
-                              className="w-24 px-2 py-1.5 bg-admin-card border border-admin-border rounded text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+                              placeholder="Note (optional)"
+                              className="w-36 px-3 py-2 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
                             />
                             <button
                               onClick={() => handleRestock(bookId)}
-                              disabled={restocking}
-                              className="px-3 py-1.5 bg-admin-accent text-white rounded text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                              disabled={restocking || !restockQty}
+                              className="px-4 py-2 bg-admin-success text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors disabled:opacity-40"
                             >
-                              {restocking ? '...' : t('common.save')}
+                              {restocking ? '...' : 'Restock'}
                             </button>
                             <button
-                              onClick={() => {
-                                setRestockId(null);
-                                setRestockQty('');
-                                setRestockNote('');
-                              }}
-                              className="p-1 text-admin-muted hover:text-admin-text transition-colors"
+                              onClick={() => { setRestockId(null); setRestockQty(''); setRestockNote(''); }}
+                              className="p-1.5 text-admin-muted hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                             >
-                              <FiX size={14} />
+                              <FiX size={16} />
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setRestockId(bookId)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors"
                           >
                             <FiPackage size={13} />
                             {t('inventory.restock')}

@@ -116,7 +116,7 @@ export default function OrderDetail() {
           >
             <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
           </Link>
-          <h2 className="text-xl font-semibold text-admin-text">Order not found</h2>
+          <h2 className="text-2xl font-bold text-admin-text">Order not found</h2>
         </div>
       </motion.div>
     );
@@ -139,7 +139,7 @@ export default function OrderDetail() {
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
         <div className="flex-1">
-          <h2 className="text-xl font-semibold text-admin-text">
+          <h2 className="text-2xl font-bold text-admin-text">
             {t('orders.orderNumber')}{order.orderNumber}
           </h2>
           <p className="text-sm text-admin-muted">

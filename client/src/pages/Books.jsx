@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiFilter, FiX, FiChevronDown, FiStar } from 'react-icons/fi';
+import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
-import { fetchBooks as fetchOpenLibrary } from '../utils/openLibrary';
 
 const sortOptions = [
   { value: 'newest', labelKey: 'books.sortOptions.newest' },
@@ -19,8 +18,9 @@ const Books = () => {
   const { t, language } = useLanguageStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [allBooks, setAllBooks] = useState([]);
+  const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -28,12 +28,13 @@ const Books = () => {
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || 'newest';
   const bookLang = searchParams.get('language') || '';
-  const minRating = searchParams.get('rating') || '';
+  const page = parseInt(searchParams.get('page') || '1');
 
   const updateParam = (key, value) => {
     const params = new URLSearchParams(searchParams);
     if (value) params.set(key, value);
     else params.delete(key);
+    if (key !== 'page') params.delete('page');
     setSearchParams(params);
   };
 
@@ -45,9 +46,17 @@ const Books = () => {
     const fetchBooks = async () => {
       setLoading(true);
       try {
-        const query = search || 'popular books';
-        const results = await fetchOpenLibrary(query, 40);
-        setAllBooks(results);
+        const params = new URLSearchParams();
+        params.set('page', page);
+        params.set('limit', '20');
+        if (search) params.set('search', search);
+        if (category) params.set('category', category);
+        if (bookLang) params.set('language', bookLang);
+        if (sort) params.set('sort', sort);
+
+        const res = await api.get(`/books?${params}`);
+        setBooks(res.data.data || res.data);
+        setPagination(res.data.pagination || null);
       } catch (err) {
         console.error('Failed to load books:', err);
       } finally {
@@ -55,23 +64,11 @@ const Books = () => {
       }
     };
     fetchBooks();
-  }, [search]);
-
-  // Client-side filtering + sorting
-  const filteredBooks = allBooks.filter((book) => {
-    if (bookLang && book.language !== bookLang) return false;
-    if (minRating && parseFloat(book.averageRating) < parseFloat(minRating)) return false;
-    return true;
-  }).sort((a, b) => {
-    if (sort === 'price_asc') return a.price - b.price;
-    if (sort === 'price_desc') return b.price - a.price;
-    if (sort === 'rating') return parseFloat(b.averageRating) - parseFloat(a.averageRating);
-    if (sort === 'bestselling') return b.reviewCount - a.reviewCount;
-    return 0;
-  });
+  }, [search, category, sort, bookLang, page]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
-  const hasActiveFilters = category || bookLang || minRating;
+  const hasActiveFilters = category || bookLang;
+  const totalBooks = pagination?.total || books.length;
 
   return (
     <PageTransition>
@@ -83,7 +80,7 @@ const Books = () => {
               {t('books.title')}
             </h1>
             <p className="text-sm text-foreground/50 mt-0.5">
-              {filteredBooks.length} {t('nav.books').toLowerCase()}
+              {totalBooks} {t('nav.books').toLowerCase()}
             </p>
           </div>
 
@@ -187,46 +184,6 @@ const Books = () => {
                 </div>
               </div>
 
-              {/* Rating */}
-              <div className="mb-6">
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
-                  {language === 'ar' ? 'التقييم' : 'Rating'}
-                </label>
-                <div className="space-y-1">
-                  {[
-                    { value: '', label: language === 'ar' ? 'الكل' : 'Any' },
-                    { value: '4', label: '4+' },
-                    { value: '3', label: '3+' },
-                    { value: '2', label: '2+' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => updateParam('rating', opt.value)}
-                      className={`w-full text-start py-1.5 flex items-center gap-1.5 text-sm transition-colors ${
-                        minRating === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                      }`}
-                    >
-                      {opt.value ? (
-                        <>
-                          <div className="flex items-center gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                              <FiStar
-                                key={i}
-                                size={12}
-                                className={i < parseInt(opt.value) ? 'text-yellow-500 fill-yellow-500' : 'text-foreground/15'}
-                              />
-                            ))}
-                          </div>
-                          <span>& {language === 'ar' ? 'فوق' : 'up'}</span>
-                        </>
-                      ) : (
-                        opt.label
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Clear Filters */}
               {hasActiveFilters && (
                 <button
@@ -258,14 +215,39 @@ const Books = () => {
                   </div>
                 ))}
               </div>
-            ) : filteredBooks.length === 0 ? (
+            ) : books.length === 0 ? (
               <div className="bg-surface rounded-xl p-16 text-center border border-muted/10">
                 <p className="text-foreground/50 text-lg">{t('common.noResults')}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {filteredBooks.map((book) => <BookCard key={book.id} book={book} />)}
-              </div>
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {books.map((book) => <BookCard key={book.id} book={book} />)}
+                </div>
+
+                {/* Pagination */}
+                {pagination && pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <button
+                      disabled={page <= 1}
+                      onClick={() => updateParam('page', (page - 1).toString())}
+                      className="p-2 rounded-lg border border-muted/20 text-foreground disabled:opacity-30 hover:bg-surface-alt transition-colors"
+                    >
+                      <FiChevronLeft size={18} />
+                    </button>
+                    <span className="text-sm text-foreground/70 px-3">
+                      {page} / {pagination.totalPages}
+                    </span>
+                    <button
+                      disabled={page >= pagination.totalPages}
+                      onClick={() => updateParam('page', (page + 1).toString())}
+                      className="p-2 rounded-lg border border-muted/20 text-foreground disabled:opacity-30 hover:bg-surface-alt transition-colors"
+                    >
+                      <FiChevronRight size={18} />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

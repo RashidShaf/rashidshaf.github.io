@@ -13,7 +13,6 @@ import useCartStore from '../stores/useCartStore';
 import useWishlistStore from '../stores/useWishlistStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
-import { fetchBookByKey, fetchBooks } from '../utils/openLibrary';
 
 const BookDetail = () => {
   const { slug } = useParams();
@@ -34,19 +33,12 @@ const BookDetail = () => {
         let bookData = null;
         let recs = [];
 
-        // Check if this is an Open Library key (starts with OL)
-        if (slug.startsWith('OL') || slug.startsWith('/works/')) {
-          const key = slug.replace('/works/', '');
-          bookData = await fetchBookByKey(key);
-          recs = await fetchBooks('popular books', 6);
-        } else {
-          const res = await api.get(`/books/${slug}`);
-          bookData = res.data;
-          try {
-            const recRes = await api.get(`/books/${res.data.id}/recommendations`);
-            recs = recRes.data;
-          } catch {}
-        }
+        const res = await api.get(`/books/${slug}`);
+        bookData = res.data;
+        try {
+          const recRes = await api.get(`/books/${res.data.id}/recommendations`);
+          recs = recRes.data;
+        } catch {}
 
         setBook(bookData);
         setRecommendations(recs);
@@ -99,8 +91,7 @@ const BookDetail = () => {
   const catName = book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : null;
   const inWishlist = isInWishlist(book.id);
 
-  const coverUrl = book._googleCover
-    || (book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null);
+  const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
 
   const hasDiscount = book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price);
   const discountPercent = hasDiscount

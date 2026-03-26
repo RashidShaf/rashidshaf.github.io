@@ -17,8 +17,7 @@ const BookCard = ({ book, comingSoon = false }) => {
   const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
   const inWishlist = isInWishlist(book.id);
 
-  const coverUrl = book._googleCover
-    || (book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null);
+  const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
 
   return (
     <motion.div

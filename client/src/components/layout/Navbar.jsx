@@ -18,6 +18,7 @@ import useCartStore from '../../stores/useCartStore';
 import useAuthStore from '../../stores/useAuthStore';
 import useWishlistStore from '../../stores/useWishlistStore';
 import LanguageSwitcher from './LanguageSwitcher';
+import api from '../../utils/api';
 
 const Navbar = () => {
   const { t, language } = useLanguageStore();
@@ -30,7 +31,64 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const accountTimeout = useRef(null);
+  const searchRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  // Debounced search for autocomplete
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    clearTimeout(debounceRef.current);
+    if (value.trim().length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setLoadingSuggestions(true);
+    setShowSuggestions(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await api.get(`/books?search=${encodeURIComponent(value.trim())}&limit=6`);
+        const books = res.data.data || res.data;
+        setSuggestions(books.map((b) => ({
+          id: b.id,
+          title: b.title,
+          author: b.author,
+          slug: b.slug,
+          cover: b.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${b.coverImage}` : null,
+        })));
+      } catch {
+        setSuggestions([]);
+      }
+      setLoadingSuggestions(false);
+    }, 300);
+  };
+
+  const closeSuggestions = () => {
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
+  const handleSuggestionClick = (slug) => {
+    navigate(`/books/${slug}`);
+    setSearchQuery('');
+    closeSuggestions();
+    setMobileOpen(false);
+  };
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        closeSuggestions();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const cartCount = getItemCount();
   const wCount = wishlistCount();
@@ -100,25 +158,70 @@ const Navbar = () => {
             {/* Right Side */}
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Search */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchQuery.trim()) {
-                    navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
-                    setSearchQuery('');
-                  }
-                }}
-                className="hidden md:flex items-center relative"
-              >
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('books.search')}
-                  className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-muted/20 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
-                />
-                <FiSearch className="absolute start-3.5 w-4 h-4 text-muted/50 pointer-events-none" />
-              </form>
+              <div ref={searchRef} className="hidden md:block relative">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                      navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
+                      setSearchQuery('');
+                      closeSuggestions();
+                    }
+                  }}
+                  className="flex items-center relative"
+                >
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
+                    placeholder={t('books.search')}
+                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-muted/20 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                  />
+                  <FiSearch className="absolute start-3.5 w-4 h-4 text-muted/50 pointer-events-none" />
+                </form>
+
+                {/* Suggestions Dropdown */}
+                {showSuggestions && (
+                  <div className="absolute top-full mt-2 w-72 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 overflow-hidden">
+                    {loadingSuggestions ? (
+                      <div className="px-4 py-6 text-center">
+                        <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
+                      </div>
+                    ) : suggestions.length === 0 ? (
+                      <div className="px-4 py-4 text-center text-sm text-muted">
+                        {t('common.noResults')}
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        {suggestions.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => handleSuggestionClick(item.slug)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
+                          >
+                            {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
+                              <p className="text-xs text-muted line-clamp-1">{item.author}</p>
+                            </div>
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => {
+                            navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
+                            setSearchQuery('');
+                            closeSuggestions();
+                          }}
+                          className="w-full px-3 py-2.5 text-xs font-medium text-accent hover:bg-surface-alt transition-colors border-t border-muted/10 text-center"
+                        >
+                          {t('common.seeAll')} "{searchQuery}"
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Language Switcher */}
               <div className="hidden sm:block">
@@ -258,26 +361,59 @@ const Navbar = () => {
             >
               <div className="px-4 py-6 space-y-1">
                 {/* Mobile Search */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (searchQuery.trim()) {
-                      navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
-                      setSearchQuery('');
-                      setMobileOpen(false);
-                    }
-                  }}
-                  className="relative mb-4"
-                >
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('books.search')}
-                    className="w-full px-4 py-3 ps-11 bg-surface border border-muted/20 rounded-xl text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
-                  />
-                  <FiSearch className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50 pointer-events-none" />
-                </form>
+                <div className="relative mb-4">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (searchQuery.trim()) {
+                        navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
+                        setSearchQuery('');
+                        closeSuggestions();
+                        setMobileOpen(false);
+                      }
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      placeholder={t('books.search')}
+                      className="w-full px-4 py-3 ps-11 bg-surface border border-muted/20 rounded-xl text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                    />
+                    <FiSearch className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50 pointer-events-none" />
+                  </form>
+
+                  {/* Mobile Suggestions */}
+                  {showSuggestions && (
+                    <div className="mt-2 bg-surface border border-muted/15 rounded-xl shadow-lg overflow-hidden">
+                      {loadingSuggestions ? (
+                        <div className="px-4 py-4 text-center">
+                          <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
+                        </div>
+                      ) : suggestions.length === 0 ? (
+                        <div className="px-4 py-3 text-center text-sm text-muted">
+                          {t('common.noResults')}
+                        </div>
+                      ) : (
+                        <div className="py-1">
+                          {suggestions.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleSuggestionClick(item.slug)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
+                            >
+                              {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
+                                <p className="text-xs text-muted line-clamp-1">{item.author}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {navLinks.map((link) => (
                   <NavLink

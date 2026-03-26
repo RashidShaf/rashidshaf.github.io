@@ -11,7 +11,9 @@ exports.list = async (req, res, next) => {
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
+        { titleAr: { contains: search, mode: 'insensitive' } },
         { author: { contains: search, mode: 'insensitive' } },
+        { authorAr: { contains: search, mode: 'insensitive' } },
         { isbn: { contains: search, mode: 'insensitive' } },
       ];
     }

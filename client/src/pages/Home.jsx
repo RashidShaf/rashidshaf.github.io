@@ -7,7 +7,6 @@ import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
-import { fetchBooks } from '../utils/openLibrary';
 
 const HeroBanner = ({ featured, language, t }) => {
   const [slide, setSlide] = useState(0);
@@ -20,7 +19,8 @@ const HeroBanner = ({ featured, language, t }) => {
     return () => clearInterval(timer);
   }, [paused]);
 
-  const bookCovers = featured.filter((b) => b._googleCover).slice(0, 6).map((b) => b._googleCover);
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
+  const bookCovers = featured.filter((b) => b.coverImage).slice(0, 6).map((b) => `${API_BASE}/${b.coverImage}`);
   const isSlide2 = slide === 1;
 
   return (
@@ -201,19 +201,16 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch categories from our API
-        const catRes = await api.get('/categories').catch(() => ({ data: [] }));
-        setCategories(catRes.data);
-
-        // Fetch books from Open Library API for demo
-        const [featuredBooks, newBooks, bestBooks] = await Promise.all([
-          fetchBooks('bestseller fiction', 12),
-          fetchBooks('new releases 2024', 12),
-          fetchBooks('popular novels', 12),
+        const [catRes, featuredRes, newRes, bestRes] = await Promise.all([
+          api.get('/categories').catch(() => ({ data: [] })),
+          api.get('/books/featured').catch(() => ({ data: [] })),
+          api.get('/books/new-arrivals').catch(() => ({ data: [] })),
+          api.get('/books/bestsellers').catch(() => ({ data: [] })),
         ]);
-        setFeatured(featuredBooks);
-        setNewArrivals(newBooks);
-        setBestsellers(bestBooks);
+        setCategories(catRes.data);
+        setFeatured(featuredRes.data);
+        setNewArrivals(newRes.data);
+        setBestsellers(bestRes.data);
       } catch (err) {
         console.error('Failed to load home data:', err);
       } finally {

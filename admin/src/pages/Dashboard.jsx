@@ -36,10 +36,10 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { key: 'totalRevenue', icon: FiDollarSign, value: stats ? `QAR ${parseFloat(stats.totalRevenue).toFixed(2)}` : '...', color: 'bg-blue-500' },
-    { key: 'totalOrders', icon: FiShoppingBag, value: stats?.totalOrders ?? '...', color: 'bg-green-500' },
-    { key: 'totalUsers', icon: FiUsers, value: stats?.totalUsers ?? '...', color: 'bg-purple-500' },
-    { key: 'totalBooks', icon: FiBook, value: stats?.totalBooks ?? '...', color: 'bg-amber-500' },
+    { key: 'totalRevenue', icon: FiDollarSign, value: stats ? `QAR ${parseFloat(stats.totalRevenue).toFixed(0)}` : '...', bg: 'bg-blue-600', color: 'text-white' },
+    { key: 'totalOrders', icon: FiShoppingBag, value: stats?.totalOrders ?? '...', bg: 'bg-emerald-600', color: 'text-white' },
+    { key: 'totalUsers', icon: FiUsers, value: stats?.totalUsers ?? '...', bg: 'bg-violet-600', color: 'text-white' },
+    { key: 'totalBooks', icon: FiBook, value: stats?.totalBooks ?? '...', bg: 'bg-amber-500', color: 'text-white' },
   ];
 
   const statusColor = { PENDING: 'text-yellow-600', CONFIRMED: 'text-blue-600', PROCESSING: 'text-purple-600', SHIPPED: 'text-indigo-600', DELIVERED: 'text-green-600', CANCELLED: 'text-red-600' };
@@ -49,14 +49,12 @@ export default function Dashboard() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {statCards.map((card, i) => (
-          <motion.div key={card.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }} className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-admin-muted font-medium">{t(`dashboard.${card.key}`)}</span>
-              <div className={`w-10 h-10 ${card.color} rounded-lg flex items-center justify-center`}>
-                <card.icon size={18} className="text-white" />
-              </div>
+          <motion.div key={card.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <card.icon size={20} className={card.color} />
             </div>
-            <p className="text-2xl font-bold text-admin-text">{card.value}</p>
+            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs font-medium text-admin-muted mt-1.5">{t(`dashboard.${card.key}`)}</p>
           </motion.div>
         ))}
       </div>

@@ -69,7 +69,7 @@ export default function AdminLayout() {
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-admin-accent text-white'
-                  : 'text-white/60 hover:text-white hover:bg-sidebar-hover'
+                  : 'text-white/85 hover:text-white hover:bg-sidebar-hover'
               }`
             }
           >
@@ -83,7 +83,7 @@ export default function AdminLayout() {
       <div className="p-3 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-sidebar-hover transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/85 hover:text-white hover:bg-sidebar-hover transition-colors"
         >
           <FiLogOut size={18} />
           <span>{t('nav.logout')}</span>
@@ -96,7 +96,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-admin-bg">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:block fixed top-0 ${isRTL ? 'right-0' : 'left-0'} h-full w-64 bg-sidebar z-30`}
+        className={`hidden lg:block fixed ${isRTL ? 'right-2' : 'left-2'} top-2 bottom-2 w-64 bg-sidebar z-30 rounded-2xl`}
       >
         {sidebarContent}
       </aside>
@@ -117,7 +117,7 @@ export default function AdminLayout() {
               animate={{ x: 0 }}
               exit={{ x: isRTL ? 256 : -256 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={`fixed top-0 ${isRTL ? 'right-0' : 'left-0'} h-full w-64 bg-sidebar z-50 lg:hidden`}
+              className={`fixed ${isRTL ? 'right-2' : 'left-2'} top-2 bottom-2 w-64 bg-sidebar z-50 lg:hidden rounded-2xl`}
             >
               {sidebarContent}
             </motion.aside>

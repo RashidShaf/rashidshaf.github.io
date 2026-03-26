@@ -40,7 +40,7 @@ const Cart = () => {
             {items.map((item) => {
               const title = language === 'ar' && item.book.titleAr ? item.book.titleAr : item.book.title;
               const author = language === 'ar' && item.book.authorAr ? item.book.authorAr : item.book.author;
-              const cover = item.book._googleCover || (item.book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${item.book.coverImage}` : null);
+              const cover = item.book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${item.book.coverImage}` : null;
 
               return (
                 <motion.div

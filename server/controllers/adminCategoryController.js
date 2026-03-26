@@ -17,7 +17,8 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { name, nameAr, description, descriptionAr, parentId, displayOrder, isActive } = req.body;
-    const data = { nameAr, description, descriptionAr, parentId, displayOrder, isActive };
+    const data = { nameAr, description, descriptionAr, parentId, displayOrder };
+    if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;
     if (name) { data.name = name; data.slug = generateSlug(name); }
     if (req.file) { data.image = `uploads/categories/${req.file.filename}`; }
 

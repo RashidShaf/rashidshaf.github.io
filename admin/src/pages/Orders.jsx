@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter } from 'react-icons/fi';
+import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -24,13 +24,33 @@ export default function Orders() {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pending: 0, delivered: 0 });
+
+  useEffect(() => {
+    api.get('/admin/dashboard/stats').then((res) => {
+      setStats((s) => ({ ...s, totalOrders: res.data.totalOrders || 0, totalRevenue: res.data.totalRevenue || 0 }));
+    }).catch(() => {});
+    // Get pending & delivered counts
+    Promise.all([
+      api.get('/admin/orders?status=PENDING&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
+      api.get('/admin/orders?status=DELIVERED&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
+    ]).then(([pendingRes, deliveredRes]) => {
+      setStats((s) => ({
+        ...s,
+        pending: pendingRes.data.pagination?.total || 0,
+        delivered: deliveredRes.data.pagination?.total || 0,
+      }));
+    });
+  }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: 10 });
       if (statusFilter !== 'ALL') params.set('status', statusFilter);
+      if (search) params.set('search', search);
       const res = await api.get(`/admin/orders?${params}`);
       setOrders(res.data.data || res.data);
       setPagination(res.data.pagination || null);
@@ -42,9 +62,16 @@ export default function Orders() {
     }
   };
 
+  useEffect(() => { fetchOrders(); }, [page, statusFilter]);
+
+  // Live search with debounce
   useEffect(() => {
-    fetchOrders();
-  }, [page, statusFilter]);
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchOrders();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleStatusChange = (e) => {
     setStatusFilter(e.target.value);
@@ -57,12 +84,32 @@ export default function Orders() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-admin-text">{t('orders.title')}</h2>
+      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('orders.title')}</h2>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          { icon: FiShoppingBag, label: 'Total Orders', value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
+          { icon: FiClock, label: 'Pending', value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
+          { icon: FiCheckCircle, label: 'Delivered', value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
+        ].map((card, i) => (
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <card.icon className={`w-5 h-5 ${card.color}`} />
+            </div>
+            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Filter Bar */}
+      {/* Search & Filter Bar */}
       <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+        </div>
         <div className="relative">
           <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <select

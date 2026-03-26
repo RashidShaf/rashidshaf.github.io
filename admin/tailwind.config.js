@@ -11,7 +11,7 @@ export default {
         'admin-card': '#FFFFFF',
         'admin-border': '#E2E8F0',
         'admin-text': '#0F172A',
-        'admin-muted': '#64748B',
+        'admin-muted': '#475569',
         'admin-accent': '#3B82F6',
         'admin-success': '#10B981',
         'admin-warning': '#F59E0B',

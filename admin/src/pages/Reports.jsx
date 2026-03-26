@@ -54,9 +54,7 @@ export default function Reports() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-admin-text">{t('reports.title')}</h2>
-      </div>
+      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('reports.title')}</h2>
 
       <div className="space-y-8">
         {/* ==================== SALES REPORT ==================== */}
