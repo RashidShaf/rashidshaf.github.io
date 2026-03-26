@@ -79,13 +79,8 @@ const Navbar = () => {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 group">
-              <div className="flex flex-col items-start">
-                <span className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-[0.15em] group-hover:text-accent transition-colors">
-                  {language === 'ar' ? 'أركان' : 'ARKAAN'}
-                </span>
-                <span className="h-0.5 w-8 bg-accent rounded-full group-hover:w-full transition-all duration-300" />
-              </div>
+            <Link to="/" className="flex-shrink-0">
+              <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="h-10 lg:h-14 w-auto" />
             </Link>
 
             {/* Desktop Nav Links */}
