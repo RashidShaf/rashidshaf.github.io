@@ -44,7 +44,7 @@ exports.inventory = async (req, res, next) => {
     const books = await prisma.book.findMany({
       where: { isActive: true },
       orderBy: { stock: 'asc' },
-      select: { id: true, title: true, stock: true, lowStockThreshold: true, salesCount: true, price: true },
+      select: { id: true, title: true, author: true, stock: true, lowStockThreshold: true, salesCount: true, price: true },
     });
 
     const totalStock = books.reduce((sum, b) => sum + b.stock, 0);

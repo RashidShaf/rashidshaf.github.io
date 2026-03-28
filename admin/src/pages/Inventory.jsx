@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiPlus, FiX } from 'react-icons/fi';
+import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiPlus, FiX, FiBook, FiDollarSign, FiLayers } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -16,6 +16,11 @@ export default function Inventory() {
   const [restockQty, setRestockQty] = useState('');
   const [restockNote, setRestockNote] = useState('');
   const [restocking, setRestocking] = useState(false);
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
+  }, []);
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -72,6 +77,26 @@ export default function Inventory() {
     >
       <h2 className="text-2xl font-bold text-admin-text mb-6">{t('inventory.title')}</h2>
 
+      {/* Summary Cards */}
+      {summary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[
+            { icon: FiBook, label: 'Total Books', value: summary.totalStock !== undefined ? (inventory.length || '-') : '-', bg: 'bg-blue-600' },
+            { icon: FiLayers, label: 'Total Stock', value: summary.totalStock ?? 0, bg: 'bg-emerald-600' },
+            { icon: FiAlertTriangle, label: 'Low Stock', value: summary.lowStockCount ?? 0, bg: 'bg-amber-500' },
+            { icon: FiDollarSign, label: 'Total Value', value: `QAR ${parseFloat(summary.totalValue ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
+          ].map((card, i) => (
+            <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+              <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+                <card.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+              <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Low Stock Alerts */}
       {lowStock.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
@@ -114,6 +139,8 @@ export default function Inventory() {
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
                 </th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">Price</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">Value</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Sales</th>
                 <th className="text-right px-4 py-3 font-medium text-admin-muted">
                   {t('common.actions')}
@@ -124,14 +151,14 @@ export default function Inventory() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={5} className="px-4 py-4">
+                    <td colSpan={6} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : inventory.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={6} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -165,6 +192,12 @@ export default function Inventory() {
                         {isLow && (
                           <span className="ml-2 text-xs text-red-400">Low</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-admin-muted">
+                        QAR {parseFloat(item.price || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-admin-text">
+                        QAR {(stock * parseFloat(item.price || 0)).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-admin-muted">
                         {item.salesCount ?? item.totalSold ?? '-'}

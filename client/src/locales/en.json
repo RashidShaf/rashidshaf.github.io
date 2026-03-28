@@ -165,7 +165,18 @@
     "value3Title": "Fast Delivery",
     "value3Text": "Quick and reliable delivery across Doha and all of Qatar, bringing books right to your doorstep.",
     "value4Title": "Customer First",
-    "value4Text": "Dedicated support and easy returns — your satisfaction is our top priority."
+    "value4Text": "Dedicated support and easy returns — your satisfaction is our top priority.",
+    "whyChoose": "Why Choose Us",
+    "cod": "Cash on Delivery",
+    "codText": "Pay when your order arrives at your doorstep",
+    "fastDelivery": "Fast Delivery",
+    "fastDeliveryText": "Quick and reliable delivery across all of Qatar",
+    "bilingual": "Bilingual Store",
+    "bilingualText": "Full experience in both Arabic and English",
+    "ctaTitle": "Ready to find your next read?",
+    "ctaSubtitle": "Browse our collection and discover your new favorite book",
+    "browseBooks": "Browse Books",
+    "contactUs": "Contact Us"
   },
   "contact": {
     "title": "Contact Us",
