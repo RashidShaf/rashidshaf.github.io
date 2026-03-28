@@ -75,8 +75,6 @@ export default function Inventory() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('inventory.title')}</h2>
-
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -139,7 +137,6 @@ export default function Inventory() {
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
                 </th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Price</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Value</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Sales</th>
                 <th className="text-right px-4 py-3 font-medium text-admin-muted">
@@ -151,14 +148,14 @@ export default function Inventory() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6} className="px-4 py-4">
+                    <td colSpan={5} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : inventory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={5} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -192,9 +189,6 @@ export default function Inventory() {
                         {isLow && (
                           <span className="ml-2 text-xs text-red-400">Low</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-admin-muted">
-                        QAR {parseFloat(item.price || 0).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 font-medium text-admin-text">
                         QAR {(stock * parseFloat(item.price || 0)).toFixed(2)}

@@ -111,7 +111,7 @@ exports.featured = async (req, res, next) => {
   try {
     const books = await prisma.book.findMany({
       where: { isActive: true, isFeatured: true },
-      orderBy: { salesCount: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 8,
       include: {
         category: { select: { id: true, name: true, nameAr: true, slug: true } },
@@ -126,7 +126,7 @@ exports.featured = async (req, res, next) => {
 exports.newArrivals = async (req, res, next) => {
   try {
     const books = await prisma.book.findMany({
-      where: { isActive: true },
+      where: { isActive: true, isNewArrival: true },
       orderBy: { createdAt: 'desc' },
       take: 8,
       include: {
@@ -142,8 +142,8 @@ exports.newArrivals = async (req, res, next) => {
 exports.bestsellers = async (req, res, next) => {
   try {
     const books = await prisma.book.findMany({
-      where: { isActive: true },
-      orderBy: { salesCount: 'desc' },
+      where: { isActive: true, isBestseller: true },
+      orderBy: { createdAt: 'desc' },
       take: 8,
       include: {
         category: { select: { id: true, name: true, nameAr: true, slug: true } },
@@ -153,6 +153,30 @@ exports.bestsellers = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.trending = async (req, res, next) => {
+  try {
+    const books = await prisma.book.findMany({
+      where: { isActive: true, isTrending: true },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+    });
+    res.json(books);
+  } catch (error) { next(error); }
+};
+
+exports.comingSoon = async (req, res, next) => {
+  try {
+    const books = await prisma.book.findMany({
+      where: { isActive: true, isComingSoon: true },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+    });
+    res.json(books);
+  } catch (error) { next(error); }
 };
 
 exports.recommendations = async (req, res, next) => {

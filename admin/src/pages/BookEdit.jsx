@@ -24,7 +24,7 @@ export default function BookEdit() {
     title: '', titleAr: '', author: '', authorAr: '', isbn: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
-    stock: '0', categoryId: '', tags: '', isFeatured: false, isActive: true,
+    stock: '0', categoryId: '', tags: '', isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isActive: true,
   });
 
   useEffect(() => {
@@ -55,6 +55,10 @@ export default function BookEdit() {
           categoryId: book.categoryId || '',
           tags: Array.isArray(book.tags) ? book.tags.join(', ') : '',
           isFeatured: book.isFeatured || false,
+          isBestseller: book.isBestseller || false,
+          isNewArrival: book.isNewArrival || false,
+          isTrending: book.isTrending || false,
+          isComingSoon: book.isComingSoon || false,
           isActive: book.isActive !== false,
         });
 
@@ -73,7 +77,11 @@ export default function BookEdit() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+    if (name === 'isComingSoon' && checked) {
+      setForm({ ...form, isComingSoon: true, isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false });
+    } else {
+      setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+    }
   };
 
   const handleCover = (e) => {
@@ -268,14 +276,28 @@ export default function BookEdit() {
                   ))}
                 </select>
               </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="isFeatured" checked={form.isFeatured} onChange={handleChange} className="w-4 h-4 rounded border-admin-border text-admin-accent focus:ring-admin-accent" />
-                <span className="text-sm text-admin-text font-medium">Featured Book</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 rounded border-admin-border text-admin-accent focus:ring-admin-accent" />
-                <span className="text-sm text-admin-text font-medium">Active</span>
-              </label>
+              <p className="text-xs font-bold text-admin-text uppercase tracking-wider pt-2">Show in Sections</p>
+              {[
+                { name: 'isComingSoon', label: 'Coming Soon' },
+                { name: 'isFeatured', label: 'Featured' },
+                { name: 'isBestseller', label: 'Bestseller' },
+                { name: 'isNewArrival', label: 'New Arrival' },
+                { name: 'isTrending', label: "Everyone's Talking About" },
+              ].map((opt) => {
+                const disabled = form.isComingSoon && opt.name !== 'isComingSoon';
+                return (
+                  <label key={opt.name} className={`flex items-center gap-3 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
+                    <input type="checkbox" name={opt.name} checked={form[opt.name]} onChange={handleChange} disabled={disabled} className="w-4 h-4 rounded border-admin-border text-admin-accent focus:ring-admin-accent disabled:opacity-50" />
+                    <span className="text-sm text-admin-text font-medium">{opt.label}</span>
+                  </label>
+                );
+              })}
+              <div className="border-t border-admin-border pt-3 mt-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 rounded border-admin-border text-admin-accent focus:ring-admin-accent" />
+                  <span className="text-sm text-admin-text font-medium">Active</span>
+                </label>
+              </div>
             </div>
 
             {/* Actions */}

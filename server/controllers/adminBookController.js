@@ -49,11 +49,22 @@ exports.create = async (req, res, next) => {
   try {
     const data = req.body;
     data.slug = generateSlug(data.title);
-    data.price = parseFloat(data.price);
-    if (data.compareAtPrice) data.compareAtPrice = parseFloat(data.compareAtPrice);
-    if (data.stock) data.stock = parseInt(data.stock);
-    if (data.pages) data.pages = parseInt(data.pages);
-    if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim());
+    data.price = data.price ? parseFloat(data.price) : 0;
+    if (!data.author) data.author = 'Unknown';
+    data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
+    data.stock = data.stock ? parseInt(data.stock) : 0;
+    data.pages = data.pages ? parseInt(data.pages) : null;
+    if (!data.isbn || data.isbn === '') delete data.isbn;
+    if (!data.categoryId || data.categoryId === '') delete data.categoryId;
+    if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
+    else if (!data.tags) data.tags = [];
+    // Clean empty strings
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr'].forEach((f) => {
+      if (data[f] === '') data[f] = null;
+    });
+    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
+      data[f] = data[f] === 'true' || data[f] === true;
+    });
 
     const book = await prisma.book.create({ data, include: { category: true } });
     res.status(201).json(book);
@@ -66,11 +77,20 @@ exports.update = async (req, res, next) => {
   try {
     const data = req.body;
     if (data.title) data.slug = generateSlug(data.title);
-    if (data.price) data.price = parseFloat(data.price);
-    if (data.compareAtPrice) data.compareAtPrice = parseFloat(data.compareAtPrice);
-    if (data.stock !== undefined) data.stock = parseInt(data.stock);
-    if (data.pages) data.pages = parseInt(data.pages);
-    if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim());
+    if (data.price !== undefined) data.price = data.price ? parseFloat(data.price) : 0;
+    data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
+    if (data.stock !== undefined) data.stock = data.stock ? parseInt(data.stock) : 0;
+    data.pages = data.pages && data.pages !== '' ? parseInt(data.pages) : null;
+    if (data.isbn === '') delete data.isbn;
+    if (data.categoryId === '') delete data.categoryId;
+    if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr'].forEach((f) => {
+      if (data[f] === '') data[f] = null;
+    });
+    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
+      if (data[f] !== undefined) data[f] = data[f] === 'true' || data[f] === true;
+    });
+    if (data.isActive !== undefined) data.isActive = data.isActive === 'true' || data.isActive === true;
 
     const book = await prisma.book.update({
       where: { id: req.params.id }, data, include: { category: true },
@@ -83,8 +103,8 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    await prisma.book.update({ where: { id: req.params.id }, data: { isActive: false } });
-    res.json({ message: 'Book deactivated.' });
+    await prisma.book.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Book deleted.' });
   } catch (error) {
     next(error);
   }

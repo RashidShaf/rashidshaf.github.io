@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiTrash2, FiX, FiUpload, FiImage, FiEdit2, FiLayers, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
@@ -12,7 +13,8 @@ export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingCat, setEditingCat] = useState(null); // null = create, object = edit
+  const [editingCat, setEditingCat] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: '', nameAr: '', description: '' });
   const [imageFile, setImageFile] = useState(null);
@@ -100,14 +102,16 @@ export default function Categories() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this category?')) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      await api.delete(`/admin/categories/${id}`);
+      await api.delete(`/admin/categories/${deleteId}`);
       toast.success('Category deleted');
+      setDeleteId(null);
       fetchCategories();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete category');
+      setDeleteId(null);
     }
   };
 
@@ -116,8 +120,7 @@ export default function Categories() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-admin-text">{t('nav.categories')}</h2>
+      <div className="flex justify-end mb-6">
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
           <FiPlus size={16} /> {t('common.create')}
         </button>
@@ -186,7 +189,7 @@ export default function Categories() {
                         <button onClick={() => openEdit(cat)} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                           <FiEdit2 size={15} />
                         </button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
+                        <button onClick={() => setDeleteId(cat.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
                           <FiTrash2 size={15} />
                         </button>
                       </div>
@@ -249,6 +252,15 @@ export default function Categories() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={!!deleteId}
+        title="Delete Category"
+        message="This will permanently delete this category. This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </motion.div>
   );
 }

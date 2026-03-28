@@ -43,22 +43,28 @@ const Home = () => {
   const [featured, setFeatured] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [bestsellers, setBestsellers] = useState([]);
+  const [trending, setTrending] = useState([]);
+  const [comingSoon, setComingSoon] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, featuredRes, newRes, bestRes] = await Promise.all([
+        const [catRes, featuredRes, newRes, bestRes, trendRes, soonRes] = await Promise.all([
           api.get('/categories').catch(() => ({ data: [] })),
           api.get('/books/featured').catch(() => ({ data: [] })),
           api.get('/books/new-arrivals').catch(() => ({ data: [] })),
           api.get('/books/bestsellers').catch(() => ({ data: [] })),
+          api.get('/books/trending').catch(() => ({ data: [] })),
+          api.get('/books/coming-soon').catch(() => ({ data: [] })),
         ]);
         setCategories(catRes.data);
         setFeatured(featuredRes.data);
         setNewArrivals(newRes.data);
         setBestsellers(bestRes.data);
+        setTrending(trendRes.data);
+        setComingSoon(soonRes.data);
       } catch (err) {
         console.error('Failed to load home data:', err);
       } finally {
@@ -169,7 +175,7 @@ const Home = () => {
       )}
 
       {/* Everyone's Talking About */}
-      {!loading && featured.length > 0 && (
+      {!loading && trending.length > 0 && (
         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
@@ -177,19 +183,19 @@ const Home = () => {
             </h2>
           </div>
           <BookCarousel>
-            {featured.map((book) => <BookCard key={book.id} book={book} />)}
+            {trending.map((book) => <BookCard key={book.id} book={book} />)}
           </BookCarousel>
         </section>
       )}
 
       {/* Coming Soon */}
-      {!loading && newArrivals.length > 0 && (
+      {!loading && comingSoon.length > 0 && (
         <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-8">
             {language === 'ar' ? 'قريباً' : 'Coming Soon'}
           </h2>
           <BookCarousel>
-            {newArrivals.map((book) => <BookCard key={book.id} book={book} comingSoon />)}
+            {comingSoon.map((book) => <BookCard key={book.id} book={book} comingSoon />)}
           </BookCarousel>
         </section>
       )}

@@ -5,7 +5,7 @@ exports.overview = async (req, res, next) => {
     const books = await prisma.book.findMany({
       where: { isActive: true },
       orderBy: { stock: 'asc' },
-      select: { id: true, title: true, titleAr: true, stock: true, lowStockThreshold: true, sku: true, salesCount: true },
+      select: { id: true, title: true, titleAr: true, author: true, stock: true, lowStockThreshold: true, sku: true, salesCount: true, price: true },
     });
     res.json(books);
   } catch (error) {
