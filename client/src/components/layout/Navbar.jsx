@@ -174,7 +174,7 @@ const Navbar = () => {
 
                 {/* Suggestions Dropdown */}
                 {showSuggestions && (
-                  <div className="absolute top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 left-0 sm:left-auto bg-surface border border-muted/15 rounded-xl shadow-xl z-50 overflow-hidden">
                     {loadingSuggestions ? (
                       <div className="px-4 py-6 text-center">
                         <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
@@ -331,6 +331,52 @@ const Navbar = () => {
         </nav>
       </header>
 
+      {/* Mobile Search Bar */}
+      <div className="md:hidden bg-background border-b border-muted/10 px-4 py-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchQuery.trim()) {
+              navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
+              setSearchQuery('');
+              closeSuggestions();
+            }
+          }}
+          className="relative"
+        >
+          <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
+            placeholder={t('books.search')}
+            className="w-full px-4 py-2.5 ps-10 bg-surface border border-muted/20 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+          />
+        </form>
+        {showSuggestions && (
+          <div className="mt-2 bg-surface border border-muted/15 rounded-xl shadow-xl overflow-hidden">
+            {loadingSuggestions ? (
+              <div className="px-4 py-4 text-center"><div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" /></div>
+            ) : suggestions.length === 0 ? (
+              <div className="px-4 py-3 text-center text-sm text-muted">{t('common.noResults')}</div>
+            ) : (
+              <div className="py-1">
+                {suggestions.map((item) => (
+                  <button key={item.id} onClick={() => handleSuggestionClick(item.slug)} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start">
+                    {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
+                      <p className="text-xs text-muted line-clamp-1">{item.author}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileOpen && (
@@ -427,46 +473,32 @@ const Navbar = () => {
 
                 {user ? (
                   <>
-                    <div className="px-4 py-2 mb-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs text-muted">{user.email}</p>
+                    <div className="bg-surface-alt rounded-xl p-3">
+                      <div className="flex items-center gap-3 px-2 py-2 mb-1">
+                        <div className="w-9 h-9 rounded-full bg-accent text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                          {user.firstName?.[0]}{user.lastName?.[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{user.firstName} {user.lastName}</p>
+                          <p className="text-[11px] text-muted truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      {[
+                        { to: '/profile', icon: FiUser, label: t('nav.profile') },
+                        { to: '/orders', icon: FiPackage, label: t('nav.orders') },
+                        { to: '/wishlist', icon: FiHeart, label: t('nav.wishlist') },
+                      ].map((item) => (
+                        <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground/80 hover:bg-background transition-colors text-sm">
+                          <item.icon className="w-4 h-4" /> {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={() => { handleLogout(); setMobileOpen(false); }}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-red-500 hover:bg-background transition-colors text-sm mt-1"
+                      >
+                        <FiLogOut className="w-4 h-4" /> {t('nav.logout')}
+                      </button>
                     </div>
-                    <Link
-                      to="/profile"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-surface-alt transition-colors"
-                    >
-                      <FiUser className="w-5 h-5" />
-                      {t('nav.profile')}
-                    </Link>
-                    <Link
-                      to="/orders"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-surface-alt transition-colors"
-                    >
-                      <FiPackage className="w-5 h-5" />
-                      {t('nav.orders')}
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-surface-alt transition-colors"
-                    >
-                      <FiHeart className="w-5 h-5" />
-                      {t('nav.wishlist')}
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setMobileOpen(false);
-                      }}
-                      className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-secondary hover:bg-surface-alt transition-colors"
-                    >
-                      <FiLogOut className="w-5 h-5" />
-                      {t('nav.logout')}
-                    </button>
                   </>
                 ) : (
                   <div className="flex flex-col gap-2 px-4">

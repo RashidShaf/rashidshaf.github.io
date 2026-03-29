@@ -52,10 +52,10 @@ const OrderHistory = () => {
               <Link
                 key={order.id}
                 to={`/orders/${order.id}`}
-                className="flex items-center gap-4 bg-surface rounded-xl border border-muted/10 shadow-sm p-4 sm:p-5 hover:shadow-lg hover:border-accent/20 transition-all group"
+                className="block sm:flex sm:items-center gap-4 bg-surface rounded-xl border border-muted/10 shadow-sm p-4 sm:p-5 hover:shadow-lg hover:border-accent/20 transition-all group"
               >
                 {/* Item Thumbnails */}
-                <div className="flex -space-x-3 flex-shrink-0">
+                <div className="hidden sm:flex -space-x-3 flex-shrink-0">
                   {(order.items || []).slice(0, 3).map((item, i) => {
                     const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
                     return (
@@ -86,7 +86,7 @@ const OrderHistory = () => {
                 </div>
 
                 {/* Price + Arrow */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-muted/10">
                   <p className="text-base font-extrabold text-foreground">{formatPrice(order.total)}</p>
                   <FiChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-accent transition-colors rtl:rotate-180" />
                 </div>

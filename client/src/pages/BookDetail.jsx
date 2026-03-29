@@ -158,6 +158,21 @@ const BookDetail = () => {
               )}
             </div>
             </div>
+
+            {/* Mobile additional images */}
+            {book.images && book.images.length > 0 && (
+              <div className="flex gap-1.5 mt-2 sm:hidden overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {[coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).map((img, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedImage(img)}
+                    className={`w-10 h-13 rounded overflow-hidden border-2 cursor-pointer flex-shrink-0 ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15'}`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Details */}
@@ -211,30 +226,13 @@ const BookDetail = () => {
             </div>
 
             {/* Quantity + Buttons */}
-            <div className="flex flex-wrap items-center gap-3 mt-5">
+            {/* Quantity + Wishlist */}
+            <div className="flex items-center gap-3 mt-5">
               <div className="flex items-center border border-muted/20 rounded-lg">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-sm">-</button>
                 <span className="w-10 h-8 flex items-center justify-center text-sm font-medium text-foreground border-x border-muted/20">{quantity}</span>
                 <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-sm">+</button>
               </div>
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                className="flex items-center gap-2 px-5 py-2 bg-[#A39666] text-white text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors"
-              >
-                <FiShoppingCart size={15} />
-                {t('common.addToCart')}
-              </motion.button>
-
-              <Link
-                to="/checkout"
-                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                className="flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors"
-                style={{ backgroundColor: '#7A1B4E', color: 'white' }}
-              >
-                {t('common.buyNow')}
-              </Link>
 
               <motion.button
                 whileTap={{ scale: 0.9 }}
@@ -250,6 +248,27 @@ const BookDetail = () => {
               >
                 <FiHeart size={18} className={inWishlist ? 'fill-white' : ''} />
               </motion.button>
+            </div>
+
+            {/* Add to Cart + Buy Now */}
+            <div className="flex items-center gap-2 mt-3">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#A39666] text-white text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors"
+              >
+                <FiShoppingCart size={14} />
+                {t('common.addToCart')}
+              </motion.button>
+
+              <Link
+                to="/checkout"
+                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg transition-colors"
+                style={{ backgroundColor: '#7A1B4E', color: 'white' }}
+              >
+                {t('common.buyNow')}
+              </Link>
             </div>
 
             {/* Stock info */}

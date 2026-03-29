@@ -77,35 +77,38 @@ const OrderDetail = () => {
   return (
     <PageTransition>
       <AccountLayout>
-        {/* Back + Header */}
-        <Link to="/orders" className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-accent transition-colors mb-6">
+        {/* Back */}
+        <Link to="/orders" className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-accent transition-colors mb-4">
           {isRTL ? <FiArrowRight size={14} /> : <FiArrowLeft size={14} />} {t('orders.title')}
         </Link>
 
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-display font-bold text-foreground">{order.orderNumber}</h1>
-              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
-                {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
-              </span>
+        {/* Order Header Card */}
+        <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-5 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">{order.orderNumber}</h1>
+                <span className={`px-2.5 py-0.5 text-[11px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                  {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-foreground/50">
+                <span className="flex items-center gap-1.5">
+                  <FiCalendar size={12} />
+                  {isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <FiCreditCard size={12} />
+                  {isRTL ? 'الدفع عند الاستلام' : 'COD'}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-foreground/50">
-              <span className="flex items-center gap-1.5">
-                <FiCalendar size={13} />
-                {isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FiCreditCard size={13} />
-                {isRTL ? 'الدفع عند الاستلام' : 'Cash on Delivery'}
-              </span>
-            </div>
+            {['CONFIRMED'].includes(order.status) && (
+              <button onClick={handleCancel} className="px-4 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors self-start">
+                {t('orders.cancel')}
+              </button>
+            )}
           </div>
-          {['CONFIRMED'].includes(order.status) && (
-            <button onClick={handleCancel} className="px-5 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
-              {t('orders.cancel')}
-            </button>
-          )}
         </div>
 
         {/* Status Timeline */}

@@ -100,7 +100,7 @@ const BookCard = ({ book, comingSoon = false }) => {
         <p className="text-[13px] text-muted mt-1 line-clamp-1">{author}</p>
 
         {!comingSoon && (
-          <div className="flex items-center justify-between mt-2">
+          <div className="mt-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-foreground">
                 {formatPrice(book.price)}
@@ -111,7 +111,7 @@ const BookCard = ({ book, comingSoon = false }) => {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 mt-1">
               <FiStar className="w-3 h-3 text-yellow-500 fill-yellow-500" />
               <span className="text-[11px] font-medium text-foreground">
                 {parseFloat(book.averageRating).toFixed(1)}

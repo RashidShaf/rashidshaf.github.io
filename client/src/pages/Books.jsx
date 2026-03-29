@@ -105,7 +105,7 @@ const Books = () => {
                 <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
               </button>
               {sortOpen && (
-                <div className="absolute top-full mt-1 end-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-20 min-w-[180px] py-1 overflow-hidden">
+                <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
                   {sortOptions.map((opt) => (
                     <button
                       key={opt.value}
