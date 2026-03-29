@@ -17,6 +17,7 @@ import useLanguageStore from '../../stores/useLanguageStore';
 import useCartStore from '../../stores/useCartStore';
 import useAuthStore from '../../stores/useAuthStore';
 import useWishlistStore from '../../stores/useWishlistStore';
+import useThemeStore from '../../stores/useThemeStore';
 import LanguageSwitcher from './LanguageSwitcher';
 import api from '../../utils/api';
 
@@ -24,6 +25,7 @@ const Navbar = () => {
   const { t, language } = useLanguageStore();
   const cartItems = useCartStore((s) => s.items);
   const wishlistItems = useWishlistStore((s) => s.items);
+  const { theme, setTheme } = useThemeStore();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -131,7 +133,7 @@ const Navbar = () => {
       <header
         className="relative z-50 bg-background border-b border-muted/10"
       >
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
@@ -214,6 +216,28 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
+
+              {/* Theme Toggle */}
+              {(() => {
+                const themes = [
+                  { id: 'modern', label: 'Modern', dot: 'bg-blue-500' },
+                  { id: 'brand', label: 'Brand', dot: 'bg-[#A39666]' },
+                  { id: 'royal', label: 'Royal', dot: 'bg-[#560736]' },
+                ];
+                const currentIndex = themes.findIndex((t) => t.id === theme);
+                const current = themes[currentIndex] || themes[0];
+                const nextTheme = themes[(currentIndex + 1) % themes.length];
+                return (
+                  <button
+                    onClick={() => setTheme(nextTheme.id)}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-muted/30 text-foreground hover:border-accent hover:text-accent transition-colors text-sm font-medium"
+                    title={`Switch to ${nextTheme.label}`}
+                  >
+                    <span className={`w-3 h-3 rounded-full ${current.dot}`} />
+                    <span className="hidden md:inline">{current.label}</span>
+                  </button>
+                );
+              })()}
 
               {/* Language Switcher */}
               <div className="hidden sm:block">

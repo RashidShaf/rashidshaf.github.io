@@ -20,16 +20,16 @@ const AccountLayout = ({ children }) => {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Mobile Nav — horizontal pills */}
-      <div className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Mobile Nav */}
+      <div className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {links.map((link) => {
           const isActive = pathname === link.to;
           return (
             <Link
               key={link.to}
               to={link.to}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${
                 isActive ? 'bg-accent text-white' : 'bg-surface border border-muted/10 text-foreground/70'
               }`}
             >
@@ -39,55 +39,55 @@ const AccountLayout = ({ children }) => {
         })}
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <div className="sticky top-6 space-y-5">
+      <div className="flex gap-8">
+        {/* Sidebar — always on the physical left */}
+        <div className="hidden lg:block w-[280px] flex-shrink-0" style={{ direction: 'ltr' }}>
+          <div className="sticky top-6 space-y-4" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
             {/* User Card */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 text-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent to-accent-light text-white text-3xl font-bold flex items-center justify-center mx-auto mb-4 shadow-lg shadow-accent/20">
-                {initials}
-              </div>
-              <h2 className="text-xl font-bold text-foreground">{user?.firstName} {user?.lastName}</h2>
-              <div className="flex items-center justify-center gap-1.5 mt-1.5 text-sm text-foreground/50">
-                <FiMail size={13} />
-                <span className="truncate max-w-[180px]">{user?.email}</span>
-              </div>
-              {memberSince && (
-                <div className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 bg-surface-alt rounded-full text-xs text-foreground/50">
-                  <FiCalendar size={11} />
-                  <span>{language === 'ar' ? 'عضو منذ' : 'Member since'} {memberSince}</span>
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent-light text-white text-xl font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-accent/15">
+                  {initials}
                 </div>
-              )}
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-foreground truncate">{user?.firstName} {user?.lastName}</h2>
+                  <p className="text-xs text-foreground/50 truncate flex items-center gap-1">
+                    <FiMail size={11} /> {user?.email}
+                  </p>
+                  {memberSince && (
+                    <p className="text-[11px] text-foreground/40 mt-1 flex items-center gap-1">
+                      <FiCalendar size={10} /> {language === 'ar' ? 'عضو منذ' : 'Since'} {memberSince}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Nav Links */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm py-2">
               {links.map((link) => {
                 const isActive = pathname === link.to;
                 return (
                   <Link
                     key={link.to}
                     to={link.to}
-                    className={`flex items-center gap-3 px-5 py-4 transition-all border-b border-muted/5 last:border-b-0 relative ${
-                      isActive ? 'bg-accent/5 text-accent' : 'text-foreground/70 hover:bg-surface-alt hover:text-foreground'
+                    className={`flex items-center gap-3 px-5 py-3 mx-2 rounded-xl transition-all ${
+                      isActive
+                        ? 'bg-accent text-white shadow-sm'
+                        : 'text-foreground/60 hover:bg-surface-alt hover:text-foreground'
                     }`}
                   >
-                    {isActive && (
-                      <div className="absolute start-0 top-2 bottom-2 w-[3px] bg-accent rounded-e-full" />
-                    )}
-                    <link.icon size={18} className={isActive ? 'text-accent' : ''} />
+                    <link.icon size={18} />
                     <span className="text-sm font-semibold">{link.label}</span>
                   </Link>
                 );
               })}
-
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-3">
+        <div className="flex-1 min-w-0">
           {children}
         </div>
       </div>

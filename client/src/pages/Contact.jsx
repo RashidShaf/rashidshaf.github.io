@@ -79,7 +79,7 @@ const Contact = () => {
               </p>
               <div className="flex items-center gap-2.5 flex-wrap">
                 {[
-                  { href: 'https://www.instagram.com/arkaan.bookstore?igsh=bW9qZmh0M3h5Ymd0', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
+                  { href: 'https://www.instagram.com/arkaan.qa?igsh=b3l5Mmwyc3Bndm5j', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
                   { href: 'https://wa.me/97459943131', icon: FaWhatsapp, label: 'WhatsApp', bg: 'bg-green-500' },
                   { href: 'https://www.facebook.com/profile.php?id=61569754228280', icon: FaFacebookF, label: 'Facebook', bg: 'bg-blue-600' },
                   { href: 'https://www.tiktok.com/@arkaan.qa', icon: FaTiktok, label: 'TikTok', bg: 'bg-black' },

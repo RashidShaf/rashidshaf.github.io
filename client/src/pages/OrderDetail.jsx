@@ -1,31 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiArrowLeft, FiPackage, FiMapPin, FiPhone, FiUser, FiCheck, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCalendar, FiHash } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
 
-const statusSteps = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+const statusSteps = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+
+const statusColors = {
+  PENDING: 'bg-amber-100 text-amber-700',
+  CONFIRMED: 'bg-blue-100 text-blue-700',
+  PROCESSING: 'bg-violet-100 text-violet-700',
+  SHIPPED: 'bg-indigo-100 text-indigo-700',
+  DELIVERED: 'bg-emerald-100 text-emerald-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+};
 
 const OrderDetail = () => {
   const { id } = useParams();
   const { t, language } = useLanguageStore();
+  const isRTL = language === 'ar';
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
   useEffect(() => {
     api.get(`/orders/${id}`).then((res) => setOrder(res.data)).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
   const handleCancel = async () => {
-    if (!confirm(language === 'ar' ? 'هل أنت متأكد من إلغاء الطلب؟' : 'Are you sure you want to cancel this order?')) return;
     try {
       await api.put(`/orders/${id}/cancel`);
       setOrder((o) => ({ ...o, status: 'CANCELLED', cancelledAt: new Date() }));
-      toast.success(language === 'ar' ? 'تم إلغاء الطلب' : 'Order cancelled');
+      toast.success(isRTL ? 'تم إلغاء الطلب' : 'Order cancelled');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to cancel');
     }
@@ -34,10 +45,13 @@ const OrderDetail = () => {
   if (loading) {
     return (
       <PageTransition>
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="h-8 bg-surface-alt rounded w-1/3 animate-pulse mb-8" />
-          <div className="h-64 bg-surface-alt rounded-xl animate-pulse" />
-        </div>
+        <AccountLayout>
+          <div className="space-y-4">
+            <div className="h-8 bg-surface-alt rounded-lg w-1/3 animate-pulse" />
+            <div className="h-48 bg-surface-alt rounded-2xl animate-pulse" />
+            <div className="h-64 bg-surface-alt rounded-2xl animate-pulse" />
+          </div>
+        </AccountLayout>
       </PageTransition>
     );
   }
@@ -45,10 +59,14 @@ const OrderDetail = () => {
   if (!order) {
     return (
       <PageTransition>
-        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-          <p className="text-muted text-lg">{t('common.noResults')}</p>
-          <Link to="/orders" className="mt-4 inline-flex items-center gap-2 text-accent"><FiArrowLeft /> {t('orders.title')}</Link>
-        </div>
+        <AccountLayout>
+          <div className="text-center py-20">
+            <p className="text-foreground/50 text-lg">{t('common.noResults')}</p>
+            <Link to="/orders" className="mt-4 inline-flex items-center gap-2 text-accent text-sm font-medium">
+              {isRTL ? <FiArrowRight /> : <FiArrowLeft />} {t('orders.title')}
+            </Link>
+          </div>
+        </AccountLayout>
       </PageTransition>
     );
   }
@@ -58,20 +76,33 @@ const OrderDetail = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+      <AccountLayout>
+        {/* Back + Header */}
+        <Link to="/orders" className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-accent transition-colors mb-6">
+          {isRTL ? <FiArrowRight size={14} /> : <FiArrowLeft size={14} />} {t('orders.title')}
+        </Link>
+
+        <div className="flex items-start justify-between mb-8">
           <div>
-            <Link to="/orders" className="flex items-center gap-1 text-sm text-muted hover:text-accent mb-2">
-              <FiArrowLeft size={14} /> {t('orders.title')}
-            </Link>
-            <h1 className="text-2xl font-display font-bold text-foreground">{order.orderNumber}</h1>
-            <p className="text-sm text-muted mt-1">
-              {language === 'ar' ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-display font-bold text-foreground">{order.orderNumber}</h1>
+              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-foreground/50">
+              <span className="flex items-center gap-1.5">
+                <FiCalendar size={13} />
+                {isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FiCreditCard size={13} />
+                {isRTL ? 'الدفع عند الاستلام' : 'Cash on Delivery'}
+              </span>
+            </div>
           </div>
           {['PENDING', 'CONFIRMED'].includes(order.status) && (
-            <button onClick={handleCancel} className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+            <button onClick={handleCancel} className="px-5 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
               {t('orders.cancel')}
             </button>
           )}
@@ -79,84 +110,157 @@ const OrderDetail = () => {
 
         {/* Status Timeline */}
         {!isCancelled ? (
-          <div className="bg-surface rounded-xl border border-muted/10 p-6 mb-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
+            <h3 className="text-sm font-bold text-foreground/50 uppercase tracking-wider mb-6">
+              {isRTL ? 'حالة الطلب' : 'Order Status'}
+            </h3>
+            <div className="flex items-center justify-between relative">
+              {/* Progress line */}
+              <div className="absolute top-4 left-4 right-4 h-1 bg-muted/15 rounded-full" />
+              <div
+                className="absolute top-4 left-4 h-1 bg-accent rounded-full transition-all duration-500"
+                style={{ width: currentStep >= 0 ? `${(currentStep / (statusSteps.length - 1)) * (100 - 8)}%` : '0%' }}
+              />
+
               {statusSteps.map((step, i) => (
-                <div key={step} className="flex-1 flex flex-col items-center relative">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold z-10 ${
-                    i <= currentStep ? 'bg-accent text-white' : 'bg-surface-alt text-muted border border-muted/20'
+                <div key={step} className="flex flex-col items-center relative z-10">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ${
+                    i <= currentStep
+                      ? 'bg-accent text-white'
+                      : 'bg-background text-foreground/30 border-2 border-muted/20'
                   }`}>
                     {i <= currentStep ? <FiCheck size={16} /> : i + 1}
                   </div>
-                  <span className={`text-[11px] mt-2 font-medium ${i <= currentStep ? 'text-accent' : 'text-muted'}`}>
+                  <span className={`text-[11px] mt-2.5 font-semibold ${i <= currentStep ? 'text-accent' : 'text-foreground/30'}`}>
                     {t(`orders.statuses.${step.toLowerCase()}`)}
                   </span>
-                  {i < statusSteps.length - 1 && (
-                    <div className={`absolute top-4 left-[55%] w-[calc(100%-10px)] h-0.5 ${i < currentStep ? 'bg-accent' : 'bg-muted/20'}`} />
-                  )}
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <FiX className="text-red-500 w-5 h-5" />
-            <span className="text-sm font-medium text-red-700">
-              {language === 'ar' ? 'تم إلغاء هذا الطلب' : 'This order has been cancelled'}
-            </span>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <FiX className="text-red-500 w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-700">
+                {isRTL ? 'تم إلغاء هذا الطلب' : 'This order has been cancelled'}
+              </p>
+              {order.cancelledAt && (
+                <p className="text-xs text-red-500 mt-0.5">
+                  {isRTL ? formatDateAr(order.cancelledAt) : formatDate(order.cancelledAt)}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Items */}
           <div className="lg:col-span-2">
-            <div className="bg-surface rounded-xl border border-muted/10 p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('orders.items')}</h2>
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-14 h-18 rounded-lg bg-surface-alt overflow-hidden flex-shrink-0">
-                      {item.book?.coverImage ? (
-                        <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${item.book.coverImage}`} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-accent/30 font-bold">{item.title.charAt(0)}</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground line-clamp-1">
-                        {language === 'ar' && item.book?.titleAr ? item.book.titleAr : item.title}
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-muted/10">
+                <h2 className="text-base font-bold text-foreground">
+                  {t('orders.items')} ({order.items.length})
+                </h2>
+              </div>
+              <div className="divide-y divide-muted/10">
+                {order.items.map((item) => {
+                  const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                  const title = isRTL && item.book?.titleAr ? item.book.titleAr : item.title;
+                  return (
+                    <div key={item.id} className="flex items-center gap-4 px-6 py-4">
+                      <div className="w-14 h-[72px] rounded-lg bg-surface-alt overflow-hidden flex-shrink-0">
+                        {cover ? (
+                          <img src={cover} alt={title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-accent/20 font-bold text-lg">{item.title.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground line-clamp-1">{title}</p>
+                        <p className="text-xs text-foreground/50 mt-1">
+                          {formatPrice(item.price)} x {item.quantity}
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold text-foreground flex-shrink-0">
+                        {formatPrice(parseFloat(item.price) * item.quantity)}
                       </p>
-                      <p className="text-xs text-muted mt-0.5">x {item.quantity}</p>
                     </div>
-                    <span className="text-sm font-bold text-foreground">{formatPrice(parseFloat(item.price) * item.quantity)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Summary + Shipping */}
-          <div className="space-y-6">
-            <div className="bg-surface rounded-xl border border-muted/10 p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted">{t('cart.subtotal')}</span><span>{formatPrice(order.subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-muted">{t('cart.shipping')}</span><span>{parseFloat(order.shippingCost) === 0 ? t('cart.freeShipping') : formatPrice(order.shippingCost)}</span></div>
-                <div className="border-t border-muted/10 pt-2 flex justify-between"><span className="font-semibold">{t('cart.total')}</span><span className="font-bold text-lg">{formatPrice(order.total)}</span></div>
+          {/* Sidebar — Summary + Shipping */}
+          <div className="space-y-5">
+            {/* Order Summary */}
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+              <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-foreground/50">{t('cart.subtotal')}</span>
+                  <span className="font-medium text-foreground">{formatPrice(order.subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground/50">{t('cart.shipping')}</span>
+                  <span className="font-medium text-foreground">{parseFloat(order.shippingCost) === 0 ? t('cart.freeShipping') : formatPrice(order.shippingCost)}</span>
+                </div>
+                <div className="border-t border-muted/10 pt-3 flex justify-between">
+                  <span className="font-bold text-foreground">{t('cart.total')}</span>
+                  <span className="font-extrabold text-xl text-foreground">{formatPrice(order.total)}</span>
+                </div>
               </div>
             </div>
 
-            <div className="bg-surface rounded-xl border border-muted/10 p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.shippingInfo')}</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted"><FiUser size={14} />{order.shippingName}</div>
-                <div className="flex items-center gap-2 text-muted"><FiPhone size={14} /><span dir="ltr">{order.shippingPhone}</span></div>
-                <div className="flex items-center gap-2 text-muted"><FiMapPin size={14} />{order.shippingAddress}, {order.shippingCity}</div>
+            {/* Shipping Info */}
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+              <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.shippingInfo')}</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-surface-alt flex items-center justify-center flex-shrink-0">
+                    <FiUser size={14} className="text-foreground/40" />
+                  </div>
+                  <span className="text-sm text-foreground">{order.shippingName}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-surface-alt flex items-center justify-center flex-shrink-0">
+                    <FiPhone size={14} className="text-foreground/40" />
+                  </div>
+                  <span className="text-sm text-foreground" dir="ltr">{order.shippingPhone}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-surface-alt flex items-center justify-center flex-shrink-0">
+                    <FiMapPin size={14} className="text-foreground/40" />
+                  </div>
+                  <span className="text-sm text-foreground">{order.shippingAddress}, {order.shippingCity}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Info */}
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+              <h2 className="text-base font-bold text-foreground mb-4">{isRTL ? 'معلومات الطلب' : 'Order Info'}</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiHash size={12} /> {isRTL ? 'رقم الطلب' : 'Order #'}</span>
+                  <span className="font-semibold text-foreground">{order.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCalendar size={12} /> {isRTL ? 'التاريخ' : 'Date'}</span>
+                  <span className="text-foreground">{isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCreditCard size={12} /> {isRTL ? 'الدفع' : 'Payment'}</span>
+                  <span className="text-foreground">{isRTL ? 'عند الاستلام' : 'COD'}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </AccountLayout>
     </PageTransition>
   );
 };

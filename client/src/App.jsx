@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import useLanguageStore from './stores/useLanguageStore';
+import useThemeStore from './stores/useThemeStore';
 
 import MainLayout from './components/layout/MainLayout';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -106,10 +107,12 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   const initLanguage = useLanguageStore((s) => s.initLanguage);
+  const initTheme = useThemeStore((s) => s.initTheme);
 
   useEffect(() => {
     initLanguage();
-  }, [initLanguage]);
+    initTheme();
+  }, [initLanguage, initTheme]);
 
   return (
     <BrowserRouter>

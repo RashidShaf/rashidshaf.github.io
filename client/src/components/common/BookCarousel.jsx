@@ -36,24 +36,24 @@ const BookCarousel = ({ children }) => {
   };
 
   return (
-    <div className="relative group/carousel overflow-hidden">
-      {/* Left Arrow */}
+    <div className="relative group/carousel">
+      {/* Left Arrow — outside cards */}
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-2 rtl:left-auto rtl:right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-background/95 border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
+          className="absolute -left-5 rtl:-left-auto rtl:-right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
         >
-          <FiChevronLeft size={18} />
+          <FiChevronLeft size={20} />
         </button>
       )}
 
-      {/* Right Arrow */}
+      {/* Right Arrow — outside cards */}
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-2 rtl:right-auto rtl:left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-background/95 border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
+          className="absolute -right-5 rtl:-right-auto rtl:-left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
         >
-          <FiChevronRight size={18} />
+          <FiChevronRight size={20} />
         </button>
       )}
 
@@ -65,7 +65,7 @@ const BookCarousel = ({ children }) => {
       >
         {Array.isArray(children)
           ? children.map((child, i) => (
-              <div key={i} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)]">
+              <div key={i} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] 2xl:w-[calc(16.666%-10px)]">
                 {child}
               </div>
             ))

@@ -72,7 +72,7 @@ const Books = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div>

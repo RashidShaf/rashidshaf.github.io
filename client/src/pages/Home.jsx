@@ -11,29 +11,18 @@ import api from '../utils/api';
 const HeroBanner = () => {
   return (
     <section className="relative overflow-hidden">
+      {/* Desktop Banner */}
       <img
         src="/hero-banner.jpg"
         alt="Arkaan Bookstore - توصيلنا بختصر المسافات"
-        className="w-full h-auto object-cover"
+        className="hidden sm:block w-full h-auto object-cover"
       />
-      {/* Animated Logo */}
-      <div className="absolute top-[40%] left-10 sm:left-32 lg:left-48 -translate-y-1/2 z-10 flex flex-col items-center">
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-[80px] h-[80px] sm:w-[280px] sm:h-[280px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[100px] h-[100px] sm:w-[340px] sm:h-[340px] lg:w-[500px] lg:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
-          <motion.img
-            src="/logo.jpg"
-            alt="Arkaan"
-            className="w-14 h-14 sm:w-48 sm:h-48 lg:w-72 lg:h-72 rounded-full object-cover shadow-2xl"
-            style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-          />
-        </div>
-        <div className="-mt-2 sm:-mt-1">
-          <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-20 sm:w-48 lg:w-64 drop-shadow-lg" />
-        </div>
-      </div>
+      {/* Mobile Banner */}
+      <img
+        src="/hero-banner-mobile.jpg"
+        alt="Arkaan Bookstore - توصيلنا بختصر المسافات"
+        className="block sm:hidden w-full h-auto object-cover"
+      />
     </section>
   );
 };
@@ -83,7 +72,7 @@ const Home = () => {
 
       {/* Featured Books */}
       {!loading && featured.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.featured')}
@@ -100,7 +89,7 @@ const Home = () => {
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('nav.categories')}
@@ -142,7 +131,7 @@ const Home = () => {
 
       {/* New Arrivals */}
       {!loading && newArrivals.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.newArrivals')}
@@ -159,7 +148,7 @@ const Home = () => {
 
       {/* Bestsellers */}
       {!loading && bestsellers.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {language === 'ar' ? 'الأكثر مبيعاً' : 'Bestsellers'}
@@ -176,7 +165,7 @@ const Home = () => {
 
       {/* Everyone's Talking About */}
       {!loading && trending.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {language === 'ar' ? 'الجميع يتحدث عنها' : "Everyone's Talking About"}
@@ -190,7 +179,7 @@ const Home = () => {
 
       {/* Coming Soon */}
       {!loading && comingSoon.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-8">
             {language === 'ar' ? 'قريباً' : 'Coming Soon'}
           </h2>

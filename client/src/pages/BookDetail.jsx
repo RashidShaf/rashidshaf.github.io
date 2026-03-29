@@ -100,7 +100,7 @@ const BookDetail = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted mb-6">
           <Link to="/" className="hover:text-accent transition-colors">{t('nav.home')}</Link>
@@ -214,7 +214,7 @@ const BookDetail = () => {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors"
+                className="flex items-center gap-2 px-5 py-2 bg-[#A39666] text-white text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors"
               >
                 <FiShoppingCart size={15} />
                 {t('common.addToCart')}

@@ -21,6 +21,35 @@
   --font-arabic: 'Tajawal', sans-serif;
 }
 
+/* ===== Brand Theme ===== */
+[data-theme="brand"] {
+  --color-background: #EDF0F1;
+  --color-foreground: #101418;
+  --color-primary: #560736;
+  --color-primary-light: #7A1B4E;
+  --color-accent: #A39666;
+  --color-accent-light: #B8AB7E;
+  --color-secondary: #10B981;
+  --color-surface: #F5F6F7;
+  --color-surface-alt: #E3E4E5;
+  --color-muted: #8A8985;
+}
+
+/* ===== Royal Theme ===== */
+[data-theme="royal"] {
+  --color-background: #EDF0F1;
+  --color-foreground: #101418;
+  --color-primary: #560736;
+  --color-primary-light: #7A1B4E;
+  --color-accent: #560736;
+  --color-accent-light: #7A1B4E;
+  --color-secondary: #10B981;
+  --color-surface: #F5F6F7;
+  --color-surface-alt: #E3E4E5;
+  --color-muted: #9B9590;
+}
+
+
 /* ===== Base Styles ===== */
 @layer base {
   html {

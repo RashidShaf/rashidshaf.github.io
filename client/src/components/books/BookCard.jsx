@@ -52,7 +52,7 @@ const BookCard = ({ book, comingSoon = false }) => {
                   addItem(book, 1);
                   toast.success(t('books.addedToCart'));
                 }}
-                className="flex-1 flex items-center justify-center gap-2 py-2 bg-accent text-white text-xs font-medium rounded-lg hover:bg-accent-light transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#A39666] text-white text-xs font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors"
               >
                 <FiShoppingCart size={14} />
                 {t('common.addToCart')}
