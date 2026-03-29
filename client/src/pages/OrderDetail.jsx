@@ -101,7 +101,7 @@ const OrderDetail = () => {
               </span>
             </div>
           </div>
-          {['PENDING', 'CONFIRMED'].includes(order.status) && (
+          {['CONFIRMED'].includes(order.status) && (
             <button onClick={handleCancel} className="px-5 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
               {t('orders.cancel')}
             </button>

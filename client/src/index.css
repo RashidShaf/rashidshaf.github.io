@@ -4,39 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Clean & Modern Theme ===== */
-:root {
-  --color-background: #FFFFFF;
-  --color-foreground: #111827;
-  --color-primary: #111827;
-  --color-primary-light: #374151;
-  --color-accent: #3B82F6;
-  --color-accent-light: #60A5FA;
-  --color-secondary: #10B981;
-  --color-surface: #F9FAFB;
-  --color-surface-alt: #F3F4F6;
-  --color-muted: #9CA3AF;
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
-  --font-arabic: 'Tajawal', sans-serif;
-}
-
-/* ===== Brand Theme ===== */
-[data-theme="brand"] {
-  --color-background: #EDF0F1;
-  --color-foreground: #101418;
-  --color-primary: #560736;
-  --color-primary-light: #7A1B4E;
-  --color-accent: #A39666;
-  --color-accent-light: #B8AB7E;
-  --color-secondary: #10B981;
-  --color-surface: #F5F6F7;
-  --color-surface-alt: #E3E4E5;
-  --color-muted: #8A8985;
-}
-
 /* ===== Royal Theme ===== */
-[data-theme="royal"] {
+:root {
   --color-background: #EDF0F1;
   --color-foreground: #101418;
   --color-primary: #560736;
@@ -47,6 +16,9 @@
   --color-surface: #F5F6F7;
   --color-surface-alt: #E3E4E5;
   --color-muted: #9B9590;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-arabic: 'Tajawal', sans-serif;
 }
 
 
@@ -62,6 +34,16 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    accent-color: var(--color-accent);
+  }
+
+  select, option {
+    accent-color: var(--color-accent);
+  }
+
+  option:checked {
+    background-color: var(--color-accent);
+    color: white;
   }
 
   [dir="rtl"] body {

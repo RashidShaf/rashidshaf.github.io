@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FiMail, FiPhone, FiMapPin, FiSave } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import PhoneInput from '../components/common/PhoneInput';
 import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -69,10 +70,7 @@ const Profile = () => {
               </div>
               <div>
                 <label className={labelClass}>{t('checkout.phone')}</label>
-                <div className="relative">
-                  <FiPhone className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
-                  <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+974" dir="ltr" className={iconInputClass} />
-                </div>
+                <PhoneInput value={form.phone} onChange={(val) => update('phone', val)} />
               </div>
             </div>
           </div>

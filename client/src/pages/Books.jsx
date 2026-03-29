@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
@@ -22,6 +22,17 @@ const Books = () => {
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
+
+  // Close sort dropdown on click outside
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const search = searchParams.get('search') || '';
@@ -85,17 +96,29 @@ const Books = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                value={sort}
-                onChange={(e) => updateParam('sort', e.target.value)}
-                className="appearance-none bg-surface border border-muted/15 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
+            <div className="relative" ref={sortRef}>
+              <button
+                onClick={() => setSortOpen(!sortOpen)}
+                className="flex items-center gap-2 bg-surface border border-muted/15 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
               >
-                {sortOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
-                ))}
-              </select>
-              <FiChevronDown className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+                {t(sortOptions.find((o) => o.value === sort)?.labelKey || sortOptions[0].labelKey)}
+                <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {sortOpen && (
+                <div className="absolute top-full mt-1 end-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-20 min-w-[180px] py-1 overflow-hidden">
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { updateParam('sort', opt.value); setSortOpen(false); }}
+                      className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
+                        sort === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                      }`}
+                    >
+                      {t(opt.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button

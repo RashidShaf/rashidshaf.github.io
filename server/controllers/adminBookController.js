@@ -122,3 +122,30 @@ exports.uploadCover = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.uploadImages = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) return res.status(400).json({ message: 'No files uploaded.' });
+    const newImages = req.files.map((f) => `uploads/covers/${f.filename}`);
+    const book = await prisma.book.findUnique({ where: { id: req.params.id }, select: { images: true } });
+    const images = [...(book?.images || []), ...newImages].slice(0, 3);
+    const updated = await prisma.book.update({
+      where: { id: req.params.id }, data: { images },
+    });
+    res.json({ images: updated.images });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteImage = async (req, res, next) => {
+  try {
+    const { imageUrl } = req.body;
+    const book = await prisma.book.findUnique({ where: { id: req.params.id }, select: { images: true } });
+    const images = (book?.images || []).filter((img) => img !== imageUrl);
+    await prisma.book.update({ where: { id: req.params.id }, data: { images } });
+    res.json({ images });
+  } catch (error) {
+    next(error);
+  }
+};

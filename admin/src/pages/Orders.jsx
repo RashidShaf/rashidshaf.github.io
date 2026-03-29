@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
-const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+const STATUSES = ['ALL', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
 const statusColors = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -34,7 +34,7 @@ export default function Orders() {
     }).catch(() => {});
     // Get pending & delivered counts
     Promise.all([
-      api.get('/admin/orders?status=PENDING&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
+      api.get('/admin/orders?status=PROCESSING&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
       api.get('/admin/orders?status=DELIVERED&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
     ]).then(([pendingRes, deliveredRes]) => {
       setStats((s) => ({
@@ -89,7 +89,7 @@ export default function Orders() {
         {[
           { icon: FiShoppingBag, label: 'Total Orders', value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
           { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
-          { icon: FiClock, label: 'Pending', value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
+          { icon: FiClock, label: 'Processing', value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
           { icon: FiCheckCircle, label: 'Delivered', value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
@@ -103,17 +103,21 @@ export default function Orders() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
+        <div className="flex-1" />
+        <button onClick={fetchOrders} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+          <FiRefreshCw size={16} />
+        </button>
         <div className="relative">
           <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <select
             value={statusFilter}
             onChange={handleStatusChange}
-            className="pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
+            className="pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -134,8 +138,8 @@ export default function Orders() {
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.customer')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Items</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -172,6 +176,9 @@ export default function Orders() {
                     <td className="px-4 py-3 font-medium text-admin-text">
                       QAR {parseFloat(order.total || 0).toFixed(2)}
                     </td>
+                    <td className="px-4 py-3 text-admin-muted text-xs">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
@@ -180,9 +187,6 @@ export default function Orders() {
                       >
                         {t(`orders.statuses.${order.status}`) || order.status}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
-                      {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
                 ))

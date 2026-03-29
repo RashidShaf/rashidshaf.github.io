@@ -22,7 +22,7 @@ exports.list = async (req, res, next) => {
         where, orderBy: { createdAt: 'desc' }, skip, take: limit,
         include: {
           user: { select: { firstName: true, lastName: true, email: true } },
-          items: { select: { title: true, quantity: true, price: true } },
+          items: { select: { title: true, quantity: true, price: true, book: { select: { title: true, author: true, coverImage: true } } } },
         },
       }),
       prisma.order.count({ where }),
@@ -37,7 +37,7 @@ exports.list = async (req, res, next) => {
 exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    const validStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' });
     }

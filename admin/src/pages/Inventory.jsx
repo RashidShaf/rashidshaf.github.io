@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiPlus, FiX, FiBook, FiDollarSign, FiLayers } from 'react-icons/fi';
+import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -17,6 +17,7 @@ export default function Inventory() {
   const [restockNote, setRestockNote] = useState('');
   const [restocking, setRestocking] = useState(false);
   const [summary, setSummary] = useState(null);
+  const [invSearch, setInvSearch] = useState('');
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
@@ -96,6 +97,18 @@ export default function Inventory() {
       )}
 
       {/* Low Stock Alerts */}
+      {/* Search */}
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative flex-1 max-w-sm">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder="Search inventory..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+        </div>
+        <div className="flex-1" />
+        <button onClick={fetchInventory} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+          <FiRefreshCw size={16} />
+        </button>
+      </div>
+
       {lowStock.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
@@ -160,7 +173,7 @@ export default function Inventory() {
                   </td>
                 </tr>
               ) : (
-                inventory.map((item) => {
+                inventory.filter((item) => !invSearch || (item.title || item.book?.title || '').toLowerCase().includes(invSearch.toLowerCase())).map((item) => {
                   const bookId = item.id || item.bookId;
                   const stock = item.stock ?? item.currentStock ?? 0;
                   const isLow = stock <= 5;

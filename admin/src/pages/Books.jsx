@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -78,13 +78,6 @@ export default function Books() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex items-center justify-between mb-6">
-        <div />
-        <Link to="/books/create" className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
-          <FiPlus size={16} /> {t('books.addBook')}
-        </Link>
-      </div>
-
       {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
@@ -102,22 +95,19 @@ export default function Books() {
         ))}
       </div>
 
-      {/* Search + Per-page */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="relative max-w-sm flex-1">
+      {/* Search + Per-page + Add Book */}
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
-        <select
-          value={limit}
-          onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-          className="px-3 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
-        >
-          <option value={10}>10 per page</option>
-          <option value={20}>20 per page</option>
-          <option value={50}>50 per page</option>
-          <option value={100}>All</option>
-        </select>
+        <div className="flex-1" />
+        <button onClick={fetchBooks} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+          <FiRefreshCw size={16} />
+        </button>
+        <Link to="/books/create" className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap">
+          <FiPlus size={16} /> {t('books.addBook')}
+        </Link>
       </div>
 
       {/* Table */}
@@ -182,15 +172,27 @@ export default function Books() {
           </table>
         </div>
 
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
-            <span className="text-xs text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination.total}</span>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total || books.length}</span>
+            <select
+              value={limit}
+              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              className="px-2 py-1 bg-admin-bg border border-gray-300 rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>All</option>
+            </select>
+          </div>
+          {pagination && pagination.totalPages > 1 && (
             <div className="flex gap-1">
               <button disabled={!pagination.hasPrev} onClick={() => setPage(page - 1)} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronLeft size={16} /></button>
               <button disabled={!pagination.hasNext} onClick={() => setPage(page + 1)} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronRight size={16} /></button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <ConfirmModal

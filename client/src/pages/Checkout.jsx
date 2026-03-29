@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiMapPin, FiPhone, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
+import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -92,7 +93,9 @@ const Checkout = () => {
   return (
     <PageTransition>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-display font-bold text-foreground mb-8">{t('checkout.title')}</h1>
+        <Link to="/cart" className="inline-flex items-center gap-2 text-2xl font-display font-bold text-foreground hover:text-accent transition-colors mb-8">
+          {language === 'ar' ? <FiArrowRight size={22} /> : <FiArrowLeft size={22} />} {t('checkout.title')}
+        </Link>
 
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-8">
@@ -112,10 +115,7 @@ const Checkout = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.phone')}</label>
-                      <div className="relative">
-                        <FiPhone className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-                        <input type="tel" value={form.shippingPhone} onChange={(e) => update('shippingPhone', e.target.value)} required placeholder="+974" dir="ltr" className={inputClass} />
-                      </div>
+                      <PhoneInput value={form.shippingPhone} onChange={(val) => update('shippingPhone', val)} required />
                     </div>
                   </div>
                   <div>

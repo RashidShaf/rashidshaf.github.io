@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiUser, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
 
@@ -72,10 +73,7 @@ const Register = () => {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.phone') || 'Phone'}</label>
-                <div className="relative">
-                  <FiPhone className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="w-full ps-10 pe-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="+974 5000 0000" />
-                </div>
+                <PhoneInput value={form.phone} onChange={(val) => update('phone', val)} />
               </div>
 
               <div>

@@ -107,12 +107,13 @@ const Cart = () => {
               );
             })}
 
-            <div className="flex items-center justify-between pt-2">
-              <Link to="/books" className="text-sm text-accent hover:text-accent-light transition-colors">
+            <div className="flex items-center justify-between pt-4">
+              <Link to="/books" className="inline-flex items-center gap-2 px-5 py-2.5 border border-muted/20 text-foreground text-sm font-medium rounded-xl hover:border-accent hover:text-accent transition-colors">
                 {t('cart.continueShopping')}
               </Link>
-              <button onClick={clearCart} className="text-sm text-red-500 hover:underline">
-                Clear cart
+              <button onClick={clearCart} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
+                <FiTrash2 size={14} />
+                {language === 'ar' ? 'مسح السلة' : 'Clear Cart'}
               </button>
             </div>
           </div>

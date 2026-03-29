@@ -32,8 +32,6 @@ export default function Reports() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('reports.title')}</h2>
-
       <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
         {/* Stat Cards */}
         {salesLoading && !salesReport ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiTrash2, FiX, FiUpload, FiImage, FiEdit2, FiLayers, FiCheckCircle } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiX, FiUpload, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -16,6 +16,7 @@ export default function Categories() {
   const [editingCat, setEditingCat] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [catSearch, setCatSearch] = useState('');
   const [form, setForm] = useState({ name: '', nameAr: '', description: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -115,17 +116,14 @@ export default function Categories() {
     }
   };
 
+  const filteredCategories = categories.filter((c) =>
+    !catSearch || c.name?.toLowerCase().includes(catSearch.toLowerCase()) || c.nameAr?.includes(catSearch) || c.name_ar?.includes(catSearch)
+  );
   const totalCategories = categories.length;
   const activeCategories = categories.filter((c) => c.isActive !== false).length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <div className="flex justify-end mb-6">
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
-          <FiPlus size={16} /> {t('common.create')}
-        </button>
-      </div>
-
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
@@ -140,6 +138,21 @@ export default function Categories() {
             <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Search + Create */}
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative flex-1 max-w-sm">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder="Search categories..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+        </div>
+        <div className="flex-1" />
+        <button onClick={fetchCategories} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+          <FiRefreshCw size={16} />
+        </button>
+        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap">
+          <FiPlus size={16} /> {t('common.create')}
+        </button>
       </div>
 
       {/* Table */}
@@ -161,10 +174,10 @@ export default function Categories() {
                 [...Array(4)].map((_, i) => (
                   <tr key={i}><td colSpan={6} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
-              ) : categories.length === 0 ? (
+              ) : filteredCategories.length === 0 ? (
                 <tr><td colSpan={6} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
               ) : (
-                categories.map((cat) => (
+                filteredCategories.map((cat) => (
                   <tr key={cat.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">

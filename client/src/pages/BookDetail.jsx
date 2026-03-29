@@ -19,12 +19,13 @@ const BookDetail = () => {
   const { t, language } = useLanguageStore();
   const addItem = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist);
+  const wishlistItems = useWishlistStore((s) => s.items);
 
   const [book, setBook] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchBookData = async () => {
@@ -89,7 +90,7 @@ const BookDetail = () => {
   const description = language === 'ar' && book.descriptionAr ? book.descriptionAr : book.description;
   const publisher = language === 'ar' && book.publisherAr ? book.publisherAr : book.publisher;
   const catName = book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : null;
-  const inWishlist = isInWishlist(book.id);
+  const inWishlist = wishlistItems.includes(book.id);
 
   const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
 
@@ -100,7 +101,7 @@ const BookDetail = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4 pb-16">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted mb-6">
           <Link to="/" className="hover:text-accent transition-colors">{t('nav.home')}</Link>
@@ -123,23 +124,28 @@ const BookDetail = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex-shrink-0 flex gap-4 mx-auto lg:ms-12"
+            className="flex-shrink-0 mx-auto lg:mx-0"
           >
-            {/* Thumbnail strip — only show if multiple images */}
-            {book.images && book.images.length > 0 && (
-              <div className="hidden sm:flex flex-col gap-2">
-                {[coverUrl, ...book.images].filter(Boolean).slice(0, 4).map((img, i) => (
-                  <div key={i} className={`w-14 h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${i === 0 ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ))}
+            <div className="flex gap-4">
+              {/* Thumbnail strip — always reserve space */}
+              <div className="hidden sm:flex flex-col gap-2 w-14">
+                {book.images && book.images.length > 0 ? (
+                  [coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
+                    <div
+                      key={i}
+                      onClick={() => setSelectedImage(img)}
+                      className={`w-14 h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ))
+                ) : null}
               </div>
-            )}
 
-            {/* Main cover */}
-            <div className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
-              {coverUrl ? (
-                <img src={coverUrl} alt={title} className="w-full h-full object-cover" />
+              {/* Main cover */}
+              <div className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              {(selectedImage || coverUrl) ? (
+                <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                   <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>
@@ -150,6 +156,7 @@ const BookDetail = () => {
                   -{discountPercent}%
                 </span>
               )}
+            </div>
             </div>
           </motion.div>
 
@@ -231,14 +238,17 @@ const BookDetail = () => {
 
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={() => toggleWishlist(book.id)}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${
+                onClick={() => {
+                  toggleWishlist(book.id);
+                  toast.success(inWishlist ? (language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist') : (language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Added to wishlist'));
+                }}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all ${
                   inWishlist
-                    ? 'border-red-500 bg-red-50 text-red-500'
+                    ? 'border-red-500 bg-red-500 text-white'
                     : 'border-muted/20 text-muted hover:border-red-500 hover:text-red-500'
                 }`}
               >
-                <FiHeart size={15} />
+                <FiHeart size={18} className={inWishlist ? 'fill-white' : ''} />
               </motion.button>
             </div>
 
@@ -278,9 +288,9 @@ const BookDetail = () => {
           </motion.div>
         </div>
 
-        {/* Description — aligned with cover */}
+        {/* Description — aligned with title */}
         {description && (
-          <div className="mt-8 lg:ps-[362px]">
+          <div className="mt-8 lg:ps-[380px]">
             <h3 className="text-lg font-semibold text-foreground mb-3">{t('book.description')}</h3>
             <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line max-w-4xl">{description}</p>
           </div>

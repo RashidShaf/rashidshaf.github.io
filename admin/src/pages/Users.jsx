@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck } from 'react-icons/fi';
+import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -84,15 +84,15 @@ export default function Users() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm mb-4">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('common.search')}
-          className="w-full pl-10 pr-4 py-2.5 bg-admin-card border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-        />
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative flex-1 max-w-sm">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+        </div>
+        <div className="flex-1" />
+        <button onClick={fetchUsers} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+          <FiRefreshCw size={16} />
+        </button>
       </div>
 
       {/* Table */}
@@ -103,6 +103,7 @@ export default function Users() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.name')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.email')}</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">Phone</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.role')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.blocked')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Orders</th>
@@ -114,14 +115,14 @@ export default function Users() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7} className="px-4 py-4">
+                    <td colSpan={8} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={8} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -137,6 +138,7 @@ export default function Users() {
                       </p>
                     </td>
                     <td className="px-4 py-3 text-admin-muted">{user.email}</td>
+                    <td className="px-4 py-3 text-admin-muted" dir="ltr">{user.phone || '-'}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${

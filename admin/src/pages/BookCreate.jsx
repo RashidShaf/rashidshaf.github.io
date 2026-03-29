@@ -13,10 +13,13 @@ export default function BookCreate() {
   const isRTL = useLanguageStore((s) => s.isRTL);
   const navigate = useNavigate();
   const fileRef = useRef(null);
+  const imagesRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '',
@@ -36,6 +39,21 @@ export default function BookCreate() {
     } else {
       setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
     }
+  };
+
+  const handleAdditionalImages = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const remaining = 3 - additionalImages.length;
+    if (remaining <= 0) return;
+    const limited = files.slice(0, remaining);
+    setAdditionalImages((prev) => [...prev, ...limited]);
+    setImagePreviews((prev) => [...prev, ...limited.map((f) => URL.createObjectURL(f))]);
+  };
+
+  const removeAdditionalImage = (index) => {
+    setAdditionalImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCover = (e) => {
@@ -66,6 +84,15 @@ export default function BookCreate() {
         const fd = new FormData();
         fd.append('cover', coverFile);
         await api.post(`/admin/books/${bookId}/cover`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      // Upload additional images
+      if (additionalImages.length > 0 && bookId) {
+        const fd = new FormData();
+        additionalImages.forEach((f) => fd.append('images', f));
+        await api.post(`/admin/books/${bookId}/images`, fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
@@ -211,6 +238,33 @@ export default function BookCreate() {
                 )}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleCover} className="hidden" />
+            </div>
+
+            {/* Additional Images */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-4">Additional Images</h3>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {imagePreviews.map((preview, i) => (
+                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <img src={preview} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeAdditionalImage(i)} className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
+                      <FiX size={12} />
+                    </button>
+                  </div>
+                ))}
+                {imagePreviews.length < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => imagesRef.current?.click()}
+                    className="aspect-square border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-admin-accent transition-colors cursor-pointer"
+                  >
+                    <FiUpload className="w-5 h-5 text-admin-muted mb-1" />
+                    <span className="text-[10px] text-admin-muted">Add</span>
+                  </button>
+                )}
+              </div>
+              <input ref={imagesRef} type="file" accept="image/*" multiple onChange={handleAdditionalImages} className="hidden" />
+              <p className="text-[11px] text-admin-muted">Upload multiple product images</p>
             </div>
 
             {/* Category & Options */}

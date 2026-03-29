@@ -10,8 +10,6 @@ export default function Settings() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h2 className="text-2xl font-bold text-admin-text mb-6">{t('nav.settings')}</h2>
-
       <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
         <div className="text-admin-muted text-sm py-12 text-center">
           Settings panel coming soon

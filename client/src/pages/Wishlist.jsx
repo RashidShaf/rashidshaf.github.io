@@ -53,7 +53,7 @@ const Wishlist = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-surface-alt rounded-lg animate-pulse">
                 <div className="aspect-[5/6] bg-muted/10 rounded-t-lg" />
@@ -70,7 +70,7 @@ const Wishlist = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {books.map((book) => {
               const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
               const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
@@ -102,17 +102,11 @@ const Wishlist = () => {
                           onClick={(e) => { e.preventDefault(); handleRemove(book.id); }}
                           className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
                         >
-                          <FiX size={14} />
+                          <FiHeart size={14} />
                         </button>
                       </div>
                     </div>
 
-                    {/* Wishlist Badge */}
-                    <div className="absolute top-2 end-2">
-                      <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-                        <FiHeart className="w-4 h-4 text-white fill-white" />
-                      </div>
-                    </div>
                   </Link>
 
                   {/* Info */}

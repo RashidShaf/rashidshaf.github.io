@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiUser, FiPackage, FiHeart, FiBook, FiCalendar, FiMail, FiLock } from 'react-icons/fi';
+import { FiUser, FiPackage, FiHeart, FiCalendar, FiMail, FiLock } from 'react-icons/fi';
 import useLanguageStore from '../../stores/useLanguageStore';
 import useAuthStore from '../../stores/useAuthStore';
 
@@ -15,7 +15,6 @@ const AccountLayout = ({ children }) => {
     { to: '/profile', icon: FiUser, label: t('nav.profile') },
     { to: '/orders', icon: FiPackage, label: t('profile.myOrders') },
     { to: '/wishlist', icon: FiHeart, label: t('profile.myWishlist') },
-    { to: '/reading-lists', icon: FiBook, label: t('profile.myReadingLists') },
     { to: '/change-password', icon: FiLock, label: t('profile.changePassword') },
   ];
 

@@ -5,7 +5,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import useLanguageStore from './stores/useLanguageStore';
-import useThemeStore from './stores/useThemeStore';
 
 import MainLayout from './components/layout/MainLayout';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -21,7 +20,6 @@ import Profile from './pages/Profile';
 import OrderHistory from './pages/OrderHistory';
 import OrderDetail from './pages/OrderDetail';
 import Wishlist from './pages/Wishlist';
-import ReadingLists from './pages/ReadingLists';
 import ChangePassword from './pages/ChangePassword';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -81,14 +79,6 @@ const AnimatedRoutes = () => {
             }
           />
           <Route
-            path="reading-lists"
-            element={
-              <PrivateRoute>
-                <ReadingLists />
-              </PrivateRoute>
-            }
-          />
-          <Route
             path="change-password"
             element={
               <PrivateRoute>
@@ -107,12 +97,10 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   const initLanguage = useLanguageStore((s) => s.initLanguage);
-  const initTheme = useThemeStore((s) => s.initTheme);
 
   useEffect(() => {
     initLanguage();
-    initTheme();
-  }, [initLanguage, initTheme]);
+  }, [initLanguage]);
 
   return (
     <BrowserRouter>

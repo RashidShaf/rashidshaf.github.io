@@ -14,10 +14,14 @@ export default function BookEdit() {
   const isRTL = useLanguageStore((s) => s.isRTL);
   const navigate = useNavigate();
   const fileRef = useRef(null);
+  const imagesRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImageFiles, setNewImageFiles] = useState([]);
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -65,6 +69,9 @@ export default function BookEdit() {
         if (book.coverImage) {
           setCoverPreview(`${API_BASE}/${book.coverImage}`);
         }
+        if (book.images && book.images.length > 0) {
+          setExistingImages(book.images);
+        }
       } catch (err) {
         toast.error('Failed to load book');
         navigate('/books');
@@ -74,6 +81,31 @@ export default function BookEdit() {
     };
     fetchData();
   }, [id]);
+
+  const totalImages = existingImages.length + newImageFiles.length;
+
+  const handleAddImages = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const remaining = 3 - totalImages;
+    if (remaining <= 0) return;
+    const limited = files.slice(0, remaining);
+    setNewImageFiles((prev) => [...prev, ...limited]);
+    setNewImagePreviews((prev) => [...prev, ...limited.map((f) => URL.createObjectURL(f))]);
+  };
+
+  const removeExistingImage = async (imageUrl) => {
+    try {
+      await api.delete(`/admin/books/${id}/images`, { data: { imageUrl } });
+      setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+      toast.success('Image removed');
+    } catch { toast.error('Failed to remove image'); }
+  };
+
+  const removeNewImage = (index) => {
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -110,6 +142,14 @@ export default function BookEdit() {
         const fd = new FormData();
         fd.append('cover', coverFile);
         await api.post(`/admin/books/${id}/cover`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      if (newImageFiles.length > 0) {
+        const fd = new FormData();
+        newImageFiles.forEach((f) => fd.append('images', f));
+        await api.post(`/admin/books/${id}/images`, fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
@@ -262,6 +302,41 @@ export default function BookEdit() {
                 )}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleCover} className="hidden" />
+            </div>
+
+            {/* Additional Images */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-4">Additional Images</h3>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {existingImages.map((img, i) => (
+                  <div key={`existing-${i}`} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <img src={`${API_BASE}/${img}`} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeExistingImage(img)} className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
+                      <FiX size={12} />
+                    </button>
+                  </div>
+                ))}
+                {newImagePreviews.map((preview, i) => (
+                  <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    <img src={preview} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeNewImage(i)} className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
+                      <FiX size={12} />
+                    </button>
+                  </div>
+                ))}
+                {totalImages < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => imagesRef.current?.click()}
+                    className="aspect-square border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-admin-accent transition-colors cursor-pointer"
+                  >
+                    <FiUpload className="w-5 h-5 text-admin-muted mb-1" />
+                    <span className="text-[10px] text-admin-muted">Add</span>
+                  </button>
+                )}
+              </div>
+              <input ref={imagesRef} type="file" accept="image/*" multiple onChange={handleAddImages} className="hidden" />
+              <p className="text-[11px] text-admin-muted">Max 3 images</p>
             </div>
 
             {/* Category & Options */}
