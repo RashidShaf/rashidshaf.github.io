@@ -44,7 +44,7 @@ const Contact = () => {
           <div className="h-1 w-16 bg-accent rounded-full mx-auto mt-6" />
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-10">
+        <div className="grid lg:grid-cols-5 gap-6 lg:gap-10">
           {/* Contact Info */}
           <div className="lg:col-span-2 space-y-5">
             <div>
@@ -57,7 +57,7 @@ const Contact = () => {
             </div>
 
             {contactInfo.map((item, i) => (
-              <div key={i} className="flex items-start gap-4 bg-surface rounded-xl p-4 border border-muted/10">
+              <div key={i} className="flex items-start gap-3 sm:gap-4 bg-surface rounded-xl p-3 sm:p-4 border border-muted/10">
                 <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
                   <item.icon className="w-5 h-5 text-accent" />
                 </div>

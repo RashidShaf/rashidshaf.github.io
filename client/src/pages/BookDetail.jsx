@@ -128,7 +128,7 @@ const BookDetail = () => {
           >
             <div className="flex gap-4">
               {/* Thumbnail strip — always reserve space */}
-              <div className="hidden sm:flex flex-col gap-2 w-14">
+              <div className="hidden sm:flex flex-col gap-2 w-14 flex-shrink-0">
                 {book.images && book.images.length > 0 ? (
                   [coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
                     <div
@@ -143,7 +143,7 @@ const BookDetail = () => {
               </div>
 
               {/* Main cover */}
-              <div className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="relative w-[180px] sm:w-[280px] h-[260px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
@@ -266,7 +266,7 @@ const BookDetail = () => {
 
             {/* Details — inline after buttons */}
             <div className="mt-6 pt-5 border-t border-muted/10">
-              <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+              <div className="flex flex-wrap gap-x-4 sm:gap-x-8 gap-y-3 text-sm">
                 {publisher && (
                   <div><span className="text-foreground/50">{t('book.publisher')}: </span><span className="text-foreground font-medium">{publisher}</span></div>
                 )}

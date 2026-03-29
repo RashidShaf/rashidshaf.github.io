@@ -174,7 +174,7 @@ const Navbar = () => {
 
                 {/* Suggestions Dropdown */}
                 {showSuggestions && (
-                  <div className="absolute top-full mt-2 w-72 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute top-full mt-2 w-[calc(100vw-2rem)] sm:w-72 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 overflow-hidden">
                     {loadingSuggestions ? (
                       <div className="px-4 py-6 text-center">
                         <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
@@ -252,7 +252,7 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full mt-1 ltr:right-0 rtl:left-0 bg-surface border border-muted/20 rounded-xl shadow-xl overflow-hidden min-w-[220px] z-50"
+                      className="absolute top-full mt-1 ltr:right-0 rtl:left-0 bg-surface border border-muted/20 rounded-xl shadow-xl overflow-hidden min-w-[180px] sm:min-w-[220px] z-50"
                       onMouseEnter={handleAccountEnter}
                       onMouseLeave={handleAccountLeave}
                     >

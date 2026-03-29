@@ -72,7 +72,7 @@ const Home = () => {
 
       {/* Featured Books */}
       {!loading && featured.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.featured')}
@@ -89,7 +89,7 @@ const Home = () => {
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('nav.categories')}
@@ -131,7 +131,7 @@ const Home = () => {
 
       {/* New Arrivals */}
       {!loading && newArrivals.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.newArrivals')}
@@ -148,7 +148,7 @@ const Home = () => {
 
       {/* Bestsellers */}
       {!loading && bestsellers.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {language === 'ar' ? 'الأكثر مبيعاً' : 'Bestsellers'}
@@ -165,7 +165,7 @@ const Home = () => {
 
       {/* Everyone's Talking About */}
       {!loading && trending.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {language === 'ar' ? 'الجميع يتحدث عنها' : "Everyone's Talking About"}
@@ -179,7 +179,7 @@ const Home = () => {
 
       {/* Coming Soon */}
       {!loading && comingSoon.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
+        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-8">
             {language === 'ar' ? 'قريباً' : 'Coming Soon'}
           </h2>

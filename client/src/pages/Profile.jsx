@@ -43,7 +43,7 @@ const Profile = () => {
 
         <form onSubmit={handleSubmit}>
           {/* Personal Info */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -58,7 +58,7 @@ const Profile = () => {
           </div>
 
           {/* Contact */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}</h3>
             <div className="space-y-4">
               <div>
@@ -76,7 +76,7 @@ const Profile = () => {
           </div>
 
           {/* Address */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'العنوان' : 'Address'}</h3>
             <div className="space-y-4">
               <div>

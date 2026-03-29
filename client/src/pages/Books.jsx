@@ -140,7 +140,7 @@ const Books = () => {
             lg:w-52 flex-shrink-0
           `}>
             <div className={`
-              ${filtersOpen ? 'absolute right-0 rtl:right-auto rtl:left-0 top-0 h-full w-72 bg-background p-6 shadow-2xl overflow-y-auto' : ''}
+              ${filtersOpen ? 'absolute right-0 rtl:right-auto rtl:left-0 top-0 h-full w-[min(80vw,288px)] bg-background p-5 shadow-2xl overflow-y-auto' : ''}
               lg:static lg:p-0 lg:shadow-none lg:w-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto
             `}
               style={{ scrollbarWidth: 'thin' }}
