@@ -10,6 +10,7 @@ export default {
         'admin-bg': '#F8FAFC',
         'admin-card': '#FFFFFF',
         'admin-border': '#E2E8F0',
+        'admin-input-border': '#CBD5E1',
         'admin-text': '#0F172A',
         'admin-muted': '#475569',
         'admin-accent': '#3B82F6',

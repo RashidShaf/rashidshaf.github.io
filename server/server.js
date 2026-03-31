@@ -22,6 +22,9 @@ const adminInventoryRoutes = require('./routes/admin/inventory');
 const adminDashboardRoutes = require('./routes/admin/dashboard');
 const adminReportRoutes = require('./routes/admin/reports');
 const adminReviewRoutes = require('./routes/admin/reviews');
+const adminSettingsRoutes = require('./routes/admin/settings');
+const adminNotificationRoutes = require('./routes/admin/notifications');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -58,6 +61,9 @@ app.use('/api/admin/inventory', adminInventoryRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/reports', adminReportRoutes);
 app.use('/api/admin/reviews', adminReviewRoutes);
+app.use('/api/admin/settings', adminSettingsRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

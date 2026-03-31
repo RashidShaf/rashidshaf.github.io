@@ -1,20 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiPhone, FiMail, FiMapPin, FiSend, FiInstagram } from 'react-icons/fi';
 import { FaWhatsapp, FaFacebookF, FaTiktok, FaLinkedinIn, FaXTwitter, FaPinterestP } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
+import api from '../utils/api';
 
 const Contact = () => {
   const { t, language } = useLanguageStore();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sending, setSending] = useState(false);
+  const [settings, setSettings] = useState({});
+
+  useEffect(() => {
+    api.get('/settings/public').then((res) => setSettings(res.data || {})).catch(() => {});
+  }, []);
+
+  const phone = settings.storePhone || '+974 5994 3131';
+  const email2 = settings.storeEmail || 'info@arkaan.com';
 
   const contactInfo = [
-    { icon: FiPhone, label: t('contact.phone'), value: '+974 5994 3131', dir: 'ltr' },
-    { icon: FiMail, label: t('contact.email'), value: 'info@arkaan.com' },
-    { icon: FiMapPin, label: t('contact.location'), value: t('contact.locationText') },
+    { icon: FiPhone, label: t('contact.phone'), value: phone, dir: 'ltr' },
+    { icon: FiMail, label: t('contact.email'), value: email2 },
+    { icon: FiMapPin, label: t('contact.location'), value: settings.storeAddress || t('contact.locationText') },
   ];
+
+  const socialLinks = [
+    { key: 'instagram', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
+    { key: 'whatsapp', icon: FaWhatsapp, label: 'WhatsApp', bg: 'bg-green-500' },
+    { key: 'facebook', icon: FaFacebookF, label: 'Facebook', bg: 'bg-blue-600' },
+    { key: 'tiktok', icon: FaTiktok, label: 'TikTok', bg: 'bg-black' },
+    { key: 'linkedin', icon: FaLinkedinIn, label: 'LinkedIn', bg: 'bg-sky-700' },
+    { key: 'twitter', icon: FaXTwitter, label: 'X', bg: 'bg-black' },
+    { key: 'pinterest', icon: FaPinterestP, label: 'Pinterest', bg: 'bg-red-600' },
+  ].filter((s) => settings[s.key]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -73,26 +92,26 @@ const Contact = () => {
             ))}
 
             {/* Social Links */}
-            <div className="bg-surface rounded-xl p-4 border border-muted/10">
-              <p className="text-xs text-foreground/70 uppercase tracking-wider font-medium mb-3">
-                {language === 'ar' ? 'تابعنا' : 'Follow Us'}
-              </p>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                {[
-                  { href: 'https://www.instagram.com/arkaan.qa?igsh=b3l5Mmwyc3Bndm5j', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
-                  { href: 'https://wa.me/97459943131', icon: FaWhatsapp, label: 'WhatsApp', bg: 'bg-green-500' },
-                  { href: 'https://www.facebook.com/profile.php?id=61569754228280', icon: FaFacebookF, label: 'Facebook', bg: 'bg-blue-600' },
-                  { href: 'https://www.tiktok.com/@arkaan.qa', icon: FaTiktok, label: 'TikTok', bg: 'bg-black' },
-                  { href: 'https://www.linkedin.com/in/arkaan-store-a97810347/', icon: FaLinkedinIn, label: 'LinkedIn', bg: 'bg-sky-700' },
-                  { href: 'https://x.com/Arkaanqa', icon: FaXTwitter, label: 'X', bg: 'bg-black' },
-                  { href: 'https://www.pinterest.com/arkaanqa/', icon: FaPinterestP, label: 'Pinterest', bg: 'bg-red-600' },
-                ].map((s) => (
-                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className={`w-9 h-9 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
-                    <s.icon className="w-4 h-4" />
-                  </a>
-                ))}
+            {socialLinks.length > 0 && (
+              <div className="bg-surface rounded-xl p-4 border border-muted/10">
+                <p className="text-xs text-foreground/70 uppercase tracking-wider font-medium mb-3">
+                  {language === 'ar' ? 'تابعنا' : 'Follow Us'}
+                </p>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  {socialLinks.map((s) => {
+                    let href = settings[s.key];
+                    if (s.key === 'whatsapp' && href && !href.startsWith('http')) {
+                      href = `https://wa.me/${href.replace(/[^0-9]/g, '')}`;
+                    }
+                    return (
+                      <a key={s.label} href={href} target="_blank" rel="noopener noreferrer" className={`w-9 h-9 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
+                        <s.icon className="w-4 h-4" />
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Contact Form */}
@@ -104,63 +123,23 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
-                      {t('contact.name')}
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors"
-                    />
+                    <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.name')}</label>
+                    <input type="text" name="name" value={form.name} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
-                      {t('contact.emailAddress')}
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors"
-                    />
+                    <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.emailAddress')}</label>
+                    <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {t('contact.subject')}
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors"
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.subject')}</label>
+                  <input type="text" name="subject" value={form.subject} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {t('contact.message')}
-                  </label>
-                  <textarea
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    required
-                    rows={5}
-                    className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors resize-none"
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.message')}</label>
+                  <textarea name="message" value={form.message} onChange={handleChange} required rows={5} className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors resize-none" />
                 </div>
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-60"
-                >
+                <button type="submit" disabled={sending} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-60">
                   <FiSend className="w-4 h-4" />
                   {sending ? t('common.loading') : t('contact.send')}
                 </button>

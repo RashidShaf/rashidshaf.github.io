@@ -47,9 +47,9 @@ const Register = () => {
             <h1 className="text-xl font-semibold text-foreground">{t('auth.register')}</h1>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-8 border border-muted/10 shadow-sm">
+          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-5 sm:p-8 border border-muted/10 shadow-sm">
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.firstName')}</label>
                   <div className="relative">

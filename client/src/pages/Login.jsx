@@ -46,7 +46,7 @@ const Login = () => {
             <h1 className="text-xl font-semibold text-foreground">{t('auth.login')}</h1>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-8 border border-muted/10 shadow-sm">
+          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-5 sm:p-8 border border-muted/10 shadow-sm">
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>

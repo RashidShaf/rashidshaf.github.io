@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
+import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiChevronUp, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -18,6 +18,7 @@ export default function Inventory() {
   const [restocking, setRestocking] = useState(false);
   const [summary, setSummary] = useState(null);
   const [invSearch, setInvSearch] = useState('');
+  const [alertMinimized, setAlertMinimized] = useState(false);
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
@@ -101,42 +102,52 @@ export default function Inventory() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder="Search inventory..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder="Search inventory..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchInventory} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
-          <FiRefreshCw size={16} />
+        <button onClick={fetchInventory} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+          <FiRefreshCw size={14} /> Refresh
         </button>
       </div>
 
       {lowStock.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <FiAlertTriangle className="text-red-500" size={18} />
-            <h3 className="text-sm font-semibold text-red-700">
-              {t('inventory.lowStock')} ({lowStock.length})
-            </h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiAlertTriangle className="text-red-500" size={18} />
+              <h3 className="text-sm font-semibold text-red-700">
+                {t('inventory.lowStock')} ({lowStock.length})
+              </h3>
+            </div>
+            <button
+              onClick={() => setAlertMinimized(!alertMinimized)}
+              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              <FiChevronUp size={16} className={`transition-transform ${alertMinimized ? 'rotate-180' : ''}`} />
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {lowStock.slice(0, 6).map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-admin-text truncate">
-                    {item.title || item.book?.title}
-                  </p>
-                  <p className="text-xs text-admin-muted">
-                    {item.author || item.book?.author}
-                  </p>
+          {!alertMinimized && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3">
+              {lowStock.slice(0, 6).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-admin-text truncate">
+                      {item.title || item.book?.title}
+                    </p>
+                    <p className="text-xs text-admin-muted">
+                      {item.author || item.book?.author}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-red-600 ml-3">
+                    {item.stock ?? item.currentStock} left
+                  </span>
                 </div>
-                <span className="text-sm font-bold text-red-600 ml-3">
-                  {item.stock ?? item.currentStock} left
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -220,7 +231,7 @@ export default function Inventory() {
                                 value={restockQty}
                                 onChange={(e) => setRestockQty(e.target.value)}
                                 placeholder="0"
-                                className="w-20 px-3 py-2 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent text-center"
+                                className="w-20 px-3 py-2 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent text-center"
                                 autoFocus
                               />
                             </div>
@@ -229,7 +240,7 @@ export default function Inventory() {
                               value={restockNote}
                               onChange={(e) => setRestockNote(e.target.value)}
                               placeholder="Note (optional)"
-                              className="w-36 px-3 py-2 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+                              className="w-36 px-3 py-2 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
                             />
                             <button
                               onClick={() => handleRestock(bookId)}

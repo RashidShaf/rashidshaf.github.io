@@ -14,7 +14,11 @@
     "edit": "Edit",
     "back": "Back",
     "seeAll": "See All",
-    "language": "Language"
+    "language": "Language",
+    "confirm": "Are you sure?",
+    "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
+    "more": "More",
+    "results": "Results"
   },
   "nav": {
     "home": "Home",
@@ -37,6 +41,9 @@
     "heroSubtitle": "Browse our curated collection of books from classic literature to contemporary bestsellers",
     "featured": "Featured Books",
     "newArrivals": "New Arrivals",
+    "bestsellers": "Bestsellers",
+    "trending": "Everyone's Talking About",
+    "comingSoon": "Coming Soon",
     "categories": "Browse Categories",
     "testimonials": "What Our Readers Say",
     "newsletter": "Stay Updated",
@@ -44,8 +51,9 @@
     "subscribe": "Subscribe"
   },
   "books": {
-    "title": "Browse Books",
-    "search": "Search for books...",
+    "title": "Browse Products",
+    "browse": "Browse",
+    "search": "Search for products...",
     "filters": "Filters",
     "category": "Category",
     "priceRange": "Price Range",
@@ -61,7 +69,11 @@
     },
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
-    "addedToCart": "Added to cart!"
+    "addedToCart": "Added to cart!",
+    "lowStock": "Only {{count}} left in stock",
+    "langArabic": "Arabic",
+    "langEnglish": "English",
+    "section": "Collection"
   },
   "book": {
     "description": "Description",
@@ -73,7 +85,20 @@
     "verifiedPurchase": "Verified Purchase",
     "pages": "Pages",
     "publisher": "Publisher",
-    "isbn": "ISBN"
+    "isbn": "ISBN",
+    "published": "Published",
+    "addedToWishlistToast": "Added to wishlist",
+    "removedFromWishlistToast": "Removed from wishlist",
+    "noReviews": "No reviews yet. Be the first to review!",
+    "loginToReview": "Login to write a review",
+    "yourReview": "Your Review",
+    "editReview": "Edit Review",
+    "deleteReview": "Delete Review",
+    "reviewSubmitted": "Review submitted successfully",
+    "reviewUpdated": "Review updated successfully",
+    "reviewDeleted": "Review deleted",
+    "ratingRequired": "Please select a rating",
+    "loadMore": "Load More Reviews"
   },
   "cart": {
     "title": "Shopping Cart",
@@ -85,7 +110,9 @@
     "continueShopping": "Continue Shopping",
     "remove": "Remove",
     "quantity": "Quantity",
-    "freeShipping": "Free Shipping"
+    "freeShipping": "Free Shipping",
+    "clearCart": "Clear Cart",
+    "freeShippingThreshold": "Free shipping on orders over QAR {{amount}}"
   },
   "checkout": {
     "title": "Checkout",
@@ -98,7 +125,12 @@
     "placeOrder": "Place Order",
     "cod": "Cash on Delivery",
     "orderSummary": "Order Summary",
-    "codNote": "Pay when your order arrives"
+    "codNote": "Pay when your order arrives",
+    "paymentMethod": "Payment Method",
+    "orderPlaced": "Order Placed!",
+    "orderNumber": "Order number",
+    "orderSuccess": "Order placed successfully!",
+    "orderFailed": "Failed to place order"
   },
   "auth": {
     "login": "Login",
@@ -141,7 +173,16 @@
       "shipped": "Shipped",
       "delivered": "Delivered",
       "cancelled": "Cancelled"
-    }
+    },
+    "orderStatus": "Order Status",
+    "orderCancelled": "This order has been cancelled",
+    "orderInfo": "Order Info",
+    "orderHash": "Order #",
+    "payment": "Payment",
+    "paymentCOD": "COD",
+    "orderCancelledToast": "Order cancelled",
+    "cancelFailed": "Failed to cancel",
+    "cancelConfirm": "Are you sure you want to cancel this order? This action cannot be undone."
   },
   "footer": {
     "about": "Arkaan Bookstore is your trusted destination for books in Qatar. We offer a curated collection of Arabic and English titles spanning literature, science, children's books, and more.",

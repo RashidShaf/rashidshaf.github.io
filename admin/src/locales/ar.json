@@ -25,6 +25,7 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "books": "الكتب",
+    "products": "المنتجات",
     "orders": "الطلبات",
     "users": "المستخدمون",
     "categories": "التصنيفات",
@@ -46,9 +47,9 @@
     "inventoryAlerts": "تنبيهات المخزون"
   },
   "books": {
-    "title": "الكتب",
-    "addBook": "إضافة كتاب",
-    "editBook": "تعديل كتاب",
+    "title": "المنتجات",
+    "addBook": "إضافة منتج",
+    "editBook": "تعديل منتج",
     "bookTitle": "العنوان",
     "author": "المؤلف",
     "price": "السعر",

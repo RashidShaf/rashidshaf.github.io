@@ -4,6 +4,7 @@ import { FiArrowLeft, FiArrowRight, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiC
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import AccountLayout from '../components/common/AccountLayout';
+import ConfirmModal from '../components/common/ConfirmModal';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
@@ -25,6 +26,7 @@ const OrderDetail = () => {
   const isRTL = language === 'ar';
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
@@ -36,9 +38,11 @@ const OrderDetail = () => {
     try {
       await api.put(`/orders/${id}/cancel`);
       setOrder((o) => ({ ...o, status: 'CANCELLED', cancelledAt: new Date() }));
-      toast.success(isRTL ? 'تم إلغاء الطلب' : 'Order cancelled');
+      toast.success(t('orders.orderCancelledToast'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to cancel');
+      toast.error(err.response?.data?.message || t('orders.cancelFailed'));
+    } finally {
+      setShowCancelModal(false);
     }
   };
 
@@ -99,12 +103,12 @@ const OrderDetail = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <FiCreditCard size={12} />
-                  {isRTL ? 'الدفع عند الاستلام' : 'COD'}
+                  {t('checkout.cod')}
                 </span>
               </div>
             </div>
             {['CONFIRMED'].includes(order.status) && (
-              <button onClick={handleCancel} className="px-4 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors self-start">
+              <button onClick={() => setShowCancelModal(true)} className="px-4 py-2 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors self-start">
                 {t('orders.cancel')}
               </button>
             )}
@@ -115,7 +119,7 @@ const OrderDetail = () => {
         {!isCancelled ? (
           <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
             <h3 className="text-sm font-bold text-foreground/50 uppercase tracking-wider mb-6">
-              {isRTL ? 'حالة الطلب' : 'Order Status'}
+              {t('orders.orderStatus')}
             </h3>
             <div className="flex items-center justify-between relative">
               {/* Progress line */}
@@ -134,7 +138,7 @@ const OrderDetail = () => {
                   }`}>
                     {i <= currentStep ? <FiCheck size={16} /> : i + 1}
                   </div>
-                  <span className={`text-[11px] mt-2.5 font-semibold ${i <= currentStep ? 'text-accent' : 'text-foreground/30'}`}>
+                  <span className={`text-[11px] mt-2.5 font-semibold hidden sm:block ${i <= currentStep ? 'text-accent' : 'text-foreground/30'}`}>
                     {t(`orders.statuses.${step.toLowerCase()}`)}
                   </span>
                 </div>
@@ -148,7 +152,7 @@ const OrderDetail = () => {
             </div>
             <div>
               <p className="text-sm font-bold text-red-700">
-                {isRTL ? 'تم إلغاء هذا الطلب' : 'This order has been cancelled'}
+                {t('orders.orderCancelled')}
               </p>
               {order.cancelledAt && (
                 <p className="text-xs text-red-500 mt-0.5">
@@ -200,7 +204,7 @@ const OrderDetail = () => {
           {/* Sidebar — Summary + Shipping */}
           <div className="space-y-5">
             {/* Order Summary */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
               <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -219,7 +223,7 @@ const OrderDetail = () => {
             </div>
 
             {/* Shipping Info */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
               <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.shippingInfo')}</h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -244,26 +248,35 @@ const OrderDetail = () => {
             </div>
 
             {/* Order Info */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
-              <h2 className="text-base font-bold text-foreground mb-4">{isRTL ? 'معلومات الطلب' : 'Order Info'}</h2>
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
+              <h2 className="text-base font-bold text-foreground mb-4">{t('orders.orderInfo')}</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-foreground/50 flex items-center gap-1.5"><FiHash size={12} /> {isRTL ? 'رقم الطلب' : 'Order #'}</span>
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiHash size={12} /> {t('orders.orderHash')}</span>
                   <span className="font-semibold text-foreground">{order.orderNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCalendar size={12} /> {isRTL ? 'التاريخ' : 'Date'}</span>
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCalendar size={12} /> {t('orders.date')}</span>
                   <span className="text-foreground">{isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCreditCard size={12} /> {isRTL ? 'الدفع' : 'Payment'}</span>
-                  <span className="text-foreground">{isRTL ? 'عند الاستلام' : 'COD'}</span>
+                  <span className="text-foreground/50 flex items-center gap-1.5"><FiCreditCard size={12} /> {t('orders.payment')}</span>
+                  <span className="text-foreground">{t('orders.paymentCOD')}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </AccountLayout>
+
+      <ConfirmModal
+        open={showCancelModal}
+        title={t('orders.cancel')}
+        message={t('orders.cancelConfirm')}
+        confirmText={t('orders.cancel')}
+        onConfirm={handleCancel}
+        onCancel={() => setShowCancelModal(false)}
+      />
     </PageTransition>
   );
 };

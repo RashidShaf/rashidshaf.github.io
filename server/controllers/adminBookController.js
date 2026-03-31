@@ -5,7 +5,7 @@ const { generateSlug } = require('../utils/helpers');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search } = req.query;
+    const { search, category } = req.query;
 
     const where = {};
     if (search) {
@@ -18,10 +18,20 @@ exports.list = async (req, res, next) => {
       ];
     }
 
+    // Filter by parent category (includes all sub-categories)
+    if (category) {
+      const children = await prisma.category.findMany({
+        where: { parentId: category },
+        select: { id: true },
+      });
+      const categoryIds = [category, ...children.map((c) => c.id)];
+      where.categoryId = { in: categoryIds };
+    }
+
     const [books, total] = await Promise.all([
       prisma.book.findMany({
         where, orderBy: { createdAt: 'desc' }, skip, take: limit,
-        include: { category: { select: { id: true, name: true, nameAr: true } } },
+        include: { category: { select: { id: true, name: true, nameAr: true, parentId: true } } },
       }),
       prisma.book.count({ where }),
     ]);
@@ -59,8 +69,8 @@ exports.create = async (req, res, next) => {
     if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
     else if (!data.tags) data.tags = [];
     // Clean empty strings
-    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr'].forEach((f) => {
-      if (data[f] === '') data[f] = null;
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
+      if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
     ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
       data[f] = data[f] === 'true' || data[f] === true;
@@ -83,9 +93,9 @@ exports.update = async (req, res, next) => {
     data.pages = data.pages && data.pages !== '' ? parseInt(data.pages) : null;
     if (data.isbn === '') delete data.isbn;
     if (data.categoryId === '') delete data.categoryId;
-    if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
-    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr'].forEach((f) => {
-      if (data[f] === '') data[f] = null;
+    if (typeof data.tags === 'string') data.tags = data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
+      if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
     ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
       if (data[f] !== undefined) data[f] = data[f] === 'true' || data[f] === true;

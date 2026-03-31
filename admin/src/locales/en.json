@@ -25,6 +25,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "books": "Books",
+    "products": "Products",
     "orders": "Orders",
     "users": "Users",
     "categories": "Categories",
@@ -46,9 +47,9 @@
     "inventoryAlerts": "Inventory Alerts"
   },
   "books": {
-    "title": "Books",
-    "addBook": "Add Book",
-    "editBook": "Edit Book",
+    "title": "Products",
+    "addBook": "Add Product",
+    "editBook": "Edit Product",
     "bookTitle": "Title",
     "author": "Author",
     "price": "Price",

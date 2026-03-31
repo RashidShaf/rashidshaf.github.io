@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -8,7 +8,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 export default function Books() {
-  const t = useLanguageStore((s) => s.t);
+  const { t, language } = useLanguageStore();
+  const [searchParams] = useSearchParams();
   const [books, setBooks] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
@@ -17,6 +18,15 @@ export default function Books() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, featured: 0, lowStock: 0 });
   const [deleteId, setDeleteId] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
+
+  useEffect(() => {
+    api.get('/admin/categories').then((res) => {
+      const all = res.data.data || res.data;
+      setCategories(all.filter((c) => !c.parentId));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -36,6 +46,7 @@ export default function Books() {
     try {
       const params = new URLSearchParams({ page, limit });
       if (search) params.set('search', search);
+      if (selectedTab) params.set('category', selectedTab);
       const res = await api.get(`/admin/books?${params}`);
       setBooks(res.data.data);
       setPagination(res.data.pagination);
@@ -46,12 +57,19 @@ export default function Books() {
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit]);
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setPage(1); fetchBooks(); }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  const handleTabChange = (tabId) => {
+    setSelectedTab(tabId);
+    setPage(1);
+  };
+
+  const getTabName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -81,9 +99,9 @@ export default function Books() {
       {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { icon: FiBook, label: 'Total Books', value: stats.total, bg: 'bg-blue-600' },
-          { icon: FiStar, label: 'Active Books', value: pagination?.total || stats.total, bg: 'bg-amber-500' },
-          { icon: FiAlertTriangle, label: 'Low Stock', value: stats.lowStock, bg: 'bg-red-600' },
+          { icon: FiBook, label: t('dashboard.totalBooks'), value: stats.total, bg: 'bg-blue-600' },
+          { icon: FiStar, label: t('books.active'), value: pagination?.total || stats.total, bg: 'bg-amber-500' },
+          { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: stats.lowStock, bg: 'bg-red-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -95,17 +113,43 @@ export default function Books() {
         ))}
       </div>
 
-      {/* Search + Per-page + Add Book */}
+      {/* Category Tabs */}
+      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1">
+        <button
+          onClick={() => handleTabChange('')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            selectedTab === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+          }`}
+        >
+          {t('common.all')}
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleTabChange(cat.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              selectedTab === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+            }`}
+          >
+            {getTabName(cat)}
+          </button>
+        ))}
+      </div>
+
+      {/* Search + Refresh + Add Product */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchBooks} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
-          <FiRefreshCw size={16} />
+        <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+          <FiRefreshCw size={14} /> Refresh
         </button>
-        <Link to="/books/create" className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap">
+        <Link
+          to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
+          className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
+        >
           <FiPlus size={16} /> {t('books.addBook')}
         </Link>
       </div>
@@ -118,7 +162,7 @@ export default function Books() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted w-12">#</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.bookTitle')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.author')}</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.category')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.price')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.stock')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.active')}</th>
@@ -144,7 +188,9 @@ export default function Books() {
                         <span className="font-medium text-admin-text truncate max-w-[200px]">{book.title}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">{book.author}</td>
+                    <td className="px-4 py-3 text-admin-muted text-xs">
+                      {book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : '—'}
+                    </td>
                     <td className="px-4 py-3 font-medium text-admin-text">QAR {parseFloat(book.price).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`font-medium ${book.stock <= 5 ? 'text-red-500' : 'text-admin-text'}`}>{book.stock}</span>
@@ -178,7 +224,7 @@ export default function Books() {
             <select
               value={limit}
               onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-              className="px-2 py-1 bg-admin-bg border border-gray-300 rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
+              className="px-2 py-1 bg-admin-bg border border-admin-input-border rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -197,8 +243,8 @@ export default function Books() {
 
       <ConfirmModal
         open={!!deleteId}
-        title="Delete Book"
-        message="This will permanently delete this book. This action cannot be undone."
+        title="Delete Product"
+        message="This will permanently delete this product. This action cannot be undone."
         confirmText="Delete"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}

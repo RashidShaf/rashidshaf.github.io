@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiShoppingCart,
@@ -27,7 +27,13 @@ const Navbar = () => {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const [corners, setCorners] = useState([]);
+  const currentCorner = searchParams.get('corner') || (corners.length > 0 ? corners[0].slug : 'books');
+  const [cornerOpen, setCornerOpen] = useState(false);
+  const cornerRef = useRef(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileExpandedCats, setMobileExpandedCats] = useState({});
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -35,6 +41,7 @@ const Navbar = () => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const accountTimeout = useRef(null);
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
   const debounceRef = useRef(null);
 
   // Debounced search for autocomplete
@@ -81,7 +88,9 @@ const Navbar = () => {
   // Close suggestions on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+      const inDesktop = searchRef.current && searchRef.current.contains(e.target);
+      const inMobile = mobileSearchRef.current && mobileSearchRef.current.contains(e.target);
+      if (!inDesktop && !inMobile) {
         closeSuggestions();
       }
     };
@@ -101,10 +110,35 @@ const Navbar = () => {
     accountTimeout.current = setTimeout(() => setAccountOpen(false), 200);
   };
 
+  // Fetch corners
+  useEffect(() => {
+    api.get('/categories').then((res) => setCorners(res.data || [])).catch(() => {});
+  }, []);
+
+  // Close corner dropdown on click outside
+  useEffect(() => {
+    const handleClick = (e) => { if (cornerRef.current && !cornerRef.current.contains(e.target)) setCornerOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const selectedCorner = corners.find((c) => c.slug === currentCorner) || corners[0];
+  const selectedCornerName = selectedCorner ? (language === 'ar' && selectedCorner.nameAr ? selectedCorner.nameAr : selectedCorner.name) : '';
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [navigate]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
 
   const handleLogout = async () => {
@@ -139,8 +173,66 @@ const Navbar = () => {
 
             {/* Desktop Nav Links */}
             <div className="hidden lg:flex items-center gap-8">
-              {navLinks.map((link) => (
-                <NavLink key={link.to} to={link.to} className={linkClass} end={link.to === '/'}>
+              <NavLink to="/" className={linkClass} end>{t('nav.home')}</NavLink>
+
+              {/* Selected corner with mega menu on hover */}
+              <div
+                className="relative"
+                onMouseEnter={() => setCornerOpen(true)}
+                onMouseLeave={() => setCornerOpen(false)}
+              >
+                <NavLink to={`/books?category=${selectedCorner?.slug || 'books'}`} className={({ isActive }) => `relative px-1 py-2 text-sm font-medium tracking-wide transition-colors hover:text-accent flex items-center gap-1 ${isActive ? 'text-accent' : 'text-foreground'}`}>
+                  {selectedCornerName || t('nav.books')}
+                  <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${cornerOpen ? 'rotate-180' : ''}`} />
+                </NavLink>
+                {cornerOpen && (
+                  <div className="absolute top-full mt-0 left-1/2 -translate-x-1/2 bg-surface border border-muted/15 rounded-2xl shadow-2xl z-50 p-6 w-[min(90vw,720px)]">
+                    <div className="grid grid-cols-4 gap-x-6 gap-y-5">
+                      {corners.filter((c) => c.children && c.children.length > 0).map((corner) => (
+                        <div key={corner.id}>
+                          <Link
+                            to={`/books?category=${corner.slug}`}
+                            onClick={() => setCornerOpen(false)}
+                            className="text-sm font-semibold text-foreground hover:text-accent transition-colors"
+                          >
+                            {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
+                          </Link>
+                          <div className="mt-1.5 space-y-0.5">
+                            {corner.children.slice(0, 6).map((sub) => (
+                              <Link
+                                key={sub.id}
+                                to={`/books?category=${sub.slug}`}
+                                onClick={() => setCornerOpen(false)}
+                                className="block text-[13px] text-foreground/60 hover:text-accent transition-colors py-0.5"
+                              >
+                                {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {/* Corners without children */}
+                      {corners.filter((c) => !c.children || c.children.length === 0).map((corner) => (
+                        <div key={corner.id}>
+                          <Link
+                            to={`/books?category=${corner.slug}`}
+                            onClick={() => setCornerOpen(false)}
+                            className="text-sm font-semibold text-foreground hover:text-accent transition-colors"
+                          >
+                            {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {[
+                { to: '/about', label: t('nav.about') },
+                { to: '/contact', label: t('nav.contact') },
+              ].map((link) => (
+                <NavLink key={link.to} to={link.to} className={linkClass}>
                   {link.label}
                 </NavLink>
               ))}
@@ -167,7 +259,7 @@ const Navbar = () => {
                     onChange={(e) => handleSearchChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
                     placeholder={t('books.search')}
-                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-muted/20 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-muted/40 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
                   />
                   <FiSearch className="absolute start-3.5 w-4 h-4 text-muted/50 pointer-events-none" />
                 </form>
@@ -332,7 +424,7 @@ const Navbar = () => {
       </header>
 
       {/* Mobile Search Bar */}
-      <div className="md:hidden bg-background border-b border-muted/10 px-4 py-2">
+      <div ref={mobileSearchRef} className="md:hidden bg-background border-b border-muted/10 px-4 py-2 relative z-40">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -355,7 +447,7 @@ const Navbar = () => {
           />
         </form>
         {showSuggestions && (
-          <div className="mt-2 bg-surface border border-muted/15 rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute left-4 right-4 top-full mt-1 bg-surface border border-muted/15 rounded-xl shadow-2xl overflow-hidden z-50">
             {loadingSuggestions ? (
               <div className="px-4 py-4 text-center"><div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" /></div>
             ) : suggestions.length === 0 ? (
@@ -396,78 +488,59 @@ const Navbar = () => {
               className="fixed top-16 inset-x-0 bg-background border-b border-muted/20 shadow-2xl z-50 lg:hidden max-h-[calc(100vh-4rem)] overflow-y-auto"
             >
               <div className="px-4 py-6 space-y-1">
-                {/* Mobile Search */}
-                <div className="relative mb-4">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (searchQuery.trim()) {
-                        navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
-                        setSearchQuery('');
-                        closeSuggestions();
-                        setMobileOpen(false);
-                      }
-                    }}
-                  >
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                      placeholder={t('books.search')}
-                      className="w-full px-4 py-3 ps-11 bg-surface border border-muted/20 rounded-xl text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
-                    />
-                    <FiSearch className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50 pointer-events-none" />
-                  </form>
+                {/* Nav Links */}
+                <NavLink to="/" end onClick={() => setMobileOpen(false)} className={({ isActive }) => `block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface-alt'}`}>
+                  {t('nav.home')}
+                </NavLink>
 
-                  {/* Mobile Suggestions */}
-                  {showSuggestions && (
-                    <div className="mt-2 bg-surface border border-muted/15 rounded-xl shadow-lg overflow-hidden">
-                      {loadingSuggestions ? (
-                        <div className="px-4 py-4 text-center">
-                          <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
-                        </div>
-                      ) : suggestions.length === 0 ? (
-                        <div className="px-4 py-3 text-center text-sm text-muted">
-                          {t('common.noResults')}
-                        </div>
-                      ) : (
-                        <div className="py-1">
-                          {suggestions.map((item) => (
-                            <button
-                              key={item.id}
-                              onClick={() => handleSuggestionClick(item.slug)}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
+                {/* Categories — Books first, then others with expandable sub-categories */}
+                {corners.map((corner) => {
+                  const hasChildren = corner.children && corner.children.length > 0;
+                  const isExpanded = mobileExpandedCats[corner.id];
+                  const cornerName = language === 'ar' && corner.nameAr ? corner.nameAr : corner.name;
+                  return (
+                    <div key={corner.id}>
+                      <div className="flex items-center">
+                        <Link
+                          to={`/books?category=${corner.slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex-1 block px-4 py-3 rounded-lg text-base font-medium text-foreground hover:bg-surface-alt transition-colors"
+                        >
+                          {cornerName}
+                        </Link>
+                        {hasChildren && (
+                          <button
+                            onClick={() => setMobileExpandedCats((prev) => ({ ...prev, [corner.id]: !prev[corner.id] }))}
+                            className="p-3 text-muted hover:text-foreground transition-colors"
+                          >
+                            <FiChevronDown size={16} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        )}
+                      </div>
+                      {hasChildren && isExpanded && (
+                        <div className="ps-6 pb-1 space-y-0.5">
+                          {corner.children.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              to={`/books?category=${sub.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="block px-4 py-2 rounded-lg text-sm text-foreground/60 hover:text-accent hover:bg-surface-alt transition-colors"
                             >
-                              {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
-                                <p className="text-xs text-muted line-clamp-1">{item.author}</p>
-                              </div>
-                            </button>
+                              {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
+                            </Link>
                           ))}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  );
+                })}
 
-                {navLinks.map((link) => (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    end={link.to === '/'}
-                    onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) =>
-                      `block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                        isActive
-                          ? 'bg-accent/10 text-accent'
-                          : 'text-foreground hover:bg-surface-alt'
-                      }`
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                ))}
+                <NavLink to="/about" onClick={() => setMobileOpen(false)} className={({ isActive }) => `block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface-alt'}`}>
+                  {t('nav.about')}
+                </NavLink>
+                <NavLink to="/contact" onClick={() => setMobileOpen(false)} className={({ isActive }) => `block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface-alt'}`}>
+                  {t('nav.contact')}
+                </NavLink>
 
                 <div className="border-t border-muted/20 my-4" />
 

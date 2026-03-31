@@ -5,6 +5,7 @@ const auth = require('../../middleware/auth');
 const admin = require('../../middleware/admin');
 const { uploadCategoryImage } = require('../../config/multer');
 
+router.get('/', [auth, admin], adminCategoryController.list);
 router.post('/', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.create);
 router.put('/:id', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.update);
 router.delete('/:id', [auth, admin], adminCategoryController.remove);

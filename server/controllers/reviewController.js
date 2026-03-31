@@ -70,6 +70,18 @@ exports.create = async (req, res, next) => {
       },
     });
 
+    // Create admin notification for new review
+    try {
+      const { createNotification } = require('./notificationController');
+      const book = await prisma.book.findUnique({ where: { id: bookId }, select: { title: true } });
+      await createNotification({
+        type: 'NEW_REVIEW',
+        title: 'New Review',
+        message: `${review.user.firstName} rated "${book?.title}" ${rating}/5`,
+        metadata: { bookId, reviewId: review.id },
+      });
+    } catch {}
+
     res.status(201).json(review);
   } catch (error) {
     next(error);

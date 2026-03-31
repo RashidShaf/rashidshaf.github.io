@@ -7,6 +7,7 @@ import {
   FiBook,
   FiShoppingBag,
   FiUsers,
+  FiStar,
   FiLayers,
   FiPackage,
   FiBarChart2,
@@ -21,8 +22,9 @@ import Header from './Header';
 
 const navItems = [
   { path: '/', icon: FiHome, labelKey: 'nav.dashboard', end: true },
-  { path: '/books', icon: FiBook, labelKey: 'nav.books' },
+  { path: '/books', icon: FiBook, labelKey: 'nav.products' },
   { path: '/orders', icon: FiShoppingBag, labelKey: 'nav.orders' },
+  { path: '/reviews', icon: FiStar, labelKey: 'nav.reviews' },
   { path: '/users', icon: FiUsers, labelKey: 'nav.users' },
   { path: '/categories', icon: FiLayers, labelKey: 'nav.categories' },
   { path: '/inventory', icon: FiPackage, labelKey: 'nav.inventory' },

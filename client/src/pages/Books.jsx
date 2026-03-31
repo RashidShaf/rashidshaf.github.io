@@ -14,6 +14,14 @@ const sortOptions = [
   { value: 'bestselling', labelKey: 'books.sortOptions.bestselling' },
 ];
 
+const sectionOptions = [
+  { value: '', labelKey: 'common.viewAll' },
+  { value: 'featured', labelKey: 'home.featured' },
+  { value: 'bestseller', labelKey: 'home.bestsellers' },
+  { value: 'new', labelKey: 'home.newArrivals' },
+  { value: 'trending', labelKey: 'home.trending' },
+];
+
 const Books = () => {
   const { t, language } = useLanguageStore();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,12 +31,20 @@ const Books = () => {
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sortOpen, setSortOpen] = useState(false);
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const [expandedCats, setExpandedCats] = useState({});
   const sortRef = useRef(null);
+  const sectionRef = useRef(null);
 
-  // Close sort dropdown on click outside
+  const toggleExpand = (catId) => {
+    setExpandedCats((prev) => ({ ...prev, [catId]: !prev[catId] }));
+  };
+
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClick = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
+      if (sectionRef.current && !sectionRef.current.contains(e.target)) setSectionOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -39,6 +55,7 @@ const Books = () => {
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || 'newest';
   const bookLang = searchParams.get('language') || '';
+  const section = searchParams.get('section') || '';
   const page = parseInt(searchParams.get('page') || '1');
 
   const updateParam = (key, value) => {
@@ -50,7 +67,22 @@ const Books = () => {
   };
 
   useEffect(() => {
-    api.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
+    api.get('/categories').then((res) => {
+      const cats = res.data;
+      setCategories(cats);
+      // Auto-expand the category matching the URL param
+      if (category) {
+        const parent = cats.find((c) => c.slug === category);
+        if (parent) {
+          setExpandedCats((prev) => ({ ...prev, [parent.id]: true }));
+        } else {
+          const parentOfChild = cats.find((c) => c.children?.some((s) => s.slug === category));
+          if (parentOfChild) {
+            setExpandedCats((prev) => ({ ...prev, [parentOfChild.id]: true }));
+          }
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -63,6 +95,7 @@ const Books = () => {
         if (search) params.set('search', search);
         if (category) params.set('category', category);
         if (bookLang) params.set('language', bookLang);
+        if (section) params.set('section', section);
         if (sort) params.set('sort', sort);
 
         const res = await api.get(`/books?${params}`);
@@ -75,74 +108,42 @@ const Books = () => {
       }
     };
     fetchBooks();
-  }, [search, category, sort, bookLang, page]);
+  }, [search, category, sort, bookLang, section, page]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
-  const hasActiveFilters = category || bookLang;
+  const hasActiveFilters = category || bookLang || section;
   const totalBooks = pagination?.total || books.length;
+
+  // Dynamic page title based on selected category
+  const getPageTitle = () => {
+    if (!category) return t('books.title');
+    for (const cat of categories) {
+      if (cat.slug === category) return `${t('books.browse')} ${getName(cat)}`;
+      if (cat.children) {
+        const sub = cat.children.find((s) => s.slug === category);
+        if (sub) return `${t('books.browse')} ${getName(sub)}`;
+      }
+    }
+    // Fallback: capitalize the slug while categories are loading
+    if (category) return `${t('books.browse')} ${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`;
+    return t('books.title');
+  };
 
   return (
     <PageTransition>
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">
-              {t('books.title')}
-            </h1>
-            <p className="text-sm text-foreground/50 mt-0.5">
-              {totalBooks} {t('nav.books').toLowerCase()}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="relative" ref={sortRef}>
-              <button
-                onClick={() => setSortOpen(!sortOpen)}
-                className="flex items-center gap-2 bg-surface border border-muted/15 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
-              >
-                {t(sortOptions.find((o) => o.value === sort)?.labelKey || sortOptions[0].labelKey)}
-                <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {sortOpen && (
-                <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
-                  {sortOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => { updateParam('sort', opt.value); setSortOpen(false); }}
-                      className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
-                        sort === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
-                      }`}
-                    >
-                      {t(opt.labelKey)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className={`lg:hidden flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                hasActiveFilters ? 'border-accent text-accent bg-accent/5' : 'border-muted/15 text-foreground'
-              }`}
-            >
-              <FiFilter size={16} />
-              {t('books.filters')}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex gap-8">
+        <div className="flex gap-4 lg:gap-8">
           {/* Sidebar Filters */}
+          {/* Mobile filter backdrop */}
+          {filtersOpen && (
+            <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setFiltersOpen(false)} />
+          )}
+
           <aside className={`
-            ${filtersOpen ? 'fixed inset-0 z-50 bg-black/40 lg:static lg:bg-transparent' : 'hidden lg:block'}
-            lg:w-52 flex-shrink-0
+            ${filtersOpen ? 'fixed right-0 rtl:right-auto rtl:left-0 top-0 bottom-0 z-50 w-[min(80vw,288px)] bg-background p-5 shadow-2xl overflow-y-auto' : 'hidden'}
+            lg:block lg:static lg:w-52 lg:p-0 lg:shadow-none lg:bg-transparent flex-shrink-0
           `}>
-            <div className={`
-              ${filtersOpen ? 'absolute right-0 rtl:right-auto rtl:left-0 top-0 h-full w-[min(80vw,288px)] bg-background p-5 shadow-2xl overflow-y-auto' : ''}
-              lg:static lg:p-0 lg:shadow-none lg:w-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto
-            `}
+            <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pb-8"
               style={{ scrollbarWidth: 'thin' }}
             >
               {filtersOpen && (
@@ -160,26 +161,46 @@ const Books = () => {
                   {t('books.category')}
                 </label>
                 <div className="space-y-0.5">
-                  <button
-                    onClick={() => updateParam('category', '')}
-                    className={`w-full text-start py-1.5 text-sm transition-colors ${
-                      !category ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                    }`}
-                  >
-                    {t('common.viewAll')}
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => updateParam('category', cat.slug)}
-                      className={`w-full text-start py-1.5 text-sm transition-colors ${
-                        category === cat.slug ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                      }`}
-                    >
-                      {getName(cat)}
-                      <span className="text-foreground/30 ms-1">({cat._count?.books || 0})</span>
-                    </button>
-                  ))}
+                  {categories.map((cat) => {
+                    const hasChildren = cat.children && cat.children.length > 0;
+                    const isSelected = category === cat.slug;
+                    const childSelected = cat.children?.some((s) => s.slug === category);
+                    const isExpanded = expandedCats[cat.id] || isSelected || childSelected;
+                    return (
+                      <div key={cat.id}>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => { updateParam('category', cat.slug); if (hasChildren) setExpandedCats((prev) => ({ ...prev, [cat.id]: true })); }}
+                            className={`flex-1 text-start py-1.5 text-sm font-medium transition-colors ${
+                              isSelected ? 'text-accent' : 'text-foreground hover:text-accent'
+                            }`}
+                          >
+                            {getName(cat)}
+                          </button>
+                          {hasChildren && (
+                            <button onClick={() => toggleExpand(cat.id)} className="p-1 text-muted hover:text-foreground transition-colors">
+                              <FiChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                          )}
+                        </div>
+                        {hasChildren && isExpanded && (
+                          <div className="ps-3 border-s border-muted/15 ms-2 space-y-0.5 mb-1">
+                            {cat.children.map((sub) => (
+                              <button
+                                key={sub.id}
+                                onClick={() => updateParam('category', sub.slug)}
+                                className={`w-full text-start py-1 text-sm transition-colors ${
+                                  category === sub.slug ? 'text-accent font-medium' : 'text-foreground/60 hover:text-accent'
+                                }`}
+                              >
+                                {getName(sub)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -218,13 +239,86 @@ const Books = () => {
               )}
             </div>
 
-            {filtersOpen && (
-              <div className="absolute inset-0 lg:hidden" onClick={() => setFiltersOpen(false)} />
-            )}
           </aside>
 
           {/* Books Grid */}
           <div className="flex-1 min-w-0">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+              <div>
+                <h1 className="text-2xl font-display font-bold text-foreground">
+                  {getPageTitle()}
+                </h1>
+                <p className="text-sm text-foreground/50 mt-0.5">
+                  {totalBooks} {t('common.results').toLowerCase()}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                {/* Collection filter */}
+                <div className="relative" ref={sectionRef}>
+                  <button
+                    onClick={() => { setSectionOpen(!sectionOpen); setSortOpen(false); }}
+                    className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    {t(sectionOptions.find((o) => o.value === section)?.labelKey || 'books.section')}
+                    <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted transition-transform ${sectionOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {sectionOpen && (
+                    <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                      {sectionOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { updateParam('section', opt.value); setSectionOpen(false); }}
+                          className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
+                            section === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                          }`}
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sort */}
+                <div className="relative" ref={sortRef}>
+                  <button
+                    onClick={() => { setSortOpen(!sortOpen); setSectionOpen(false); }}
+                    className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    {t(sortOptions.find((o) => o.value === sort)?.labelKey || sortOptions[0].labelKey)}
+                    <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {sortOpen && (
+                    <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                      {sortOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { updateParam('sort', opt.value); setSortOpen(false); }}
+                          className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
+                            sort === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                          }`}
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                  className={`lg:hidden flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                    hasActiveFilters ? 'border-accent text-accent bg-accent/5' : 'border-muted/15 text-foreground'
+                  }`}
+                >
+                  <FiFilter size={16} />
+                  {t('books.filters')}
+                </button>
+              </div>
+            </div>
+
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {[...Array(8)].map((_, i) => (

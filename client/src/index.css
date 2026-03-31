@@ -96,3 +96,10 @@
     scrollbar-color: var(--color-muted) var(--color-surface-alt);
   }
 }
+
+/* Hide toasts on mobile */
+@media (max-width: 639px) {
+  .Toastify__toast-container {
+    display: none !important;
+  }
+}

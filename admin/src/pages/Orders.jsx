@@ -106,18 +106,18 @@ export default function Orders() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchOrders} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
-          <FiRefreshCw size={16} />
+        <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+          <FiRefreshCw size={14} /> Refresh
         </button>
         <div className="relative">
           <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <select
             value={statusFilter}
             onChange={handleStatusChange}
-            className="pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
+            className="pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -136,6 +136,7 @@ export default function Orders() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.orderNumber')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.customer')}</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('nav.products')}</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Items</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
@@ -146,14 +147,14 @@ export default function Orders() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6} className="px-4 py-4">
+                    <td colSpan={7} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={7} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -170,8 +171,12 @@ export default function Orders() {
                     <td className="px-4 py-3 text-admin-muted">
                       {order.user?.firstName} {order.user?.lastName}
                     </td>
+                    <td className="px-4 py-3 text-admin-muted text-xs">
+                      {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
+                      {order.items?.length > 2 && ` +${order.items.length - 2}`}
+                    </td>
                     <td className="px-4 py-3 text-admin-muted">
-                      {order.items?.length || order.itemCount || 0}
+                      {order.items?.reduce((sum, i) => sum + i.quantity, 0) || 0}
                     </td>
                     <td className="px-4 py-3 font-medium text-admin-text">
                       QAR {parseFloat(order.total || 0).toFixed(2)}

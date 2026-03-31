@@ -18,14 +18,18 @@ const useLanguageStore = create(
         set({ language: lang, isRTL });
       },
 
-      t: (key) => {
+      t: (key, params) => {
         const { language } = get();
         const keys = key.split('.');
         let value = translations[language];
         for (const k of keys) {
           value = value?.[k];
         }
-        return value || key;
+        if (!value) return key;
+        if (params && typeof value === 'string') {
+          return value.replace(/\{\{(\w+)\}\}/g, (_, k) => params[k] ?? '');
+        }
+        return value;
       },
 
       initLanguage: () => {

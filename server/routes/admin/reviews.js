@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const controller = require('../../controllers/adminReviewController');
 const auth = require('../../middleware/auth');
 const admin = require('../../middleware/admin');
 
-// TODO: Implement admin review routes
-
-// GET / - List all reviews (admin)
-router.get('/', [auth, admin], (req, res) => {
-  res.json({ message: 'TODO' });
-});
+router.get('/', [auth, admin], controller.list);
+router.put('/:id/visibility', [auth, admin], controller.toggleVisibility);
+router.delete('/:id', [auth, admin], controller.remove);
 
 module.exports = router;

@@ -28,8 +28,12 @@ import NotFound from './pages/NotFound';
 const AnimatedRoutes = () => {
   const location = useLocation();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname, location.search]);
+
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <Routes location={location} key={location.pathname}>
         <Route element={<MainLayout />}>
           <Route index element={<Home />} />

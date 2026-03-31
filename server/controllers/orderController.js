@@ -31,11 +31,20 @@ exports.create = async (req, res, next) => {
       validItems.push({ book, quantity: item.quantity });
     }
 
+    // Read shipping settings from DB
+    const shippingSettings = await prisma.setting.findMany({
+      where: { key: { in: ['shippingThreshold', 'shippingCost'] } },
+    });
+    const settingsMap = {};
+    shippingSettings.forEach((s) => { settingsMap[s.key] = s.value; });
+    const freeShippingThreshold = parseFloat(settingsMap.shippingThreshold) || 100;
+    const flatShippingCost = parseFloat(settingsMap.shippingCost) || 15;
+
     // Calculate totals
     const subtotal = validItems.reduce(
       (sum, item) => sum + parseFloat(item.book.price) * item.quantity, 0
     );
-    const shippingCost = subtotal >= 100 ? 0 : 15;
+    const shippingCost = subtotal >= freeShippingThreshold ? 0 : flatShippingCost;
     const total = subtotal + shippingCost;
 
     // Generate order number
@@ -101,6 +110,17 @@ exports.create = async (req, res, next) => {
 
       return newOrder;
     });
+
+    // Create admin notification for new order
+    try {
+      const { createNotification } = require('./notificationController');
+      await createNotification({
+        type: 'NEW_ORDER',
+        title: 'New Order Received',
+        message: `Order ${order.orderNumber} placed for QAR ${parseFloat(order.total).toFixed(2)}`,
+        metadata: { orderId: order.id, orderNumber: order.orderNumber },
+      });
+    } catch {}
 
     res.status(201).json({ message: 'Order placed successfully.', order });
   } catch (error) {

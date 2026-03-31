@@ -14,8 +14,11 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Users from './pages/Users';
 import Categories from './pages/Categories';
+import CategoryCreate from './pages/CategoryCreate';
+import CategoryEdit from './pages/CategoryEdit';
 import Inventory from './pages/Inventory';
 import Reports from './pages/Reports';
+import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 
 const AdminRoute = ({ children }) => {
@@ -43,8 +46,11 @@ function App() {
           <Route path="books/:id/edit" element={<BookEdit />} />
           <Route path="orders" element={<Orders />} />
           <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="reviews" element={<Reviews />} />
           <Route path="users" element={<Users />} />
           <Route path="categories" element={<Categories />} />
+          <Route path="categories/create" element={<CategoryCreate />} />
+          <Route path="categories/:id/edit" element={<CategoryEdit />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />

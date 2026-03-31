@@ -119,6 +119,12 @@ model Book {
   weight         Decimal?   @db.Decimal(6, 2)
   dimensions     String?
 
+  // General product fields
+  brand          String?
+  color          String?
+  material       String?
+  ageRange       String?    @map("age_range")
+
   // Inventory
   stock             Int    @default(0)
   lowStockThreshold Int    @default(5) @map("low_stock_threshold")
@@ -311,4 +317,26 @@ model InventoryLog {
   @@index([bookId])
   @@index([action])
   @@map("inventory_logs")
+}
+
+// ==================== SETTINGS ====================
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String @db.Text
+  @@map("settings")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // 'NEW_ORDER', 'LOW_STOCK', 'NEW_REVIEW'
+  title     String
+  message   String
+  metadata  String?  @db.Text // JSON string for extra data
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("notifications")
 }

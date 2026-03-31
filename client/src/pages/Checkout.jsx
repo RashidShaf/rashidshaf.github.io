@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
@@ -26,9 +26,20 @@ const Checkout = () => {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [shippingConfig, setShippingConfig] = useState({ threshold: 100, cost: 15 });
+
+  useEffect(() => {
+    api.get('/settings/public').then((res) => {
+      const data = res.data;
+      setShippingConfig({
+        threshold: parseFloat(data.shippingThreshold) || 100,
+        cost: parseFloat(data.shippingCost) || 15,
+      });
+    }).catch(() => {});
+  }, []);
 
   const total = getTotal();
-  const shipping = total >= 100 ? 0 : 15;
+  const shipping = total >= shippingConfig.threshold ? 0 : shippingConfig.cost;
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
 
@@ -47,9 +58,10 @@ const Checkout = () => {
       });
       setSuccess(res.data.order);
       clearCart();
-      toast.success(language === 'ar' ? 'تم تقديم الطلب بنجاح!' : 'Order placed successfully!');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      toast.success(t('checkout.orderSuccess'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to place order');
+      toast.error(err.response?.data?.message || t('checkout.orderFailed'));
     } finally {
       setLoading(false);
     }
@@ -68,18 +80,18 @@ const Checkout = () => {
             <FiCheck className="w-12 h-12 text-emerald-600" />
           </motion.div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-3">
-            {language === 'ar' ? 'تم تقديم طلبك!' : 'Order Placed!'}
+            {t('checkout.orderPlaced')}
           </h1>
           <p className="text-foreground/60 mb-1">
-            {language === 'ar' ? 'رقم الطلب' : 'Order number'}
+            {t('checkout.orderNumber')}
           </p>
           <p className="text-xl font-bold text-accent mb-2">{success.orderNumber}</p>
           <p className="text-sm text-foreground/50 mb-10">{t('checkout.codNote')}</p>
-          <div className="flex justify-center gap-4">
-            <Link to="/orders" className="px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none mx-auto">
+            <Link to="/orders" className="text-center px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors text-sm sm:text-base">
               {t('orders.track')}
             </Link>
-            <Link to="/books" className="px-8 py-3 border border-muted/20 text-foreground font-semibold rounded-xl hover:border-accent hover:text-accent transition-colors">
+            <Link to="/books" className="text-center px-8 py-3 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary hover:text-white transition-colors text-sm sm:text-base">
               {t('cart.continueShopping')}
             </Link>
           </div>
@@ -102,7 +114,7 @@ const Checkout = () => {
             {/* Left — Form */}
             <div className="lg:col-span-2 space-y-6">
               {/* Shipping */}
-              <div className="bg-surface rounded-2xl border border-muted/10 p-6 sm:p-8">
+              <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-8">
                 <h2 className="text-lg font-bold text-foreground mb-6">{t('checkout.shippingInfo')}</h2>
                 <div className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -140,8 +152,8 @@ const Checkout = () => {
               </div>
 
               {/* Payment */}
-              <div className="bg-surface rounded-2xl border border-muted/10 p-6 sm:p-8">
-                <h2 className="text-lg font-bold text-foreground mb-4">{language === 'ar' ? 'طريقة الدفع' : 'Payment Method'}</h2>
+              <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-8">
+                <h2 className="text-lg font-bold text-foreground mb-4">{t('checkout.paymentMethod')}</h2>
                 <div className="flex items-center gap-4 p-4 bg-accent/5 border border-accent/20 rounded-xl">
                   <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-white font-bold text-xs">
                     COD
@@ -156,7 +168,7 @@ const Checkout = () => {
 
             {/* Right — Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-surface rounded-2xl border border-muted/10 p-6 sticky top-6">
+              <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-6 sticky top-6">
                 <h2 className="text-lg font-bold text-foreground mb-5">{t('checkout.orderSummary')}</h2>
 
                 <div className="space-y-3 mb-5">
@@ -205,7 +217,7 @@ const Checkout = () => {
 
                 {shipping > 0 && (
                   <p className="text-xs text-foreground/40 text-center mt-3">
-                    {language === 'ar' ? 'شحن مجاني للطلبات فوق 100 ر.ق' : 'Free shipping on orders over QAR 100'}
+                    {t('cart.freeShippingThreshold', { amount: shippingConfig.threshold })}
                   </p>
                 )}
               </div>

@@ -14,7 +14,7 @@ const LanguageSwitcher = () => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={toggle}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-muted/30 text-foreground hover:border-accent hover:text-accent transition-colors text-sm font-medium"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-muted/15 text-foreground hover:border-accent hover:text-accent transition-colors text-sm font-medium"
       aria-label="Switch language"
     >
       <FiGlobe className="w-4 h-4" />

@@ -14,7 +14,11 @@
     "edit": "تعديل",
     "back": "رجوع",
     "seeAll": "عرض الكل",
-    "language": "اللغة"
+    "language": "اللغة",
+    "confirm": "هل أنت متأكد؟",
+    "confirmDelete": "هل أنت متأكد من الحذف؟ لا يمكن التراجع عن هذا الإجراء.",
+    "more": "المزيد",
+    "results": "نتائج"
   },
   "nav": {
     "home": "الرئيسية",
@@ -37,6 +41,9 @@
     "heroSubtitle": "تصفح مجموعتنا المختارة من الكتب من الأدب الكلاسيكي إلى الكتب الأكثر مبيعاً",
     "featured": "كتب مميزة",
     "newArrivals": "وصل حديثاً",
+    "bestsellers": "الأكثر مبيعاً",
+    "trending": "الجميع يتحدث عنها",
+    "comingSoon": "قريباً",
     "categories": "تصفح التصنيفات",
     "testimonials": "ماذا يقول قراؤنا",
     "newsletter": "ابقَ على اطلاع",
@@ -44,8 +51,9 @@
     "subscribe": "اشترك"
   },
   "books": {
-    "title": "تصفح الكتب",
-    "search": "ابحث عن كتب...",
+    "title": "تصفح المنتجات",
+    "browse": "تصفح",
+    "search": "ابحث عن منتجات...",
     "filters": "التصفية",
     "category": "التصنيف",
     "priceRange": "نطاق السعر",
@@ -61,7 +69,11 @@
     },
     "inStock": "متوفر",
     "outOfStock": "غير متوفر",
-    "addedToCart": "تمت الإضافة إلى السلة!"
+    "addedToCart": "تمت الإضافة إلى السلة!",
+    "lowStock": "باقي {{count}} فقط في المخزون",
+    "langArabic": "عربي",
+    "langEnglish": "إنجليزي",
+    "section": "المجموعة"
   },
   "book": {
     "description": "الوصف",
@@ -73,7 +85,20 @@
     "verifiedPurchase": "عملية شراء موثقة",
     "pages": "الصفحات",
     "publisher": "الناشر",
-    "isbn": "الرقم المعياري"
+    "isbn": "الرقم المعياري",
+    "noReviews": "لا توجد مراجعات بعد. كن أول من يراجع!",
+    "loginToReview": "سجل دخولك لكتابة مراجعة",
+    "yourReview": "مراجعتك",
+    "editReview": "تعديل المراجعة",
+    "deleteReview": "حذف المراجعة",
+    "reviewSubmitted": "تم إرسال المراجعة بنجاح",
+    "reviewUpdated": "تم تحديث المراجعة بنجاح",
+    "reviewDeleted": "تم حذف المراجعة",
+    "ratingRequired": "يرجى اختيار تقييم",
+    "loadMore": "عرض المزيد من المراجعات",
+    "published": "تاريخ النشر",
+    "addedToWishlistToast": "تمت الإضافة إلى المفضلة",
+    "removedFromWishlistToast": "تمت الإزالة من المفضلة"
   },
   "cart": {
     "title": "سلة التسوق",
@@ -85,7 +110,9 @@
     "continueShopping": "متابعة التسوق",
     "remove": "إزالة",
     "quantity": "الكمية",
-    "freeShipping": "شحن مجاني"
+    "freeShipping": "شحن مجاني",
+    "clearCart": "مسح السلة",
+    "freeShippingThreshold": "شحن مجاني للطلبات فوق {{amount}} ر.ق"
   },
   "checkout": {
     "title": "إتمام الطلب",
@@ -98,7 +125,12 @@
     "placeOrder": "تأكيد الطلب",
     "cod": "الدفع عند الاستلام",
     "orderSummary": "ملخص الطلب",
-    "codNote": "ادفع عند وصول طلبك"
+    "codNote": "ادفع عند وصول طلبك",
+    "paymentMethod": "طريقة الدفع",
+    "orderPlaced": "تم تقديم طلبك!",
+    "orderNumber": "رقم الطلب",
+    "orderSuccess": "تم تقديم الطلب بنجاح!",
+    "orderFailed": "فشل تقديم الطلب"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -141,7 +173,16 @@
       "shipped": "تم الشحن",
       "delivered": "تم التوصيل",
       "cancelled": "ملغي"
-    }
+    },
+    "orderStatus": "حالة الطلب",
+    "orderCancelled": "تم إلغاء هذا الطلب",
+    "orderInfo": "معلومات الطلب",
+    "orderHash": "رقم الطلب",
+    "payment": "الدفع",
+    "paymentCOD": "عند الاستلام",
+    "orderCancelledToast": "تم إلغاء الطلب",
+    "cancelFailed": "فشل إلغاء الطلب",
+    "cancelConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء."
   },
   "footer": {
     "about": "مكتبة أركان هي وجهتك الموثوقة للكتب في قطر. نقدم مجموعة منتقاة من العناوين العربية والإنجليزية في الأدب والعلوم وكتب الأطفال والمزيد.",

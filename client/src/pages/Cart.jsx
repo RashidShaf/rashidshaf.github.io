@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
@@ -5,12 +6,25 @@ import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import { formatPrice } from '../utils/formatters';
+import api from '../utils/api';
 
 const Cart = () => {
   const { t, language } = useLanguageStore();
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useCartStore();
+  const [shippingConfig, setShippingConfig] = useState({ threshold: 100, cost: 15 });
+
+  useEffect(() => {
+    api.get('/settings/public').then((res) => {
+      const data = res.data;
+      setShippingConfig({
+        threshold: parseFloat(data.shippingThreshold) || 100,
+        cost: parseFloat(data.shippingCost) || 15,
+      });
+    }).catch(() => {});
+  }, []);
+
   const total = getTotal();
-  const shipping = total >= 100 ? 0 : 15;
+  const shipping = total >= shippingConfig.threshold ? 0 : shippingConfig.cost;
 
   if (items.length === 0) {
     return (
@@ -69,7 +83,7 @@ const Cart = () => {
                     </Link>
                     <p className="text-xs text-muted mt-0.5">{author}</p>
 
-                    <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                       {/* Quantity */}
                       <div className="flex items-center border border-muted/20 rounded-lg">
                         <button
@@ -113,14 +127,14 @@ const Cart = () => {
               </Link>
               <button onClick={clearCart} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
                 <FiTrash2 size={14} />
-                {language === 'ar' ? 'مسح السلة' : 'Clear Cart'}
+                {t('cart.clearCart')}
               </button>
             </div>
           </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-surface rounded-xl border border-muted/10 p-6 sticky top-6">
+            <div className="bg-surface rounded-xl border border-muted/10 p-4 sm:p-6 sticky top-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
 
               <div className="space-y-3 text-sm">
@@ -142,7 +156,7 @@ const Cart = () => {
 
               {shipping > 0 && (
                 <p className="text-xs text-muted mt-3">
-                  {language === 'ar' ? 'شحن مجاني للطلبات فوق 100 ر.ق' : 'Free shipping on orders over QAR 100'}
+                  {t('cart.freeShippingThreshold', { amount: shippingConfig.threshold })}
                 </p>
               )}
 

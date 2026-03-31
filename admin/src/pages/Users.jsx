@@ -87,11 +87,11 @@ export default function Users() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchUsers} className="p-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
-          <FiRefreshCw size={16} />
+        <button onClick={fetchUsers} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+          <FiRefreshCw size={14} /> Refresh
         </button>
       </div>
 

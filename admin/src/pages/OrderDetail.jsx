@@ -205,7 +205,7 @@ export default function OrderDetail() {
             <select
               value={newStatus}
               onChange={(e) => setNewStatus(e.target.value)}
-              className="w-full px-3 py-2.5 bg-admin-card border border-gray-300 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent mb-3"
+              className="w-full px-3 py-2.5 bg-admin-card border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent mb-3"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>{t(`orders.statuses.${s}`) || s}</option>

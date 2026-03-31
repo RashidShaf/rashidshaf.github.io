@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiBarChart2, FiDollarSign, FiShoppingBag, FiPackage } from 'react-icons/fi';
+import { FiBarChart2, FiDollarSign, FiShoppingBag, FiPackage, FiDownload } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -61,15 +61,39 @@ export default function Reports() {
         <div className="flex flex-wrap items-end gap-3 mb-6 p-4 bg-gray-50 rounded-xl">
           <div>
             <label className="block text-xs font-medium text-admin-muted mb-1.5">{t('reports.from')}</label>
-            <input type="date" value={salesFrom} onChange={(e) => setSalesFrom(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+            <input type="date" value={salesFrom} onChange={(e) => setSalesFrom(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
           </div>
           <div>
             <label className="block text-xs font-medium text-admin-muted mb-1.5">{t('reports.to')}</label>
-            <input type="date" value={salesTo} onChange={(e) => setSalesTo(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+            <input type="date" value={salesTo} onChange={(e) => setSalesTo(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
           </div>
           <button onClick={generateSalesReport} disabled={salesLoading} className="px-5 py-2.5 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
             {salesLoading ? t('common.loading') : t('reports.generate')}
           </button>
+          {salesReport && (salesReport.orders || []).length > 0 && (
+            <button
+              onClick={() => {
+                const params = [];
+                if (salesFrom) params.push(`from=${salesFrom}`);
+                if (salesTo) params.push(`to=${salesTo}`);
+                const url = `${import.meta.env.VITE_API_URL}/admin/reports/sales/export${params.length ? '?' + params.join('&') : ''}`;
+                const token = JSON.parse(localStorage.getItem('admin-auth-storage') || '{}')?.state?.accessToken;
+                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+                  .then((res) => res.blob())
+                  .then((blob) => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `sales-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                  })
+                  .catch(() => toast.error('Export failed'));
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 border border-admin-border text-admin-muted rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              <FiDownload size={14} /> {t('common.export')}
+            </button>
+          )}
         </div>
 
         {/* Orders Table */}
@@ -79,17 +103,24 @@ export default function Reports() {
               <thead className="bg-gray-50 border-b border-admin-border">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-admin-muted">Order #</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">Total</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.customer')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('nav.products')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
+                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
+                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
                 </tr>
               </thead>
               <tbody>
                 {(salesReport.orders || []).length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-admin-muted">{t('common.noResults')}</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-admin-muted">{t('common.noResults')}</td></tr>
                 ) : (salesReport.orders || []).map((order) => (
                   <tr key={order.id || order.orderNumber} className="border-b border-admin-border last:border-0">
                     <td className="px-4 py-3 font-medium text-admin-text">{order.orderNumber}</td>
+                    <td className="px-4 py-3 text-admin-muted">{order.user?.firstName} {order.user?.lastName}</td>
+                    <td className="px-4 py-3 text-admin-muted text-xs">
+                      {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
+                      {order.items?.length > 2 && ` +${order.items.length - 2}`}
+                    </td>
                     <td className="px-4 py-3 font-medium text-admin-text">QAR {parseFloat(order.total || 0).toFixed(2)}</td>
                     <td className="px-4 py-3"><span className="text-xs font-medium">{order.status}</span></td>
                     <td className="px-4 py-3 text-admin-muted text-xs">{new Date(order.createdAt).toLocaleDateString()}</td>

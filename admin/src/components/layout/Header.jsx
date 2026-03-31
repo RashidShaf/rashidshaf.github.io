@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FiMenu, FiBell, FiChevronDown } from 'react-icons/fi';
+import { FiMenu, FiBell, FiChevronDown, FiCheck } from 'react-icons/fi';
 import useAuthStore from '../../stores/useAuthStore';
 import useLanguageStore from '../../stores/useLanguageStore';
+import api from '../../utils/api';
 
 const pageTitles = {
   '/': 'nav.dashboard',
-  '/books': 'nav.books',
+  '/books': 'nav.products',
   '/books/create': 'books.addBook',
   '/orders': 'nav.orders',
+  '/reviews': 'nav.reviews',
   '/users': 'nav.users',
   '/categories': 'nav.categories',
   '/inventory': 'nav.inventory',
@@ -16,9 +18,28 @@ const pageTitles = {
   '/settings': 'nav.settings',
 };
 
+function timeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
 export default function Header({ onMenuClick }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -37,16 +58,77 @@ export default function Header({ onMenuClick }) {
     return t('nav.dashboard');
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Fetch unread count on mount
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get('/admin/notifications/unread-count');
+      setUnreadCount(res.data.count || 0);
+    } catch (err) {
+      // silently fail
+    }
+  };
+
+  const fetchNotifications = async () => {
+    setNotifLoading(true);
+    try {
+      const res = await api.get('/admin/notifications?limit=10');
+      setNotifications(res.data.data || res.data || []);
+    } catch (err) {
+      // silently fail
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const handleBellClick = () => {
+    const opening = !notifOpen;
+    setNotifOpen(opening);
+    setDropdownOpen(false);
+    if (opening) {
+      fetchNotifications();
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.put('/admin/notifications/read-all');
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      // silently fail
+    }
+  };
+
+  const handleMarkRead = async (notif) => {
+    if (notif.isRead) return;
+    try {
+      await api.put(`/admin/notifications/${notif.id}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      // silently fail
+    }
+  };
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
@@ -79,15 +161,77 @@ export default function Header({ onMenuClick }) {
           </button>
 
           {/* Notification Bell */}
-          <button className="relative p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
-            <FiBell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-admin-danger rounded-full" />
-          </button>
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={handleBellClick}
+              className="relative p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors"
+            >
+              <FiBell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-admin-danger text-white text-[10px] font-bold rounded-full leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-admin-border">
+                  <h3 className="text-sm font-bold text-admin-text">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="flex items-center gap-1 text-xs text-admin-accent hover:underline font-medium"
+                    >
+                      <FiCheck size={12} /> Mark all as read
+                    </button>
+                  )}
+                </div>
+
+                {/* Notification list */}
+                <div className="max-h-80 overflow-y-auto">
+                  {notifLoading ? (
+                    <div className="px-4 py-6 text-center text-sm text-admin-muted">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-sm text-admin-muted">No notifications</div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleMarkRead(notif)}
+                        className={`px-4 py-3 border-b border-admin-border cursor-pointer hover:bg-gray-50 transition-colors ${
+                          !notif.isRead ? 'bg-blue-50/50' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!notif.isRead && (
+                            <span className="w-2 h-2 mt-1.5 bg-admin-accent rounded-full flex-shrink-0" />
+                          )}
+                          <div className={`flex-1 ${notif.isRead ? 'ml-4' : ''}`}>
+                            <p className="text-sm font-medium text-admin-text leading-snug">
+                              {notif.title}
+                            </p>
+                            <p className="text-xs text-admin-muted mt-0.5 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <p className="text-[10px] text-admin-muted mt-1">
+                              {timeAgo(notif.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
+              onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false); }}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-admin-accent flex items-center justify-center text-white text-sm font-semibold">

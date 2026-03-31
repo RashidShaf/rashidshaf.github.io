@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowRight, FiArrowLeft, FiBookOpen } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
@@ -29,26 +29,36 @@ const HeroBanner = () => {
 
 const Home = () => {
   const { t, language } = useLanguageStore();
+  const [searchParams] = useSearchParams();
+  const corner = searchParams.get('corner') || 'books';
+
   const [featured, setFeatured] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [bestsellers, setBestsellers] = useState([]);
   const [trending, setTrending] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [cornerData, setCornerData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
+        const q = `?corner=${corner}`;
         const [catRes, featuredRes, newRes, bestRes, trendRes, soonRes] = await Promise.all([
           api.get('/categories').catch(() => ({ data: [] })),
-          api.get('/books/featured').catch(() => ({ data: [] })),
-          api.get('/books/new-arrivals').catch(() => ({ data: [] })),
-          api.get('/books/bestsellers').catch(() => ({ data: [] })),
-          api.get('/books/trending').catch(() => ({ data: [] })),
-          api.get('/books/coming-soon').catch(() => ({ data: [] })),
+          api.get(`/books/featured${q}`).catch(() => ({ data: [] })),
+          api.get(`/books/new-arrivals${q}`).catch(() => ({ data: [] })),
+          api.get(`/books/bestsellers${q}`).catch(() => ({ data: [] })),
+          api.get(`/books/trending${q}`).catch(() => ({ data: [] })),
+          api.get(`/books/coming-soon${q}`).catch(() => ({ data: [] })),
         ]);
-        setCategories(catRes.data);
+        const allCats = catRes.data;
+        setCategories(allCats);
+        // Find the selected corner and its children
+        const selectedCorner = allCats.find((c) => c.slug === corner);
+        setCornerData(selectedCorner);
         setFeatured(featuredRes.data);
         setNewArrivals(newRes.data);
         setBestsellers(bestRes.data);
@@ -61,7 +71,7 @@ const Home = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [corner]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
 
@@ -77,7 +87,7 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.featured')}
             </h2>
-            <Link to="/books" className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=featured`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -87,8 +97,8 @@ const Home = () => {
         </section>
       )}
 
-      {/* Categories */}
-      {categories.length > 0 && (
+      {/* Sub-categories of selected corner */}
+      {cornerData?.children && cornerData.children.length > 0 && (
         <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
@@ -96,7 +106,7 @@ const Home = () => {
             </h2>
           </div>
           <BookCarousel>
-            {categories.map((cat) => {
+            {cornerData.children.map((cat) => {
               const coverUrl = cat.image ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${cat.image}` : null;
               return (
                 <Link
@@ -118,7 +128,7 @@ const Home = () => {
                         {getName(cat)}
                       </h3>
                       <p className="text-[12px] text-white/70 mt-0.5">
-                        {cat._count?.books || 0} {t('nav.books').toLowerCase()}
+                        {cat._count?.books || 0} {t('common.results').toLowerCase()}
                       </p>
                     </div>
                   </div>
@@ -136,7 +146,7 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
               {t('home.newArrivals')}
             </h2>
-            <Link to="/books?sort=newest" className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=new`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -151,9 +161,9 @@ const Home = () => {
         <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
-              {language === 'ar' ? 'الأكثر مبيعاً' : 'Bestsellers'}
+              {t('home.bestsellers')}
             </h2>
-            <Link to="/books?sort=bestselling" className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=bestseller`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -168,7 +178,7 @@ const Home = () => {
         <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
-              {language === 'ar' ? 'الجميع يتحدث عنها' : "Everyone's Talking About"}
+              {t('home.trending')}
             </h2>
           </div>
           <BookCarousel>
@@ -181,7 +191,7 @@ const Home = () => {
       {!loading && comingSoon.length > 0 && (
         <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-8">
-            {language === 'ar' ? 'قريباً' : 'Coming Soon'}
+            {t('home.comingSoon')}
           </h2>
           <BookCarousel>
             {comingSoon.map((book) => <BookCard key={book.id} book={book} comingSoon />)}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUpload, FiX } from 'react-icons/fi';
@@ -10,13 +10,12 @@ const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
 export default function BookEdit() {
   const { id } = useParams();
-  const t = useLanguageStore((s) => s.t);
-  const isRTL = useLanguageStore((s) => s.isRTL);
+  const { t, language, isRTL } = useLanguageStore();
   const navigate = useNavigate();
   const fileRef = useRef(null);
   const imagesRef = useRef(null);
 
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
@@ -28,7 +27,9 @@ export default function BookEdit() {
     title: '', titleAr: '', author: '', authorAr: '', isbn: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
-    stock: '0', categoryId: '', tags: '', isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isActive: true,
+    stock: '0', parentCategoryId: '', categoryId: '', tags: '',
+    brand: '', material: '', color: '', dimensions: '', ageRange: '',
+    isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isActive: true,
   });
 
   useEffect(() => {
@@ -36,10 +37,27 @@ export default function BookEdit() {
       try {
         const [bookRes, catRes] = await Promise.all([
           api.get(`/admin/books/${id}`),
-          api.get('/categories'),
+          api.get('/admin/categories'),
         ]);
         const book = bookRes.data;
-        setCategories(catRes.data.data || catRes.data);
+        const cats = catRes.data.data || catRes.data;
+        setAllCategories(cats);
+
+        // Determine parent category
+        let parentCatId = '';
+        let subCatId = '';
+        if (book.categoryId) {
+          const bookCat = cats.find((c) => c.id === book.categoryId);
+          if (bookCat) {
+            if (bookCat.parentId) {
+              parentCatId = bookCat.parentId;
+              subCatId = bookCat.id;
+            } else {
+              parentCatId = bookCat.id;
+              subCatId = '';
+            }
+          }
+        }
 
         setForm({
           title: book.title || '',
@@ -56,8 +74,14 @@ export default function BookEdit() {
           language: book.language || 'en',
           pages: book.pages ? book.pages.toString() : '',
           stock: book.stock != null ? book.stock.toString() : '0',
-          categoryId: book.categoryId || '',
+          parentCategoryId: parentCatId,
+          categoryId: subCatId,
           tags: Array.isArray(book.tags) ? book.tags.join(', ') : '',
+          brand: book.brand || '',
+          material: book.material || '',
+          color: book.color || '',
+          dimensions: book.dimensions || '',
+          ageRange: book.ageRange || '',
           isFeatured: book.isFeatured || false,
           isBestseller: book.isBestseller || false,
           isNewArrival: book.isNewArrival || false,
@@ -66,14 +90,10 @@ export default function BookEdit() {
           isActive: book.isActive !== false,
         });
 
-        if (book.coverImage) {
-          setCoverPreview(`${API_BASE}/${book.coverImage}`);
-        }
-        if (book.images && book.images.length > 0) {
-          setExistingImages(book.images);
-        }
+        if (book.coverImage) setCoverPreview(`${API_BASE}/${book.coverImage}`);
+        if (book.images && book.images.length > 0) setExistingImages(book.images);
       } catch (err) {
-        toast.error('Failed to load book');
+        toast.error('Failed to load product');
         navigate('/books');
       } finally {
         setLoading(false);
@@ -81,6 +101,18 @@ export default function BookEdit() {
     };
     fetchData();
   }, [id]);
+
+  const parentCategories = useMemo(() => allCategories.filter((c) => !c.parentId), [allCategories]);
+  const subCategories = useMemo(() => {
+    if (!form.parentCategoryId) return [];
+    return allCategories.filter((c) => c.parentId === form.parentCategoryId);
+  }, [form.parentCategoryId, allCategories]);
+
+  const selectedParent = parentCategories.find((c) => c.id === form.parentCategoryId);
+  const cornerSlug = selectedParent?.slug?.toLowerCase() || '';
+  const isBooks = cornerSlug === 'books';
+
+  const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
   const totalImages = existingImages.length + newImageFiles.length;
 
@@ -110,9 +142,11 @@ export default function BookEdit() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name === 'isComingSoon' && checked) {
-      setForm({ ...form, isComingSoon: true, isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false });
+      setForm((prev) => ({ ...prev, isComingSoon: true, isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false }));
+    } else if (name === 'parentCategoryId') {
+      setForm((prev) => ({ ...prev, parentCategoryId: value, categoryId: '' }));
     } else {
-      setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+      setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
   };
 
@@ -125,16 +159,23 @@ export default function BookEdit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.author || !form.price) {
-      toast.error('Title, Author, and Price are required');
-      return;
-    }
+    if (!form.title) { toast.error('Title is required'); return; }
     setSaving(true);
     try {
       const payload = { ...form };
+      if (payload.categoryId) {
+        // keep sub-category
+      } else if (payload.parentCategoryId) {
+        payload.categoryId = payload.parentCategoryId;
+      }
+      delete payload.parentCategoryId;
+
       if (!payload.categoryId) delete payload.categoryId;
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
+      ['brand', 'material', 'color', 'dimensions', 'ageRange'].forEach((f) => {
+        if (!payload[f]) payload[f] = null;
+      });
 
       await api.put(`/admin/books/${id}`, payload);
 
@@ -154,16 +195,17 @@ export default function BookEdit() {
         });
       }
 
-      toast.success('Book updated');
-      navigate('/books');
+      toast.success('Product updated');
+      const tab = form.parentCategoryId || '';
+      navigate(`/books${tab ? `?tab=${tab}` : ''}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update book');
+      toast.error(err.response?.data?.message || 'Failed to update product');
     } finally {
       setSaving(false);
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent';
+  const inputClass = 'w-full px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent';
   const labelClass = 'block text-sm font-medium text-admin-text mb-1.5';
 
   if (loading) {
@@ -187,8 +229,9 @@ export default function BookEdit() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Product Details */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Book Details</h3>
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Product Details</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Title (English) *</label>
@@ -197,14 +240,6 @@ export default function BookEdit() {
                 <div>
                   <label className={labelClass}>Title (Arabic)</label>
                   <input name="titleAr" value={form.titleAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Author (English) *</label>
-                  <input name="author" value={form.author} onChange={handleChange} required className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Author (Arabic)</label>
-                  <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -219,8 +254,83 @@ export default function BookEdit() {
               </div>
             </div>
 
+            {/* Book-specific fields */}
+            {isBooks && (
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Book Details</h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Author (English)</label>
+                    <input name="author" value={form.author} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Author (Arabic)</label>
+                    <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>ISBN</label>
+                    <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Pages</label>
+                    <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Publisher (English)</label>
+                    <input name="publisher" value={form.publisher} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Publisher (Arabic)</label>
+                    <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Language</label>
+                  <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
+                    <option value="en">English</option>
+                    <option value="ar">Arabic</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Non-book fields */}
+            {!isBooks && form.parentCategoryId && (
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Product Specifications</h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Brand</label>
+                    <input name="brand" value={form.brand} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Material</label>
+                    <input name="material" value={form.material} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Color</label>
+                    <input name="color" value={form.color} onChange={handleChange} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Dimensions</label>
+                    <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
+                  </div>
+                  {(cornerSlug === 'toys' || cornerSlug === 'school-project') && (
+                    <div>
+                      <label className={labelClass}>Age Range</label>
+                      <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder="e.g. 3-6 years" className={inputClass} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing & Inventory */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Pricing & Inventory</h3>
+              {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">Coming Soon — pricing and stock fields are optional</p>}
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className={labelClass}>Price (QAR) *</label>
@@ -235,37 +345,11 @@ export default function BookEdit() {
                   <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} className={inputClass} />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div>
-                  <label className={labelClass}>ISBN</label>
-                  <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Pages</label>
-                  <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Language</label>
-                  <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
-                    <option value="en">English</option>
-                    <option value="ar">Arabic</option>
-                  </select>
-                </div>
-              </div>
             </div>
 
+            {/* Tags */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Publisher & Tags</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Publisher (English)</label>
-                  <input name="publisher" value={form.publisher} onChange={handleChange} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Publisher (Arabic)</label>
-                  <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                </div>
-              </div>
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Tags</h3>
               <div>
                 <label className={labelClass}>Tags (comma separated)</label>
                 <input name="tags" value={form.tags} onChange={handleChange} placeholder="fiction, bestseller, classic" className={inputClass} />
@@ -285,11 +369,7 @@ export default function BookEdit() {
                 {coverPreview ? (
                   <>
                     <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setCoverFile(null); setCoverPreview(null); }}
-                      className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80"
-                    >
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setCoverFile(null); setCoverPreview(null); }} className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
                       <FiX size={14} />
                     </button>
                   </>
@@ -325,11 +405,7 @@ export default function BookEdit() {
                   </div>
                 ))}
                 {totalImages < 3 && (
-                  <button
-                    type="button"
-                    onClick={() => imagesRef.current?.click()}
-                    className="aspect-square border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-admin-accent transition-colors cursor-pointer"
-                  >
+                  <button type="button" onClick={() => imagesRef.current?.click()} className="aspect-square border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-admin-accent transition-colors cursor-pointer">
                     <FiUpload className="w-5 h-5 text-admin-muted mb-1" />
                     <span className="text-[10px] text-admin-muted">Add</span>
                   </button>
@@ -339,19 +415,34 @@ export default function BookEdit() {
               <p className="text-[11px] text-admin-muted">Max 3 images</p>
             </div>
 
-            {/* Category & Options */}
+            {/* Category */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Options</h3>
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category</h3>
               <div>
-                <label className={labelClass}>Category</label>
-                <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClass}>
-                  <option value="">— Select —</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <label className={labelClass}>Corner</label>
+                <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
+                  <option value="">— Select Corner —</option>
+                  {parentCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{getName(cat)}</option>
                   ))}
                 </select>
               </div>
-              <p className="text-xs font-bold text-admin-text uppercase tracking-wider pt-2">Show in Sections</p>
+              {subCategories.length > 0 && (
+                <div>
+                  <label className={labelClass}>Sub-category</label>
+                  <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClass}>
+                    <option value="">— All {getName(selectedParent)} —</option>
+                    {subCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{getName(cat)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Section Flags */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Show in Sections</h3>
               {[
                 { name: 'isComingSoon', label: 'Coming Soon' },
                 { name: 'isFeatured', label: 'Featured' },
@@ -377,11 +468,7 @@ export default function BookEdit() {
 
             {/* Actions */}
             <div className="flex flex-col gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50"
-              >
+              <button type="submit" disabled={saving} className="w-full py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
                 {saving ? t('common.loading') : t('common.save')}
               </button>
               <Link to="/books" className="w-full py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">

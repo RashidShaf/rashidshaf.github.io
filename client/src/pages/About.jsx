@@ -79,8 +79,8 @@ const About = () => {
         <div className="grid sm:grid-cols-3 gap-6 mb-20">
           {whyUs.map((item, i) => (
             <div key={i} className="bg-surface rounded-2xl p-6 border border-muted/10 text-center">
-              <div className={`w-14 h-14 rounded-xl ${item.bg} flex items-center justify-center mx-auto mb-4`}>
-                <item.icon className="w-7 h-7 text-white" />
+              <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl ${item.bg} flex items-center justify-center mx-auto mb-4`}>
+                <item.icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
               <p className="text-sm text-foreground/60">{item.text}</p>

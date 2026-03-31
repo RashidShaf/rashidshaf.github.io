@@ -10,6 +10,9 @@ exports.list = async (req, res, next) => {
         children: {
           where: { isActive: true },
           orderBy: { displayOrder: 'asc' },
+          include: {
+            _count: { select: { books: { where: { isActive: true } } } },
+          },
         },
       },
     });

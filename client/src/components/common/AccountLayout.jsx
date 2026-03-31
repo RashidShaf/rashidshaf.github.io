@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiUser, FiPackage, FiHeart, FiCalendar, FiMail, FiLock } from 'react-icons/fi';
 import useLanguageStore from '../../stores/useLanguageStore';
@@ -7,6 +8,17 @@ const AccountLayout = ({ children }) => {
   const { t, language } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
   const { pathname } = useLocation();
+  const activeTabRef = useRef(null);
+  const tabsContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (activeTabRef.current && tabsContainerRef.current) {
+      const container = tabsContainerRef.current;
+      const tab = activeTabRef.current;
+      const scrollLeft = tab.offsetLeft - container.offsetLeft - (container.clientWidth / 2) + (tab.clientWidth / 2);
+      container.scrollTo({ left: scrollLeft, behavior: 'instant' });
+    }
+  }, [pathname]);
 
   const initials = `${(user?.firstName || 'U')[0]}${(user?.lastName || '')[0] || ''}`.toUpperCase();
   const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString(language === 'ar' ? 'ar-QA' : 'en-US', { year: 'numeric', month: 'long' }) : '';
@@ -21,13 +33,14 @@ const AccountLayout = ({ children }) => {
   return (
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Mobile Nav */}
-      <div className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div ref={tabsContainerRef} className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {links.map((link) => {
           const isActive = pathname === link.to;
           return (
             <Link
               key={link.to}
               to={link.to}
+              ref={isActive ? activeTabRef : null}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${
                 isActive ? 'bg-accent text-white' : 'bg-surface border border-muted/10 text-foreground/70'
               }`}
@@ -40,7 +53,7 @@ const AccountLayout = ({ children }) => {
 
       <div className="flex gap-8">
         {/* Sidebar — always on the physical left */}
-        <div className="hidden lg:block w-[280px] flex-shrink-0" style={{ direction: 'ltr' }}>
+        <div className="hidden lg:block w-[240px] lg:w-[280px] flex-shrink-0" style={{ direction: 'ltr' }}>
           <div className="sticky top-6 space-y-4" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
             {/* User Card */}
             <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">

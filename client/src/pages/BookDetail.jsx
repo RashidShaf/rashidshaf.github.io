@@ -8,7 +8,9 @@ import {
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
+import ReviewSection from '../components/books/ReviewSection';
 import useLanguageStore from '../stores/useLanguageStore';
+import useAuthStore from '../stores/useAuthStore';
 import useCartStore from '../stores/useCartStore';
 import useWishlistStore from '../stores/useWishlistStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
@@ -90,6 +92,8 @@ const BookDetail = () => {
   const description = language === 'ar' && book.descriptionAr ? book.descriptionAr : book.description;
   const publisher = language === 'ar' && book.publisherAr ? book.publisherAr : book.publisher;
   const catName = book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : null;
+  const parentCat = book.category?.parent;
+  const parentCatName = parentCat ? (language === 'ar' && parentCat.nameAr ? parentCat.nameAr : parentCat.name) : null;
   const inWishlist = wishlistItems.includes(book.id);
 
   const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
@@ -105,16 +109,26 @@ const BookDetail = () => {
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted mb-6">
           <Link to="/" className="hover:text-accent transition-colors">{t('nav.home')}</Link>
-          <span>/</span>
-          <Link to="/books" className="hover:text-accent transition-colors">{t('nav.books')}</Link>
+          {parentCatName && (
+            <>
+              <span>/</span>
+              <Link to={`/books?category=${parentCat.slug}`} className="hover:text-accent transition-colors">{parentCatName}</Link>
+            </>
+          )}
           {catName && (
             <>
               <span>/</span>
               <Link to={`/books?category=${book.category.slug}`} className="hover:text-accent transition-colors">{catName}</Link>
             </>
           )}
+          {!parentCatName && !catName && (
+            <>
+              <span>/</span>
+              <Link to="/books" className="hover:text-accent transition-colors">{t('books.title')}</Link>
+            </>
+          )}
           <span>/</span>
-          <span className="text-foreground truncate max-w-[200px]">{title}</span>
+          <span className="text-foreground truncate max-w-[120px] sm:max-w-[200px]">{title}</span>
         </nav>
 
         {/* Main Content */}
@@ -124,17 +138,17 @@ const BookDetail = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex-shrink-0 mx-auto lg:mx-0"
+            className="flex-shrink-0 lg:mx-0"
           >
-            <div className="flex gap-4">
-              {/* Thumbnail strip — always reserve space */}
-              <div className="hidden sm:flex flex-col gap-2 w-14 flex-shrink-0">
+            <div className="flex gap-2 sm:gap-4 items-start">
+              {/* Thumbnail strip */}
+              <div className="flex flex-col gap-1.5 sm:gap-2 w-10 sm:w-14 flex-shrink-0">
                 {book.images && book.images.length > 0 ? (
                   [coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
                     <div
                       key={i}
                       onClick={() => setSelectedImage(img)}
-                      className={`w-14 h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
+                      className={`w-10 sm:w-14 h-12 sm:h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </div>
@@ -143,7 +157,8 @@ const BookDetail = () => {
               </div>
 
               {/* Main cover */}
-              <div className="relative w-[180px] sm:w-[280px] h-[260px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="flex-1 flex justify-center sm:justify-start">
+              <div className="relative w-[140px] sm:w-[280px] h-[200px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
@@ -158,21 +173,8 @@ const BookDetail = () => {
               )}
             </div>
             </div>
+            </div>
 
-            {/* Mobile additional images */}
-            {book.images && book.images.length > 0 && (
-              <div className="flex gap-1.5 mt-2 sm:hidden overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                {[coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).map((img, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setSelectedImage(img)}
-                    className={`w-10 h-13 rounded overflow-hidden border-2 cursor-pointer flex-shrink-0 ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15'}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
           </motion.div>
 
           {/* Details */}
@@ -183,22 +185,32 @@ const BookDetail = () => {
             className="flex-1 min-w-0"
           >
             {/* Category */}
-            {catName && (
-              <Link to={`/books?category=${book.category.slug}`} className="text-xs font-semibold text-accent uppercase tracking-wider hover:text-accent-light transition-colors">
-                {catName}
-              </Link>
+            {(parentCatName || catName) && (
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider">
+                {parentCatName && (
+                  <Link to={`/books?category=${parentCat.slug}`} className="text-accent hover:text-accent-light transition-colors">
+                    {parentCatName}
+                  </Link>
+                )}
+                {parentCatName && catName && <span className="text-muted">/</span>}
+                {catName && (
+                  <Link to={`/books?category=${book.category.slug}`} className="text-accent hover:text-accent-light transition-colors">
+                    {catName}
+                  </Link>
+                )}
+              </div>
             )}
 
             {/* Title */}
-            <h1 className="text-3xl lg:text-4xl font-display font-bold text-foreground mt-2 leading-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-display font-bold text-foreground mt-2 leading-tight">
               {title}
             </h1>
 
             {/* Author */}
-            <p className="text-lg text-foreground/60 mt-2">{author}</p>
+            <p className="text-sm sm:text-lg text-foreground/60 mt-1 sm:mt-2">{author}</p>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-2 mt-3 sm:mt-4">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <FiStar
@@ -218,73 +230,84 @@ const BookDetail = () => {
             </div>
 
             {/* Price */}
-            <div className="flex items-center gap-3 mt-6">
-              <span className="text-3xl font-bold text-foreground">{formatPrice(book.price)}</span>
+            <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
+              <span className="text-2xl sm:text-3xl font-bold text-foreground">{formatPrice(book.price)}</span>
               {hasDiscount && (
-                <span className="text-lg text-foreground/40 line-through">{formatPrice(book.compareAtPrice)}</span>
+                <span className="text-sm sm:text-lg text-foreground/40 line-through">{formatPrice(book.compareAtPrice)}</span>
               )}
             </div>
 
             {/* Quantity + Buttons */}
             {/* Quantity + Wishlist */}
-            <div className="flex items-center gap-3 mt-5">
+            <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-5">
               <div className="flex items-center border border-muted/20 rounded-lg">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-sm">-</button>
-                <span className="w-10 h-8 flex items-center justify-center text-sm font-medium text-foreground border-x border-muted/20">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-sm">+</button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-xs sm:text-sm">-</button>
+                <span className="w-8 h-7 sm:w-10 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-muted/20">{quantity}</span>
+                <button onClick={() => setQuantity(Math.min(book.stock, quantity + 1))} disabled={quantity >= book.stock} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">+</button>
               </div>
 
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => {
                   toggleWishlist(book.id);
-                  toast.success(inWishlist ? (language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist') : (language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Added to wishlist'));
+                  toast.success(inWishlist ? t('book.removedFromWishlistToast') : t('book.addedToWishlistToast'));
                 }}
-                className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all ${
+                className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all ${
                   inWishlist
                     ? 'border-red-500 bg-red-500 text-white'
-                    : 'border-muted/20 text-muted hover:border-red-500 hover:text-red-500'
+                    : 'border-gray-300 text-gray-400 hover:border-red-500 hover:text-red-500'
                 }`}
               >
-                <FiHeart size={18} className={inWishlist ? 'fill-white' : ''} />
+                <FiHeart size={15} className={`sm:w-[18px] sm:h-[18px] ${inWishlist ? 'fill-white' : ''}`} />
               </motion.button>
             </div>
 
             {/* Add to Cart + Buy Now */}
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-2 sm:mt-3">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#A39666] text-white text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors"
+                disabled={book.stock === 0}
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-[#A39666] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart size={14} />
                 {t('common.addToCart')}
               </motion.button>
 
-              <Link
-                to="/checkout"
-                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg transition-colors"
-                style={{ backgroundColor: '#7A1B4E', color: 'white' }}
-              >
-                {t('common.buyNow')}
-              </Link>
+              {book.stock > 0 ? (
+                <Link
+                  to="/checkout"
+                  onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
+                  className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors"
+                  style={{ backgroundColor: '#7A1B4E', color: 'white' }}
+                >
+                  {t('common.buyNow')}
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                  style={{ backgroundColor: '#7A1B4E', color: 'white' }}
+                >
+                  {t('common.buyNow')}
+                </button>
+              )}
             </div>
 
             {/* Stock info */}
             {(
-              <p className={`text-sm mt-3 ${book.stock > 5 ? 'text-secondary' : book.stock > 0 ? 'text-red-500' : 'text-foreground/40'}`}>
+              <p className={`text-xs sm:text-sm mt-2 sm:mt-3 font-medium ${book.stock > 5 ? 'text-secondary' : book.stock > 0 ? 'text-red-500' : 'text-red-500'}`}>
                 {book.stock > 5
                   ? `${t('books.inStock')}`
                   : book.stock > 0
-                  ? `Only ${book.stock} left in stock`
+                  ? t('books.lowStock', { count: book.stock })
                   : t('books.outOfStock')
                 }
               </p>
             )}
 
             {/* Details — inline after buttons */}
-            <div className="mt-6 pt-5 border-t border-muted/10">
+            <div className="mt-6 pt-5 border-t border-gray-300/70">
               <div className="flex flex-wrap gap-x-4 sm:gap-x-8 gap-y-3 text-sm">
                 {publisher && (
                   <div><span className="text-foreground/50">{t('book.publisher')}: </span><span className="text-foreground font-medium">{publisher}</span></div>
@@ -296,10 +319,10 @@ const BookDetail = () => {
                   <div><span className="text-foreground/50">{t('book.isbn')}: </span><span className="text-foreground font-medium">{book.isbn}</span></div>
                 )}
                 {book.language && (
-                  <div><span className="text-foreground/50">{t('books.language')}: </span><span className="text-foreground font-medium capitalize">{book.language === 'ar' ? 'Arabic' : 'English'}</span></div>
+                  <div><span className="text-foreground/50">{t('books.language')}: </span><span className="text-foreground font-medium capitalize">{book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish')}</span></div>
                 )}
                 {book.publishedDate && (
-                  <div><span className="text-foreground/50">Published: </span><span className="text-foreground font-medium">{language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate)}</span></div>
+                  <div><span className="text-foreground/50">{t('book.published')}: </span><span className="text-foreground font-medium">{language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate)}</span></div>
                 )}
               </div>
             </div>
@@ -314,6 +337,11 @@ const BookDetail = () => {
             <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line max-w-4xl">{description}</p>
           </div>
         )}
+
+        {/* Reviews */}
+        <div className="mt-8 lg:ps-[380px]">
+          <ReviewSection bookId={book.id} book={book} />
+        </div>
 
         {/* Recommendations */}
         {recommendations.length > 0 && (
