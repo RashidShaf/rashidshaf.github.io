@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "build": "npx prisma generate && npx prisma migrate deploy",
     "dev": "nodemon server.js",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "node prisma/seed.js",
