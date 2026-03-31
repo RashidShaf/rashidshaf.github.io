@@ -31,7 +31,16 @@ const PORT = process.env.PORT || 5000;
 
 // CORS
 app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+  origin: function (origin, callback) {
+    const allowed = [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(Boolean);
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow exact matches
+    if (allowed.includes(origin)) return callback(null, true);
+    // Allow Vercel preview URLs
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    callback(null, false);
+  },
   credentials: true,
 }));
 
