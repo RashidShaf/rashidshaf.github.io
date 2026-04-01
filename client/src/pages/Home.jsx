@@ -14,15 +14,33 @@ const HeroBanner = () => {
       {/* Desktop Banner */}
       <img
         src="/hero-banner.jpg"
-        alt="Arkaan Bookstore - توصيلنا بختصر المسافات"
+        alt="Arkaan Bookstore"
         className="hidden sm:block w-full h-auto object-cover"
       />
       {/* Mobile Banner */}
       <img
         src="/hero-banner-mobile.jpg"
-        alt="Arkaan Bookstore - توصيلنا بختصر المسافات"
+        alt="Arkaan Bookstore"
         className="block sm:hidden w-full h-auto object-cover"
       />
+      {/* Animated Logo — left side */}
+      <div className="absolute top-[42%] sm:top-[38%] left-3 sm:left-14 lg:left-24 -translate-y-1/2 z-10 flex flex-col items-center">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <motion.img
+            src="/logo.jpg"
+            alt="Arkaan"
+            className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 rounded-full object-cover shadow-2xl"
+            style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
+        <div className="-mt-2 sm:-mt-4">
+          <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 drop-shadow-lg" />
+        </div>
+      </div>
     </section>
   );
 };
