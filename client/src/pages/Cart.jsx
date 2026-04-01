@@ -43,8 +43,8 @@ const Cart = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-display font-bold text-foreground mb-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
+        <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground mb-8">
           {t('cart.title')} ({items.length})
         </h1>
 
@@ -78,7 +78,7 @@ const Cart = () => {
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
-                    <Link to={`/books/${item.book.slug}`} className="text-sm font-semibold text-foreground hover:text-accent transition-colors line-clamp-1">
+                    <Link to={`/books/${item.book.slug}`} className="text-sm 3xl:text-lg font-semibold text-foreground hover:text-accent transition-colors line-clamp-1">
                       {title}
                     </Link>
                     <p className="text-xs text-foreground/60 mt-0.5">{author}</p>
@@ -105,7 +105,7 @@ const Cart = () => {
 
                       {/* Price + Remove */}
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-foreground">
+                        <span className="text-sm 3xl:text-lg font-bold text-foreground">
                           {formatPrice(parseFloat(item.book.price) * item.quantity)}
                         </span>
                         <button
@@ -135,7 +135,7 @@ const Cart = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-surface rounded-xl border border-muted/10 p-4 sm:p-6 sticky top-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
+              <h2 className="text-lg 3xl:text-2xl font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">

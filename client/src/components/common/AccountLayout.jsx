@@ -31,7 +31,7 @@ const AccountLayout = ({ children }) => {
   ];
 
   return (
-    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
       {/* Mobile Nav */}
       <div ref={tabsContainerRef} className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {links.map((link) => {
@@ -53,16 +53,16 @@ const AccountLayout = ({ children }) => {
 
       <div className="flex gap-8">
         {/* Sidebar — always on the physical left */}
-        <div className="hidden lg:block w-[240px] lg:w-[280px] flex-shrink-0" style={{ direction: 'ltr' }}>
+        <div className="hidden lg:block w-[240px] lg:w-[280px] 3xl:w-[340px] flex-shrink-0" style={{ direction: 'ltr' }}>
           <div className="sticky top-6 space-y-4" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
             {/* User Card */}
             <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent-light text-white text-xl font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-accent/15">
+                <div className="w-16 h-16 3xl:w-20 3xl:h-20 rounded-full bg-gradient-to-br from-accent to-accent-light text-white text-xl 3xl:text-3xl font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-accent/15">
                   {initials}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-foreground truncate">{user?.firstName} {user?.lastName}</h2>
+                  <h2 className="text-lg 3xl:text-2xl font-bold text-foreground truncate">{user?.firstName} {user?.lastName}</h2>
                   <p className="text-xs text-foreground/50 truncate flex items-center gap-1">
                     <FiMail size={11} /> {user?.email}
                   </p>
@@ -90,7 +90,7 @@ const AccountLayout = ({ children }) => {
                     }`}
                   >
                     <link.icon size={18} />
-                    <span className="text-sm font-semibold">{link.label}</span>
+                    <span className="text-sm 3xl:text-lg font-semibold">{link.label}</span>
                   </Link>
                 );
               })}

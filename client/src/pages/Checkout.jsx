@@ -70,7 +70,7 @@ const Checkout = () => {
   if (success) {
     return (
       <PageTransition>
-        <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-20 text-center">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -104,8 +104,8 @@ const Checkout = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <Link to="/cart" className="inline-flex items-center gap-2 text-2xl font-display font-bold text-foreground hover:text-accent transition-colors mb-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
+        <Link to="/cart" className="inline-flex items-center gap-2 text-2xl 3xl:text-4xl font-display font-bold text-foreground hover:text-accent transition-colors mb-8">
           {language === 'ar' ? <FiArrowRight size={22} /> : <FiArrowLeft size={22} />} {t('checkout.title')}
         </Link>
 
@@ -115,35 +115,35 @@ const Checkout = () => {
             <div className="lg:col-span-2 space-y-6">
               {/* Shipping */}
               <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-8">
-                <h2 className="text-lg font-bold text-foreground mb-6">{t('checkout.shippingInfo')}</h2>
+                <h2 className="text-lg 3xl:text-2xl font-bold text-foreground mb-6">{t('checkout.shippingInfo')}</h2>
                 <div className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.name')}</label>
+                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.name')}</label>
                       <div className="relative">
                         <FiUser className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
                         <input type="text" value={form.shippingName} onChange={(e) => update('shippingName', e.target.value)} required className={inputClass} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.phone')}</label>
+                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.phone')}</label>
                       <PhoneInput value={form.shippingPhone} onChange={(val) => update('shippingPhone', val)} required />
                       <p className="text-[11px] text-foreground/40 mt-1">{t('checkout.phoneNote')}</p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.city')}</label>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.city')}</label>
                     <input type="text" value={form.shippingCity} onChange={(e) => update('shippingCity', e.target.value)} required className="w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.address')}</label>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.address')}</label>
                     <div className="relative">
                       <FiMapPin className="absolute start-4 top-3.5 w-4 h-4 text-foreground/30" />
                       <textarea value={form.shippingAddress} onChange={(e) => update('shippingAddress', e.target.value)} required rows={3} className={`${inputClass} resize-none`} />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.notes')}</label>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.notes')}</label>
                     <div className="relative">
                       <FiFileText className="absolute start-4 top-3.5 w-4 h-4 text-foreground/30" />
                       <textarea value={form.shippingNotes} onChange={(e) => update('shippingNotes', e.target.value)} rows={2} className={`${inputClass} resize-none`} />
@@ -157,7 +157,7 @@ const Checkout = () => {
             {/* Right — Summary */}
             <div className="lg:col-span-1">
               <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-6 sticky top-6">
-                <h2 className="text-lg font-bold text-foreground mb-5">{t('checkout.orderSummary')}</h2>
+                <h2 className="text-lg 3xl:text-2xl font-bold text-foreground mb-5">{t('checkout.orderSummary')}</h2>
 
                 <div className="space-y-3 mb-5">
                   {items.map((item) => {

@@ -155,7 +155,7 @@ const Navbar = () => {
   ];
 
   const linkClass = ({ isActive }) =>
-    `relative px-1 py-2 text-sm font-medium tracking-wide transition-colors hover:text-accent ${
+    `relative px-1 py-2 text-sm font-medium tracking-wide 3xl:text-lg transition-colors hover:text-accent ${
       isActive ? 'text-accent' : 'text-foreground'
     }`;
 
@@ -164,11 +164,11 @@ const Navbar = () => {
       <header
         className="relative z-50 bg-background border-b border-muted/10"
       >
-        <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+        <nav className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12">
+          <div className="flex items-center justify-between h-16 lg:h-20 3xl:h-24">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="h-10 lg:h-14 w-auto" />
+              <img src="/arkaan-text-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="h-10 lg:h-14 3xl:h-16 w-auto" />
             </Link>
 
             {/* Desktop Nav Links */}
@@ -186,14 +186,14 @@ const Navbar = () => {
                   <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${cornerOpen ? 'rotate-180' : ''}`} />
                 </NavLink>
                 {cornerOpen && (
-                  <div className="absolute top-full mt-0 left-1/2 -translate-x-1/2 bg-surface border border-muted/15 rounded-2xl shadow-2xl z-50 p-6 w-[min(90vw,720px)]">
+                  <div className="absolute top-full mt-0 left-1/2 -translate-x-1/2 bg-surface border border-muted/15 rounded-2xl shadow-2xl z-50 p-6 w-[min(90vw,900px)]">
                     <div className="grid grid-cols-4 gap-x-6 gap-y-5">
                       {corners.filter((c) => c.children && c.children.length > 0).map((corner) => (
                         <div key={corner.id}>
                           <Link
                             to={`/books?category=${corner.slug}`}
                             onClick={() => setCornerOpen(false)}
-                            className="text-sm font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block hover:text-accent transition-colors"
+                            className="text-sm 3xl:text-lg font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block hover:text-accent transition-colors"
                           >
                             {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
                           </Link>
@@ -203,7 +203,7 @@ const Navbar = () => {
                                 <Link
                                   to={`/books?category=${sub.slug}`}
                                   onClick={() => setCornerOpen(false)}
-                                  className="block text-[13px] text-foreground/60 hover:text-accent transition-colors py-0.5"
+                                  className="block text-[13px] 3xl:text-base text-foreground/60 hover:text-accent transition-colors py-0.5"
                                 >
                                   {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
                                 </Link>
@@ -226,7 +226,7 @@ const Navbar = () => {
                             <Link
                               to={`/books?category=${corner.slug}`}
                               onClick={() => setCornerOpen(false)}
-                              className="block text-[13px] text-accent hover:text-accent-light transition-colors py-0.5 mt-1 font-medium"
+                              className="block text-[13px] 3xl:text-base text-accent hover:text-accent-light transition-colors py-0.5 mt-1 font-medium"
                             >
                               {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
                             </Link>
@@ -236,7 +236,7 @@ const Navbar = () => {
                       {/* Standalone categories (no children) */}
                       {corners.filter((c) => !c.children || c.children.length === 0).length > 0 && (
                         <div>
-                          <span className="text-sm font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block">
+                          <span className="text-sm 3xl:text-lg font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block">
                             {language === 'ar' ? 'المزيد' : 'More'}
                           </span>
                           <div className="mt-1.5 space-y-0.5">
@@ -245,7 +245,7 @@ const Navbar = () => {
                                 key={corner.id}
                                 to={`/books?category=${corner.slug}`}
                                 onClick={() => setCornerOpen(false)}
-                                className="block text-[13px] text-foreground/60 hover:text-accent transition-colors py-0.5"
+                                className="block text-[13px] 3xl:text-base text-foreground/60 hover:text-accent transition-colors py-0.5"
                               >
                                 {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
                               </Link>
@@ -289,7 +289,7 @@ const Navbar = () => {
                     onChange={(e) => handleSearchChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
                     placeholder={t('books.search')}
-                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-gray-300 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                    className="w-48 lg:w-56 3xl:w-72 px-4 py-2 ps-10 bg-surface border border-gray-300 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
                   />
                   <FiSearch className="absolute start-3.5 w-4 h-4 text-muted/50 pointer-events-none" />
                 </form>

@@ -53,7 +53,7 @@ const Wishlist = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 gap-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-surface-alt rounded-lg animate-pulse">
                 <div className="aspect-[5/6] bg-muted/10 rounded-t-lg" />
@@ -70,7 +70,7 @@ const Wishlist = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 gap-3">
             {books.map((book) => {
               const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
               const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;

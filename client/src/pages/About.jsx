@@ -22,10 +22,10 @@ const About = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-12 lg:py-16">
         {/* Hero */}
         <div className="text-center mb-16">
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-3">
+          <h1 className="text-3xl sm:text-4xl 3xl:text-6xl font-display font-bold text-foreground mb-3">
             {t('about.title')}
           </h1>
           <p className="text-lg text-foreground/70 max-w-xl mx-auto">
@@ -37,25 +37,25 @@ const About = () => {
         {/* Story + Mission */}
         <div className="grid md:grid-cols-2 gap-10 mb-20">
           <div className="bg-surface rounded-2xl p-8 border border-muted/10 h-full">
-            <h2 className="text-xl font-display font-bold text-foreground mb-4">
+            <h2 className="text-xl 3xl:text-3xl font-display font-bold text-foreground mb-4">
               {t('about.story')}
             </h2>
-            <p className="text-foreground/70 leading-relaxed text-[15px]">
+            <p className="text-foreground/70 leading-relaxed text-[15px] 3xl:text-lg">
               {t('about.storyText')}
             </p>
           </div>
           <div className="bg-surface rounded-2xl p-8 border border-muted/10 h-full">
-            <h2 className="text-xl font-display font-bold text-foreground mb-4">
+            <h2 className="text-xl 3xl:text-3xl font-display font-bold text-foreground mb-4">
               {t('about.mission')}
             </h2>
-            <p className="text-foreground/70 leading-relaxed text-[15px]">
+            <p className="text-foreground/70 leading-relaxed text-[15px] 3xl:text-lg">
               {t('about.missionText')}
             </p>
           </div>
         </div>
 
         {/* Values */}
-        <h2 className="text-2xl font-display font-bold text-foreground text-center mb-10">
+        <h2 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground text-center mb-10">
           {t('about.values')}
         </h2>
         <div className="grid sm:grid-cols-2 gap-6 mb-20">
@@ -66,14 +66,14 @@ const About = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
-                <p className="text-sm text-foreground/70 leading-relaxed">{item.text}</p>
+                <p className="text-sm 3xl:text-lg text-foreground/70 leading-relaxed">{item.text}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* Why Choose Us */}
-        <h2 className="text-2xl font-display font-bold text-foreground text-center mb-10">
+        <h2 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground text-center mb-10">
           {t('about.whyChoose')}
         </h2>
         <div className="grid sm:grid-cols-3 gap-6 mb-20">
@@ -83,14 +83,14 @@ const About = () => {
                 <item.icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
-              <p className="text-sm text-foreground/60">{item.text}</p>
+              <p className="text-sm 3xl:text-lg text-foreground/60">{item.text}</p>
             </div>
           ))}
         </div>
 
         {/* CTA */}
         <div className="text-center py-8">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">
+          <h2 className="text-2xl sm:text-3xl 3xl:text-5xl font-display font-bold text-foreground mb-3">
             {t('about.ctaTitle')}
           </h2>
           <p className="text-foreground/50 mb-8 max-w-md mx-auto">

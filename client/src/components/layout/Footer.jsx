@@ -37,12 +37,12 @@ const Footer = () => {
 
   return (
     <footer className="bg-primary text-background">
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-12 lg:py-16 3xl:py-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* About */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-4">
-              <span className="text-2xl font-display font-bold tracking-[0.15em] text-background">
+              <span className="text-2xl 3xl:text-4xl font-display font-bold tracking-[0.15em] text-background">
                 {language === 'ar' ? (settings.storeNameAr || 'أركان') : (settings.storeName || 'ARKAAN')}
               </span>
               <div className="h-0.5 w-8 bg-background/30 rounded-full mt-1" />
@@ -52,7 +52,7 @@ const Footer = () => {
             </p>
             {socialLinks.length > 0 && (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wider text-background/90 mb-3">{language === 'ar' ? 'تابعنا' : 'Follow Us'}</p>
+                <p className="text-xs 3xl:text-base font-semibold uppercase tracking-wider text-background/90 mb-3">{language === 'ar' ? 'تابعنا' : 'Follow Us'}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {socialLinks.map((s) => {
                     let href = settings[s.key];
@@ -60,7 +60,7 @@ const Footer = () => {
                       href = `https://wa.me/${href.replace(/[^0-9]/g, '')}`;
                     }
                     return (
-                      <a key={s.label} href={href} target="_blank" rel="noopener noreferrer" className={`w-8 h-8 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
+                      <a key={s.label} href={href} target="_blank" rel="noopener noreferrer" className={`w-8 h-8 3xl:w-10 3xl:h-10 flex items-center justify-center rounded-full ${s.bg} text-white transition-all duration-300 hover:opacity-80 hover:scale-110`} aria-label={s.label}>
                         <s.icon className="w-3.5 h-3.5" />
                       </a>
                     );
@@ -72,13 +72,13 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-background/90 mb-4">
+            <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
               {t('footer.quickLinks')}
             </h4>
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="text-sm text-background/70 hover:text-background transition-colors">
+                  <Link to={link.to} className="text-sm 3xl:text-lg text-background/70 hover:text-background transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -88,19 +88,19 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-background/90 mb-4">
+            <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
               {t('footer.contact')}
             </h4>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-sm text-background/70">
+              <li className="flex items-start gap-3 text-sm 3xl:text-lg text-background/70">
                 <FiMapPin className="w-4 h-4 mt-0.5 text-background/70 flex-shrink-0" />
                 <span>{address}</span>
               </li>
-              <li className="flex items-center gap-3 text-sm text-background/70">
+              <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
                 <FiPhone className="w-4 h-4 text-background/70 flex-shrink-0" />
                 <span dir="ltr">{phone}</span>
               </li>
-              <li className="flex items-center gap-3 text-sm text-background/70">
+              <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
                 <FiMail className="w-4 h-4 text-background/70 flex-shrink-0" />
                 <span>{email}</span>
               </li>
@@ -109,10 +109,10 @@ const Footer = () => {
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-background/90 mb-4">
+            <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
               {t('home.newsletter')}
             </h4>
-            <p className="text-sm text-background/70 mb-4">
+            <p className="text-sm 3xl:text-lg text-background/70 mb-4">
               {t('home.heroSubtitle')}
             </p>
             <form onSubmit={(e) => e.preventDefault()} className="flex">
@@ -135,7 +135,7 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-background/10">
-        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-background/50">
             &copy; {new Date().getFullYear()} {settings.storeName || 'Arkaan Bookstore'}. {t('footer.rights')}
           </p>

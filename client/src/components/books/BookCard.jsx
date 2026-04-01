@@ -103,17 +103,17 @@ const BookCard = ({ book, comingSoon = false }) => {
       </Link>
 
       {/* Info */}
-      <div className="px-3 py-3">
+      <div className="px-3 py-3 3xl:px-4 3xl:py-4">
         <Link to={comingSoon ? '#' : `/books/${book.slug}`} className="block">
-          <h3 className="text-[13px] sm:text-[15px] font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
+          <h3 className="text-[13px] sm:text-[15px] 3xl:text-lg font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
             {title}
           </h3>
-          <p className="text-[11px] sm:text-[13px] text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>
+          <p className="text-[11px] sm:text-[13px] 3xl:text-base text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>
 
           {!comingSoon && (
             <div className="mt-1.5 sm:mt-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold text-foreground">
+                <span className="text-xs sm:text-sm 3xl:text-lg font-bold text-foreground">
                   {formatPrice(book.price)}
                 </span>
                 {book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price) && (

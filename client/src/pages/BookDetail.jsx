@@ -105,9 +105,9 @@ const BookDetail = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4 pb-16">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4 pb-16">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-foreground/60 mb-6">
+        <nav className="flex items-center gap-2 text-sm 3xl:text-lg text-foreground/60 mb-6">
           <Link to="/" className="hover:text-accent transition-colors">{t('nav.home')}</Link>
           {parentCatName && (
             <>
@@ -142,13 +142,13 @@ const BookDetail = () => {
           >
             <div className="flex gap-2 sm:gap-4 items-start">
               {/* Thumbnail strip */}
-              <div className="flex flex-col gap-1.5 sm:gap-2 w-10 sm:w-14 flex-shrink-0">
+              <div className="flex flex-col gap-1.5 sm:gap-2 w-10 sm:w-14 3xl:w-18 flex-shrink-0">
                 {book.images && book.images.length > 0 ? (
                   [coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
                     <div
                       key={i}
                       onClick={() => setSelectedImage(img)}
-                      className={`w-10 sm:w-14 h-12 sm:h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
+                      className={`w-10 sm:w-14 3xl:w-18 h-12 sm:h-16 3xl:h-20 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </div>
@@ -158,7 +158,7 @@ const BookDetail = () => {
 
               {/* Main cover */}
               <div className="flex-1 flex justify-center sm:justify-start">
-              <div className="relative w-[140px] sm:w-[280px] h-[200px] sm:h-[360px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="relative w-[140px] sm:w-[280px] 3xl:w-[360px] h-[200px] sm:h-[360px] 3xl:h-[480px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
@@ -202,12 +202,12 @@ const BookDetail = () => {
             )}
 
             {/* Title */}
-            <h1 className="text-xl sm:text-3xl lg:text-4xl font-display font-bold text-foreground mt-2 leading-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl 3xl:text-6xl font-display font-bold text-foreground mt-2 leading-tight">
               {title}
             </h1>
 
             {/* Author */}
-            <p className="text-sm sm:text-lg text-foreground/60 mt-1 sm:mt-2">{author}</p>
+            <p className="text-sm sm:text-lg 3xl:text-2xl text-foreground/60 mt-1 sm:mt-2">{author}</p>
 
             {/* Rating */}
             <div className="flex items-center gap-2 mt-3 sm:mt-4">
@@ -231,7 +231,7 @@ const BookDetail = () => {
 
             {/* Price */}
             <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
-              <span className="text-2xl sm:text-3xl font-bold text-foreground">{formatPrice(book.price)}</span>
+              <span className="text-2xl sm:text-3xl 3xl:text-5xl font-bold text-foreground">{formatPrice(book.price)}</span>
               {hasDiscount && (
                 <span className="text-sm sm:text-lg text-foreground/40 line-through">{formatPrice(book.compareAtPrice)}</span>
               )}
@@ -349,7 +349,7 @@ const BookDetail = () => {
             <h2 className="text-xl font-display font-bold text-foreground mb-6">
               {t('book.similarBooks')}
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 3xl:grid-cols-6 gap-3">
               {recommendations.slice(0, 5).map((rec) => (
                 <BookCard key={rec.id} book={rec} />
               ))}

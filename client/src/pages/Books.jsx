@@ -152,7 +152,7 @@ const Books = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4">
         <div className="flex gap-4 lg:gap-8">
           {/* Sidebar Filters */}
           {/* Mobile filter backdrop */}
@@ -162,7 +162,7 @@ const Books = () => {
 
           <aside className={`
             ${filtersOpen ? 'fixed right-0 rtl:right-auto rtl:left-0 top-0 bottom-0 z-50 w-[min(80vw,288px)] bg-background p-5 shadow-2xl overflow-y-auto' : 'hidden'}
-            lg:block lg:static lg:w-52 lg:p-0 lg:shadow-none lg:bg-transparent flex-shrink-0
+            lg:block lg:static lg:w-52 3xl:w-64 lg:p-0 lg:shadow-none lg:bg-transparent flex-shrink-0
           `}>
             <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pb-8"
               style={{ scrollbarWidth: 'thin' }}
@@ -178,7 +178,7 @@ const Books = () => {
 
               {/* Category */}
               <div className="mb-6">
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.category')}
                 </label>
                 <div className="space-y-0.5">
@@ -193,7 +193,7 @@ const Books = () => {
                         <div className="flex items-center">
                           <button
                             onClick={() => { updateParam('category', cat.slug); if (hasChildren) setExpandedCats((prev) => ({ ...prev, [cat.id]: true })); }}
-                            className={`flex-1 text-start py-1.5 text-sm font-medium transition-colors ${
+                            className={`flex-1 text-start py-1.5 text-sm 3xl:text-lg font-medium transition-colors ${
                               isSelected ? 'text-accent' : 'text-foreground hover:text-accent'
                             }`}
                           >
@@ -217,7 +217,7 @@ const Books = () => {
                                   <div className="flex items-center">
                                     <button
                                       onClick={() => { updateParam('category', sub.slug); if (subHasChildren) setExpandedCats((prev) => ({ ...prev, [sub.id]: true })); }}
-                                      className={`flex-1 text-start py-1 text-sm transition-colors ${
+                                      className={`flex-1 text-start py-1 text-sm 3xl:text-lg transition-colors ${
                                         subSelected ? 'text-accent font-medium' : 'text-foreground/60 hover:text-accent'
                                       }`}
                                     >
@@ -257,7 +257,7 @@ const Books = () => {
 
               {/* Language */}
               <div className="mb-6">
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.language')}
                 </label>
                 <div className="space-y-0.5">
@@ -269,7 +269,7 @@ const Books = () => {
                     <button
                       key={opt.value}
                       onClick={() => updateParam('language', opt.value)}
-                      className={`w-full text-start py-1.5 text-sm transition-colors ${
+                      className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
                         bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
                       }`}
                     >
@@ -281,7 +281,7 @@ const Books = () => {
 
               {/* Author */}
               <div className="mb-6">
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.author')}
                 </label>
                 <input
@@ -295,7 +295,7 @@ const Books = () => {
 
               {/* Publisher */}
               <div className="mb-6">
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.publisher')}
                 </label>
                 <input
@@ -325,7 +325,7 @@ const Books = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">
+                <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground">
                   {getPageTitle()}
                 </h1>
                 <p className="text-sm text-foreground/50 mt-0.5">
@@ -399,7 +399,7 @@ const Books = () => {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-6 gap-3">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-surface-alt rounded-lg animate-pulse">
                     <div className="aspect-[5/6] bg-muted/10 rounded-t-lg" />
@@ -417,7 +417,7 @@ const Books = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-6 gap-3">
                   {books.map((book) => <BookCard key={book.id} book={book} />)}
                 </div>
 

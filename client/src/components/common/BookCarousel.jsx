@@ -123,7 +123,7 @@ const BookCarousel = ({ children }) => {
       >
         {Array.isArray(children)
           ? children.map((child, i) => (
-              <div key={i} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] 2xl:w-[calc(16.666%-10px)]">
+              <div key={i} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] xl:w-[calc(16.666%-10px)] 3xl:w-[calc(14.285%-10px)]">
                 {child}
               </div>
             ))

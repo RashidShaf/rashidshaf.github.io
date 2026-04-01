@@ -26,19 +26,19 @@ const HeroBanner = () => {
       {/* Animated Logo — left side */}
       <div className="absolute top-[42%] sm:top-[38%] left-3 sm:left-14 lg:left-24 -translate-y-1/2 z-10 flex flex-col items-center">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
           <motion.img
             src="/logo.jpg"
             alt="Arkaan"
-            className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 rounded-full object-cover shadow-2xl"
+            className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
             style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           />
         </div>
         <div className="-mt-2 sm:-mt-4">
-          <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 drop-shadow-lg" />
+          <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 3xl:w-64 drop-shadow-lg" />
         </div>
       </div>
     </section>
@@ -100,12 +100,12 @@ const Home = () => {
 
       {/* Featured Books */}
       {!loading && featured.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.featured')}
             </h2>
-            <Link to={`/books?category=${corner}&section=featured`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=featured`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -117,9 +117,9 @@ const Home = () => {
 
       {/* Sub-categories of selected corner */}
       {cornerData?.children && cornerData.children.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('nav.categories')}
             </h2>
           </div>
@@ -159,12 +159,12 @@ const Home = () => {
 
       {/* New Arrivals */}
       {!loading && newArrivals.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.newArrivals')}
             </h2>
-            <Link to={`/books?category=${corner}&section=new`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=new`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -176,12 +176,12 @@ const Home = () => {
 
       {/* Bestsellers */}
       {!loading && bestsellers.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.bestsellers')}
             </h2>
-            <Link to={`/books?category=${corner}&section=bestseller`} className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${corner}&section=bestseller`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -193,9 +193,9 @@ const Home = () => {
 
       {/* Everyone's Talking About */}
       {!loading && trending.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.trending')}
             </h2>
           </div>
@@ -207,8 +207,8 @@ const Home = () => {
 
       {/* Coming Soon */}
       {!loading && comingSoon.length > 0 && (
-        <section className="max-w-[1800px] mx-auto px-3 sm:px-6 lg:px-10 py-8 sm:py-14">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-8">
+        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
+          <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground mb-8">
             {t('home.comingSoon')}
           </h2>
           <BookCarousel>

@@ -51,10 +51,10 @@ const Contact = () => {
 
   return (
     <PageTransition>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-12 lg:py-16">
         {/* Header */}
         <div className="text-center mb-14">
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-3">
+          <h1 className="text-3xl sm:text-4xl 3xl:text-6xl font-display font-bold text-foreground mb-3">
             {t('contact.title')}
           </h1>
           <p className="text-lg text-foreground/70 max-w-xl mx-auto">
@@ -67,7 +67,7 @@ const Contact = () => {
           {/* Contact Info */}
           <div className="lg:col-span-2 space-y-5">
             <div>
-              <h2 className="text-xl font-display font-bold text-foreground mb-2">
+              <h2 className="text-xl 3xl:text-3xl font-display font-bold text-foreground mb-2">
                 {t('contact.getInTouch')}
               </h2>
               <p className="text-sm text-foreground/70 leading-relaxed mb-6">
@@ -117,26 +117,26 @@ const Contact = () => {
           {/* Contact Form */}
           <div className="lg:col-span-3">
             <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-muted/10">
-              <h2 className="text-xl font-display font-bold text-foreground mb-6">
+              <h2 className="text-xl 3xl:text-3xl font-display font-bold text-foreground mb-6">
                 {t('contact.sendMessage')}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.name')}</label>
+                    <label className="block text-sm 3xl:text-lg font-medium text-foreground mb-1.5">{t('contact.name')}</label>
                     <input type="text" name="name" value={form.name} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.emailAddress')}</label>
+                    <label className="block text-sm 3xl:text-lg font-medium text-foreground mb-1.5">{t('contact.emailAddress')}</label>
                     <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.subject')}</label>
+                  <label className="block text-sm 3xl:text-lg font-medium text-foreground mb-1.5">{t('contact.subject')}</label>
                   <input type="text" name="subject" value={form.subject} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.message')}</label>
+                  <label className="block text-sm 3xl:text-lg font-medium text-foreground mb-1.5">{t('contact.message')}</label>
                   <textarea name="message" value={form.message} onChange={handleChange} required rows={5} className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors resize-none" />
                 </div>
                 <button type="submit" disabled={sending} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-60">
