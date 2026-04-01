@@ -24,7 +24,7 @@ export default function CategoryCreate() {
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const allCats = (res.data.data || res.data);
-      setCategories(allCats.filter((c) => !c.parentId));
+      setCategories(allCats);
       if (parentFromUrl) {
         const parent = allCats.find((c) => c.id === parentFromUrl);
         if (parent) setParentName(parent.name);
@@ -42,7 +42,7 @@ export default function CategoryCreate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error('Name is required'); return; }
-    if (!form.parentId) { toast.error('Please select a corner'); return; }
+    if (!form.parentId) { toast.error('Please select a parent category'); return; }
     setSaving(true);
     try {
       const fd = new FormData();
@@ -53,7 +53,14 @@ export default function CategoryCreate() {
 
       await api.post('/admin/categories', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success('Category created');
-      navigate(`/categories?tab=${form.parentId}`);
+      // Navigate back: find the Level 1 ancestor for the tab
+      const parent = categories.find((c) => c.id === form.parentId);
+      if (parent && parent.parentId) {
+        // Parent is Level 2 — go to Level 1 tab with Level 2 sub-tab
+        navigate(`/categories?tab=${parent.parentId}&sub=${form.parentId}`);
+      } else {
+        navigate(`/categories?tab=${form.parentId}`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create');
     } finally {
@@ -79,6 +86,61 @@ export default function CategoryCreate() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Parent Category — at top */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
+              <div>
+                <label className={labelClass}>Select Parent</label>
+                <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
+                  <option value="">— Select Parent —</option>
+                  {(() => {
+                    if (parentFromUrl) {
+                      const preselected = categories.find((c) => c.id === parentFromUrl);
+                      if (preselected) {
+                        // If Level 1: show it + its Level 2 children
+                        if (!preselected.parentId) {
+                          const children = categories.filter((c) => c.parentId === preselected.id);
+                          return (
+                            <optgroup key={preselected.id} label={preselected.name}>
+                              <option value={preselected.id}>{preselected.name}</option>
+                              {children.map((child) => (
+                                <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
+                              ))}
+                            </optgroup>
+                          );
+                        }
+                        // If Level 2: show its Level 1 parent group with this pre-selected
+                        const level1Parent = categories.find((c) => c.id === preselected.parentId);
+                        if (level1Parent) {
+                          const siblings = categories.filter((c) => c.parentId === level1Parent.id);
+                          return (
+                            <optgroup key={level1Parent.id} label={level1Parent.name}>
+                              <option value={level1Parent.id}>{level1Parent.name}</option>
+                              {siblings.map((child) => (
+                                <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
+                              ))}
+                            </optgroup>
+                          );
+                        }
+                      }
+                    }
+                    // Default: show all
+                    return categories.filter((c) => !c.parentId).map((topCat) => {
+                      const children = categories.filter((c) => c.parentId === topCat.id);
+                      return (
+                        <optgroup key={topCat.id} label={topCat.name}>
+                          <option value={topCat.id}>{topCat.name}</option>
+                          {children.map((child) => (
+                            <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
+                          ))}
+                        </optgroup>
+                      );
+                    });
+                  })()}
+                </select>
+              </div>
+            </div>
+
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -120,25 +182,6 @@ export default function CategoryCreate() {
               <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
             </div>
 
-            {/* Options */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Options</h3>
-              <div>
-                <label className={labelClass}>Parent Category</label>
-                {parentFromUrl && parentName ? (
-                  <div className="px-3 py-2.5 bg-admin-bg border border-admin-border rounded-lg text-sm text-admin-text">
-                    {parentName}
-                  </div>
-                ) : (
-                  <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
-                    <option value="">— Select Corner —</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </div>
 
             {/* Actions */}
             <div className="flex flex-col gap-3">

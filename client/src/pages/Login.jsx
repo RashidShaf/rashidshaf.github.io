@@ -51,13 +51,13 @@ const Login = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>
                 <div className="relative">
-                  <FiMail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <FiMail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full ps-10 pe-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                    className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
                     placeholder="email@example.com"
                   />
                 </div>
@@ -66,19 +66,19 @@ const Login = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.password')}</label>
                 <div className="relative">
-                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full ps-10 pe-10 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                    className="w-full ps-10 pe-10 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
+                    className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-foreground/60 hover:text-foreground"
                   >
                     {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
@@ -94,7 +94,7 @@ const Login = () => {
               </button>
             </div>
 
-            <p className="mt-6 text-center text-sm text-muted">
+            <p className="mt-6 text-center text-sm text-foreground/60">
               {t('auth.noAccount')}{' '}
               <Link to="/register" className="text-accent font-medium hover:underline">
                 {t('nav.register')}

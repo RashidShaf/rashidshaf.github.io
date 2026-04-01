@@ -12,6 +12,13 @@ exports.list = async (req, res, next) => {
           orderBy: { displayOrder: 'asc' },
           include: {
             _count: { select: { books: { where: { isActive: true } } } },
+            children: {
+              where: { isActive: true },
+              orderBy: { displayOrder: 'asc' },
+              include: {
+                _count: { select: { books: { where: { isActive: true } } } },
+              },
+            },
           },
         },
       },

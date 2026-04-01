@@ -73,7 +73,10 @@
     "lowStock": "باقي {{count}} فقط في المخزون",
     "langArabic": "عربي",
     "langEnglish": "إنجليزي",
-    "section": "المجموعة"
+    "section": "المجموعة",
+    "publisher": "الناشر",
+    "authorPlaceholder": "ابحث بالمؤلف...",
+    "publisherPlaceholder": "ابحث بالناشر..."
   },
   "book": {
     "description": "الوصف",
@@ -112,7 +115,9 @@
     "quantity": "الكمية",
     "freeShipping": "شحن مجاني",
     "clearCart": "مسح السلة",
-    "freeShippingThreshold": "شحن مجاني للطلبات فوق {{amount}} ر.ق"
+    "freeShippingThreshold": "شحن مجاني للطلبات فوق {{amount}} ر.ق",
+    "codTitle": "الدفع عند الاستلام",
+    "phoneRequired": "رقم الهاتف مطلوب لإتمام الشراء"
   },
   "checkout": {
     "title": "إتمام الطلب",
@@ -130,7 +135,8 @@
     "orderPlaced": "تم تقديم طلبك!",
     "orderNumber": "رقم الطلب",
     "orderSuccess": "تم تقديم الطلب بنجاح!",
-    "orderFailed": "فشل تقديم الطلب"
+    "orderFailed": "فشل تقديم الطلب",
+    "phoneNote": "مطلوب لتأكيد التوصيل"
   },
   "auth": {
     "login": "تسجيل الدخول",

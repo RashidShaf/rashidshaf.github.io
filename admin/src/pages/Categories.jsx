@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -17,6 +17,8 @@ export default function Categories() {
   const [deleteId, setDeleteId] = useState(null);
   const [catSearch, setCatSearch] = useState('');
   const [selectedParent, setSelectedParent] = useState(searchParams.get('tab') || '');
+  const [selectedLevel2, setSelectedLevel2] = useState(searchParams.get('sub') || '');
+  const [expandedRows, setExpandedRows] = useState({});
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -32,8 +34,14 @@ export default function Categories() {
 
   useEffect(() => { fetchCategories(); }, []);
 
+  // Auto-select first parent if none selected
+  useEffect(() => {
+    if (!selectedParent && categories.length > 0) {
+      setSelectedParent('top');
+    }
+  }, [categories]);
+
   const handleToggleActive = async (cat) => {
-    // Protect Books category from being deactivated
     if (!cat.parentId && cat.slug === 'books') {
       toast.error('Books category cannot be deactivated');
       return;
@@ -64,18 +72,69 @@ export default function Categories() {
 
   const parentCategories = categories.filter((c) => !c.parentId);
 
-  const filteredCategories = categories.filter((c) => {
-    if (catSearch && !(c.name?.toLowerCase().includes(catSearch.toLowerCase()) || c.nameAr?.includes(catSearch) || c.name_ar?.includes(catSearch))) return false;
-    if (selectedParent === 'top') return !c.parentId;
-    if (selectedParent) return c.parentId === selectedParent;
-    return !!c.parentId;
-  });
+  const getDepth = (cat) => {
+    if (!cat.parentId) return 1;
+    const parent = categories.find((c) => c.id === cat.parentId);
+    if (!parent || !parent.parentId) return 2;
+    return 3;
+  };
+
+  // Only show Level 2 sub-tabs if selectedParent is actually a Level 1 category
+  const isLevel1Selected = selectedParent && selectedParent !== 'top' && parentCategories.some((c) => c.id === selectedParent);
+  const level2Categories = isLevel1Selected
+    ? categories.filter((c) => c.parentId === selectedParent)
+    : [];
+
+  // Determine what to show in the table
+  const getFilteredCategories = () => {
+    let result = categories;
+
+    // Search filter
+    if (catSearch) {
+      result = result.filter((c) => c.name?.toLowerCase().includes(catSearch.toLowerCase()) || c.nameAr?.includes(catSearch) || c.name_ar?.includes(catSearch));
+    }
+
+    if (selectedParent === 'top') {
+      return result.filter((c) => !c.parentId);
+    }
+
+    if (selectedLevel2) {
+      // Show Level 3 children of selected Level 2
+      return result.filter((c) => c.parentId === selectedLevel2);
+    }
+
+    if (selectedParent) {
+      // Show Level 2 children only — Level 3 shown via expand/collapse in table rows
+      return result.filter((c) => c.parentId === selectedParent);
+    }
+
+    // "All" tab: show Level 2 and Level 3
+    return result.filter((c) => !!c.parentId);
+  };
+
+  const filteredCategories = getFilteredCategories();
+
+  // Sort: Level 3 after their Level 2 parent (only needed for "All" tab)
+  const sortedFilteredCategories = selectedParent || selectedLevel2
+    ? filteredCategories
+    : [...filteredCategories].sort((a, b) => {
+        const getGroup = (cat) => {
+          const depth = getDepth(cat);
+          if (depth <= 2) return cat.id;
+          return cat.parentId;
+        };
+        const ga = getGroup(a);
+        const gb = getGroup(b);
+        if (ga === gb) return getDepth(a) - getDepth(b);
+        const ia = filteredCategories.findIndex((c) => c.id === ga);
+        const ib = filteredCategories.findIndex((c) => c.id === gb);
+        return ia - ib;
+      });
 
   const totalCategories = categories.length;
   const activeCategories = categories.filter((c) => c.isActive !== false).length;
   const isTopLevel = selectedParent === 'top';
 
-  // For top-level: compute total items = direct books + all children's books
   const getTotalItems = (cat) => {
     const direct = cat._count?.books || 0;
     const childrenBooks = (cat.children || []).reduce((sum, child) => sum + (child._count?.books || 0), 0);
@@ -83,6 +142,13 @@ export default function Categories() {
   };
 
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
+
+  // Determine what the Create button's parent should be
+  const getCreateParent = () => {
+    if (selectedLevel2) return selectedLevel2;
+    if (selectedParent && selectedParent !== 'top') return selectedParent;
+    return '';
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -102,30 +168,45 @@ export default function Categories() {
         ))}
       </div>
 
-      {/* Parent Corner Pills */}
+      {/* Level 1 Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         <button
-          onClick={() => setSelectedParent('')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${!selectedParent ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text'}`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setSelectedParent('top')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${selectedParent === 'top' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text'}`}
+          onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); }}
+          className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${selectedParent === 'top' ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
         >
           Top Level
         </button>
         {parentCategories.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => setSelectedParent(cat.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${selectedParent === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text'}`}
+            onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); }}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${selectedParent === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             {getName(cat)}
           </button>
         ))}
       </div>
+
+      {/* Level 2 Sub-tabs */}
+      {level2Categories.length > 0 && (
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setSelectedLevel2('')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+          >
+            All {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
+          </button>
+          {level2Categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedLevel2(cat.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedLevel2 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+            >
+              {getName(cat)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search + Create */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
@@ -137,8 +218,11 @@ export default function Categories() {
         <button onClick={fetchCategories} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
-        {selectedParent && selectedParent !== 'top' && (
-          <Link to={`/categories/create${selectedParent ? `?parent=${selectedParent}` : ''}`} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap">
+        {selectedParent !== 'top' && (
+          <Link
+            to={`/categories/create${getCreateParent() ? `?parent=${getCreateParent()}` : ''}`}
+            className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
+          >
             <FiPlus size={16} /> {t('common.create')}
           </Link>
         )}
@@ -153,6 +237,7 @@ export default function Categories() {
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Image</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Name (EN)</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Name (AR)</th>
+                {!isTopLevel && !selectedLevel2 && selectedParent && <th className="text-left px-4 py-3 font-medium text-admin-muted">Sub-categories</th>}
                 {!isTopLevel && <th className="text-left px-4 py-3 font-medium text-admin-muted">Parent</th>}
                 {isTopLevel && <th className="text-left px-4 py-3 font-medium text-admin-muted">Sub-categories</th>}
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">{isTopLevel ? 'Total Items' : 'Items'}</th>
@@ -165,71 +250,83 @@ export default function Categories() {
                 [...Array(4)].map((_, i) => (
                   <tr key={i}><td colSpan={8} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
-              ) : filteredCategories.length === 0 ? (
+              ) : sortedFilteredCategories.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
               ) : (
-                filteredCategories.map((cat) => {
+                sortedFilteredCategories.map((cat) => {
                   const isParent = !cat.parentId;
                   const isBooks = isParent && cat.slug === 'books';
+                  const depth = getDepth(cat);
+                  const level3Children = categories.filter((c) => c.parentId === cat.id);
+                  const hasLevel3 = depth === 2 && level3Children.length > 0 && !selectedLevel2;
+                  const isExpanded = expandedRows[cat.id];
 
-                  return (
-                    <tr key={cat.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
+                  const renderRow = (rowCat, rowDepth, isChild = false) => (
+                    <tr
+                      key={rowCat.id}
+                      onClick={() => { if (hasLevel3 && !isChild) setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] })); }}
+                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasLevel3 && !isChild ? 'cursor-pointer' : ''}`}
+                    >
                       <td className="px-4 py-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          {cat.image ? <img src={`${API_BASE}/${cat.image}`} alt={cat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FiImage size={16} /></div>}
+                        <div className={`${isChild ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg overflow-hidden bg-gray-100 flex-shrink-0`}>
+                          {rowCat.image ? <img src={`${API_BASE}/${rowCat.image}`} alt={rowCat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FiImage size={isChild ? 12 : 16} /></div>}
                         </div>
                       </td>
                       <td className="px-4 py-3 font-medium text-admin-text">
-                        {!isParent && <span className="text-admin-muted me-1">└</span>}
-                        {cat.name}
+                        {isChild && <span className="text-admin-muted me-1 ms-4">└</span>}
+                        <span className={isChild ? 'text-admin-muted' : ''}>{rowCat.name}</span>
                       </td>
-                      <td className="px-4 py-3 text-admin-muted" dir="rtl">{cat.nameAr || cat.name_ar || '-'}</td>
+                      <td className="px-4 py-3 text-admin-muted" dir="rtl">{rowCat.nameAr || rowCat.name_ar || '-'}</td>
+                      {!isTopLevel && !selectedLevel2 && selectedParent && (
+                        <td className="px-4 py-3 text-admin-muted font-medium">
+                          {isChild ? '-' : categories.filter((c) => c.parentId === rowCat.id).length}
+                        </td>
+                      )}
                       {!isTopLevel && (
                         <td className="px-4 py-3 text-admin-muted text-xs">
-                          {cat.parentId ? categories.find((c) => c.id === cat.parentId)?.name || '-' : '—'}
+                          {rowCat.parentId ? categories.find((c) => c.id === rowCat.parentId)?.name || '-' : '—'}
                         </td>
                       )}
                       {isTopLevel && (
-                        <td className="px-4 py-3 text-admin-muted font-medium">{cat._count?.children || 0}</td>
+                        <td className="px-4 py-3 text-admin-muted font-medium">{rowCat._count?.children || 0}</td>
                       )}
                       <td className="px-4 py-3 text-admin-muted">
-                        {isParent ? getTotalItems(cat) : (cat._count?.books ?? 0)}
+                        {!rowCat.parentId ? getTotalItems(rowCat) : (rowCat._count?.books ?? 0)}
                       </td>
                       <td className="px-4 py-3">
-                        {isBooks ? (
-                          <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                            Active
-                          </span>
+                        {(isBooks && !isChild) ? (
+                          <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
                         ) : (
-                          <button
-                            onClick={() => handleToggleActive(cat)}
-                            className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${
-                              cat.isActive !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                            }`}
-                          >
-                            {cat.isActive !== false ? 'Active' : 'Inactive'}
+                          <button onClick={(e) => { e.stopPropagation(); handleToggleActive(rowCat); }} className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${rowCat.isActive !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            {rowCat.isActive !== false ? 'Active' : 'Inactive'}
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        {isParent ? (
-                          <div className="flex items-center justify-end gap-1">
-                            <Link to={`/categories/${cat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
-                              <FiEdit2 size={15} />
-                            </Link>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-end gap-1">
-                            <Link to={`/categories/${cat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
-                              <FiEdit2 size={15} />
-                            </Link>
-                            <button onClick={() => setDeleteId(cat.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          {hasLevel3 && !isChild && (
+                            <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Expand">
+                              <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                          )}
+                          <Link to={`/categories/${rowCat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
+                            <FiEdit2 size={15} />
+                          </Link>
+                          {rowCat.parentId && (
+                            <button onClick={() => setDeleteId(rowCat.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
                               <FiTrash2 size={15} />
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
+                  );
+
+                  return (
+                    <React.Fragment key={cat.id}>
+                      {renderRow(cat, depth)}
+                      {hasLevel3 && isExpanded && level3Children.map((child) => renderRow(child, 3, true))}
+                    </React.Fragment>
                   );
                 })
               )}

@@ -193,36 +193,66 @@ const Navbar = () => {
                           <Link
                             to={`/books?category=${corner.slug}`}
                             onClick={() => setCornerOpen(false)}
-                            className="text-sm font-semibold text-foreground hover:text-accent transition-colors"
+                            className="text-sm font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block hover:text-accent transition-colors"
                           >
                             {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
                           </Link>
                           <div className="mt-1.5 space-y-0.5">
                             {corner.children.slice(0, 6).map((sub) => (
+                              <div key={sub.id}>
+                                <Link
+                                  to={`/books?category=${sub.slug}`}
+                                  onClick={() => setCornerOpen(false)}
+                                  className="block text-[13px] text-foreground/60 hover:text-accent transition-colors py-0.5"
+                                >
+                                  {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
+                                </Link>
+                                {sub.children && sub.children.length > 0 && (
+                                  <div className="ps-3 space-y-0">
+                                    {sub.children.slice(0, 4).map((l3) => (
+                                      <Link
+                                        key={l3.id}
+                                        to={`/books?category=${l3.slug}`}
+                                        onClick={() => setCornerOpen(false)}
+                                        className="block text-[11.5px] text-foreground/40 hover:text-accent transition-colors py-0.5"
+                                      >
+                                        {language === 'ar' && l3.nameAr ? l3.nameAr : l3.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            <Link
+                              to={`/books?category=${corner.slug}`}
+                              onClick={() => setCornerOpen(false)}
+                              className="block text-[13px] text-accent hover:text-accent-light transition-colors py-0.5 mt-1 font-medium"
+                            >
+                              {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Standalone categories (no children) */}
+                      {corners.filter((c) => !c.children || c.children.length === 0).length > 0 && (
+                        <div>
+                          <span className="text-sm font-semibold text-primary border-b border-primary/20 pb-1.5 mb-2 block">
+                            {language === 'ar' ? 'المزيد' : 'More'}
+                          </span>
+                          <div className="mt-1.5 space-y-0.5">
+                            {corners.filter((c) => !c.children || c.children.length === 0).map((corner) => (
                               <Link
-                                key={sub.id}
-                                to={`/books?category=${sub.slug}`}
+                                key={corner.id}
+                                to={`/books?category=${corner.slug}`}
                                 onClick={() => setCornerOpen(false)}
                                 className="block text-[13px] text-foreground/60 hover:text-accent transition-colors py-0.5"
                               >
-                                {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
+                                {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
                               </Link>
                             ))}
                           </div>
                         </div>
-                      ))}
-                      {/* Corners without children */}
-                      {corners.filter((c) => !c.children || c.children.length === 0).map((corner) => (
-                        <div key={corner.id}>
-                          <Link
-                            to={`/books?category=${corner.slug}`}
-                            onClick={() => setCornerOpen(false)}
-                            className="text-sm font-semibold text-foreground hover:text-accent transition-colors"
-                          >
-                            {language === 'ar' && corner.nameAr ? corner.nameAr : corner.name}
-                          </Link>
-                        </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )}
@@ -259,7 +289,7 @@ const Navbar = () => {
                     onChange={(e) => handleSearchChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
                     placeholder={t('books.search')}
-                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-muted/40 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+                    className="w-48 lg:w-56 px-4 py-2 ps-10 bg-surface border border-gray-300 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
                   />
                   <FiSearch className="absolute start-3.5 w-4 h-4 text-muted/50 pointer-events-none" />
                 </form>
@@ -272,7 +302,7 @@ const Navbar = () => {
                         <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
                       </div>
                     ) : suggestions.length === 0 ? (
-                      <div className="px-4 py-4 text-center text-sm text-muted">
+                      <div className="px-4 py-4 text-center text-sm text-foreground/60">
                         {t('common.noResults')}
                       </div>
                     ) : (
@@ -286,7 +316,7 @@ const Navbar = () => {
                             {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
-                              <p className="text-xs text-muted line-clamp-1">{item.author}</p>
+                              <p className="text-xs text-foreground/60 line-clamp-1">{item.author}</p>
                             </div>
                           </button>
                         ))}
@@ -354,7 +384,7 @@ const Navbar = () => {
                             <p className="text-sm font-semibold text-foreground truncate">
                               {user.firstName} {user.lastName}
                             </p>
-                            <p className="text-xs text-muted truncate">{user.email}</p>
+                            <p className="text-xs text-foreground/60 truncate">{user.email}</p>
                           </div>
                           <div className="py-1">
                             {[
@@ -368,7 +398,7 @@ const Navbar = () => {
                                 onClick={() => setAccountOpen(false)}
                                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-surface-alt transition-colors"
                               >
-                                <item.icon className="w-4 h-4 text-muted" />
+                                <item.icon className="w-4 h-4 text-foreground/60" />
                                 {item.label}
                               </Link>
                             ))}
@@ -392,7 +422,7 @@ const Navbar = () => {
                           >
                             {t('nav.login')}
                           </Link>
-                          <p className="mt-3 text-center text-xs text-muted">
+                          <p className="mt-3 text-center text-xs text-foreground/60">
                             {t('auth.noAccount')}{' '}
                             <Link
                               to="/register"
@@ -443,7 +473,7 @@ const Navbar = () => {
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
             placeholder={t('books.search')}
-            className="w-full px-4 py-2.5 ps-10 bg-surface border border-muted/20 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
+            className="w-full px-4 py-2.5 ps-10 bg-surface border border-gray-300 rounded-full text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent transition-colors"
           />
         </form>
         {showSuggestions && (
@@ -451,7 +481,7 @@ const Navbar = () => {
             {loadingSuggestions ? (
               <div className="px-4 py-4 text-center"><div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" /></div>
             ) : suggestions.length === 0 ? (
-              <div className="px-4 py-3 text-center text-sm text-muted">{t('common.noResults')}</div>
+              <div className="px-4 py-3 text-center text-sm text-foreground/60">{t('common.noResults')}</div>
             ) : (
               <div className="py-1">
                 {suggestions.map((item) => (
@@ -459,7 +489,7 @@ const Navbar = () => {
                     {item.cover ? <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" /> : <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">{item.title?.charAt(0)}</div>}
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
-                      <p className="text-xs text-muted line-clamp-1">{item.author}</p>
+                      <p className="text-xs text-foreground/60 line-clamp-1">{item.author}</p>
                     </div>
                   </button>
                 ))}
@@ -511,7 +541,7 @@ const Navbar = () => {
                         {hasChildren && (
                           <button
                             onClick={() => setMobileExpandedCats((prev) => ({ ...prev, [corner.id]: !prev[corner.id] }))}
-                            className="p-3 text-muted hover:text-foreground transition-colors"
+                            className="p-3 text-foreground/60 hover:text-foreground transition-colors"
                           >
                             <FiChevronDown size={16} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                           </button>
@@ -519,16 +549,45 @@ const Navbar = () => {
                       </div>
                       {hasChildren && isExpanded && (
                         <div className="ps-6 pb-1 space-y-0.5">
-                          {corner.children.map((sub) => (
-                            <Link
-                              key={sub.id}
-                              to={`/books?category=${sub.slug}`}
-                              onClick={() => setMobileOpen(false)}
-                              className="block px-4 py-2 rounded-lg text-sm text-foreground/60 hover:text-accent hover:bg-surface-alt transition-colors"
-                            >
-                              {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
-                            </Link>
-                          ))}
+                          {corner.children.map((sub) => {
+                            const subHasChildren = sub.children && sub.children.length > 0;
+                            const subExpanded = mobileExpandedCats[sub.id];
+                            return (
+                              <div key={sub.id}>
+                                <div className="flex items-center">
+                                  <Link
+                                    to={`/books?category=${sub.slug}`}
+                                    onClick={() => setMobileOpen(false)}
+                                    className="flex-1 block px-4 py-2 rounded-lg text-sm text-foreground/60 hover:text-accent hover:bg-surface-alt transition-colors"
+                                  >
+                                    {language === 'ar' && sub.nameAr ? sub.nameAr : sub.name}
+                                  </Link>
+                                  {subHasChildren && (
+                                    <button
+                                      onClick={() => setMobileExpandedCats((prev) => ({ ...prev, [sub.id]: !prev[sub.id] }))}
+                                      className="p-2 text-foreground/40 hover:text-foreground transition-colors"
+                                    >
+                                      <FiChevronDown size={14} className={`transition-transform ${subExpanded ? 'rotate-180' : ''}`} />
+                                    </button>
+                                  )}
+                                </div>
+                                {subHasChildren && subExpanded && (
+                                  <div className="ps-6 pb-0.5 space-y-0.5">
+                                    {sub.children.map((l3) => (
+                                      <Link
+                                        key={l3.id}
+                                        to={`/books?category=${l3.slug}`}
+                                        onClick={() => setMobileOpen(false)}
+                                        className="block px-4 py-1.5 rounded-lg text-[13px] text-foreground/45 hover:text-accent hover:bg-surface-alt transition-colors"
+                                      >
+                                        {language === 'ar' && l3.nameAr ? l3.nameAr : l3.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -553,7 +612,7 @@ const Navbar = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-foreground truncate">{user.firstName} {user.lastName}</p>
-                          <p className="text-[11px] text-muted truncate">{user.email}</p>
+                          <p className="text-[11px] text-foreground/60 truncate">{user.email}</p>
                         </div>
                       </div>
                       {[

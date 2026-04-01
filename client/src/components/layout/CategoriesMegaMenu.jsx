@@ -55,7 +55,7 @@ const CategoriesMegaMenu = ({ onClose }) => {
                 <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
                   {getName(cat)}
                 </p>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-foreground/60">
                   {cat._count?.books || 0} {t('nav.books').toLowerCase()}
                 </p>
               </div>

@@ -124,20 +124,20 @@ const Contact = () => {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.name')}</label>
-                    <input type="text" name="name" value={form.name} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
+                    <input type="text" name="name" value={form.name} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.emailAddress')}</label>
-                    <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
+                    <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.subject')}</label>
-                  <input type="text" name="subject" value={form.subject} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
+                  <input type="text" name="subject" value={form.subject} onChange={handleChange} required className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">{t('contact.message')}</label>
-                  <textarea name="message" value={form.message} onChange={handleChange} required rows={5} className="w-full px-4 py-2.5 bg-background border border-muted/15 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors resize-none" />
+                  <textarea name="message" value={form.message} onChange={handleChange} required rows={5} className="w-full px-4 py-2.5 bg-background border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-accent transition-colors resize-none" />
                 </div>
                 <button type="submit" disabled={sending} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-60">
                   <FiSend className="w-4 h-4" />

@@ -96,7 +96,7 @@ const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={4}
-        className="w-full bg-surface-alt border border-muted/10 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+        className="w-full bg-surface-alt border border-gray-300 rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-accent resize-none"
         placeholder={t('book.writeReview') + '...'}
       />
 
@@ -112,7 +112,7 @@ const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-5 py-2 text-sm text-muted hover:text-foreground transition-colors"
+            className="px-5 py-2 text-sm text-foreground/60 hover:text-foreground transition-colors"
           >
             {t('common.cancel')}
           </button>
@@ -140,7 +140,7 @@ const ReviewCard = ({ review, isOwn, onEdit, onDelete }) => {
           <div className="flex items-center gap-3 flex-wrap">
             <StarRating rating={review.rating} size={14} />
             <span className="text-sm font-medium text-foreground">{userName}</span>
-            <span className="text-xs text-muted">{dateStr}</span>
+            <span className="text-xs text-foreground/60">{dateStr}</span>
             {review.isVerified && (
               <span className="text-xs text-secondary font-medium flex items-center gap-1">
                 {t('book.verifiedPurchase')}
@@ -278,7 +278,7 @@ const ReviewSection = ({ bookId, book }) => {
         ) : null
       ) : (
         <div className="mb-6 bg-surface border border-muted/10 rounded-xl p-3 sm:p-5 text-center">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-foreground/60">
             <Link to="/login" className="text-accent hover:text-accent-light transition-colors font-medium">
               {t('book.loginToReview')}
             </Link>
@@ -297,7 +297,7 @@ const ReviewSection = ({ bookId, book }) => {
           ))}
         </div>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-muted">{t('book.noReviews')}</p>
+        <p className="text-sm text-foreground/60">{t('book.noReviews')}</p>
       ) : (
         <div className="space-y-3">
           {reviews

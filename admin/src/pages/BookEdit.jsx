@@ -229,6 +229,33 @@ export default function BookEdit() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Category — at top for easy selection */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Corner</label>
+                  <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
+                    <option value="">— Select Corner —</option>
+                    {parentCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{getName(cat)}</option>
+                    ))}
+                  </select>
+                </div>
+                {subCategories.length > 0 && (
+                  <div>
+                    <label className={labelClass}>Sub-category</label>
+                    <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClass}>
+                      <option value="">— All {selectedParent ? getName(selectedParent) : ''} —</option>
+                      {subCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{getName(cat)}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Product Details */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Product Details</h3>
@@ -347,13 +374,14 @@ export default function BookEdit() {
               </div>
             </div>
 
-            {/* Tags */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Tags</h3>
-              <div>
-                <label className={labelClass}>Tags (comma separated)</label>
-                <input name="tags" value={form.tags} onChange={handleChange} placeholder="fiction, bestseller, classic" className={inputClass} />
-              </div>
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button type="submit" disabled={saving} className="px-8 py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
+                {saving ? t('common.loading') : t('common.save')}
+              </button>
+              <Link to="/books" className="px-8 py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+                {t('common.cancel')}
+              </Link>
             </div>
           </div>
 
@@ -415,30 +443,6 @@ export default function BookEdit() {
               <p className="text-[11px] text-admin-muted">Max 3 images</p>
             </div>
 
-            {/* Category */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category</h3>
-              <div>
-                <label className={labelClass}>Corner</label>
-                <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
-                  <option value="">— Select Corner —</option>
-                  {parentCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{getName(cat)}</option>
-                  ))}
-                </select>
-              </div>
-              {subCategories.length > 0 && (
-                <div>
-                  <label className={labelClass}>Sub-category</label>
-                  <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClass}>
-                    <option value="">— All {getName(selectedParent)} —</option>
-                    {subCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{getName(cat)}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
 
             {/* Section Flags */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
@@ -466,14 +470,13 @@ export default function BookEdit() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-              <button type="submit" disabled={saving} className="w-full py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
-                {saving ? t('common.loading') : t('common.save')}
-              </button>
-              <Link to="/books" className="w-full py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
-                {t('common.cancel')}
-              </Link>
+            {/* Tags */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Tags</h3>
+              <div>
+                <label className={labelClass}>Tags (comma separated)</label>
+                <input name="tags" value={form.tags} onChange={handleChange} placeholder="fiction, bestseller, classic" className={inputClass} />
+              </div>
             </div>
           </div>
         </div>

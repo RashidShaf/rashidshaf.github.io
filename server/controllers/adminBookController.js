@@ -18,13 +18,18 @@ exports.list = async (req, res, next) => {
       ];
     }
 
-    // Filter by parent category (includes all sub-categories)
+    // Filter by category (includes sub-categories and grandchildren — 3 levels)
     if (category) {
       const children = await prisma.category.findMany({
         where: { parentId: category },
         select: { id: true },
       });
-      const categoryIds = [category, ...children.map((c) => c.id)];
+      const childIds = children.map((c) => c.id);
+      const grandchildren = await prisma.category.findMany({
+        where: { parentId: { in: childIds } },
+        select: { id: true },
+      });
+      const categoryIds = [category, ...childIds, ...grandchildren.map((c) => c.id)];
       where.categoryId = { in: categoryIds };
     }
 

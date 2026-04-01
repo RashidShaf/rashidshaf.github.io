@@ -21,6 +21,7 @@ export default function CategoryEdit() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isTopLevel, setIsTopLevel] = useState(false);
+  const [backUrl, setBackUrl] = useState('/categories?tab=top');
   const [form, setForm] = useState({ name: '', nameAr: '', parentId: '' });
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function CategoryEdit() {
       try {
         const catRes = await api.get('/admin/categories');
         const allCats = catRes.data.data || catRes.data;
-        setCategories(allCats.filter((c) => !c.parentId && c.id !== id));
+        setCategories(allCats.filter((c) => c.id !== id));
 
         const cat = allCats.find((c) => c.id === id);
         if (cat) {
@@ -39,6 +40,19 @@ export default function CategoryEdit() {
             parentId: cat.parentId || '',
           });
           if (cat.image) setImagePreview(`${API_BASE}/${cat.image}`);
+          // Compute back URL based on hierarchy
+          if (!cat.parentId) {
+            setBackUrl('/categories?tab=top');
+          } else {
+            const parent = allCats.find((c) => c.id === cat.parentId);
+            if (parent && parent.parentId) {
+              // Level 3: go to Level 1 tab with Level 2 sub-tab
+              setBackUrl(`/categories?tab=${parent.parentId}&sub=${cat.parentId}`);
+            } else {
+              // Level 2: go to Level 1 tab
+              setBackUrl(`/categories?tab=${cat.parentId}`);
+            }
+          }
         } else {
           toast.error('Category not found');
           navigate('/categories');
@@ -73,10 +87,16 @@ export default function CategoryEdit() {
 
       await api.put(`/admin/categories/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success('Category updated');
-      if (isTopLevel) {
+      // Navigate back to the correct tab
+      const allCats = categories;
+      const parent = form.parentId ? allCats.find((c) => c.id === form.parentId) : null;
+      if (!form.parentId) {
         navigate('/categories?tab=top');
+      } else if (parent && parent.parentId) {
+        // Level 3: go to Level 1 tab with Level 2 sub-tab
+        navigate(`/categories?tab=${parent.parentId}&sub=${form.parentId}`);
       } else {
-        navigate(`/categories${form.parentId ? `?tab=${form.parentId}` : ''}`);
+        navigate(`/categories?tab=${form.parentId}`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update');
@@ -95,7 +115,7 @@ export default function CategoryEdit() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="flex items-center gap-3 mb-6">
-        <Link to="/categories" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
+        <Link to={backUrl} className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
         <h2 className="text-2xl font-bold text-admin-text">
@@ -106,6 +126,29 @@ export default function CategoryEdit() {
       <form onSubmit={handleSubmit}>
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Parent Category — at top (only for sub-categories) */}
+            {!isTopLevel && (
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
+                <div>
+                  <label className={labelClass}>Select Parent</label>
+                  <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
+                    {categories.filter((c) => !c.parentId).map((topCat) => {
+                      const children = categories.filter((c) => c.parentId === topCat.id && c.id !== id);
+                      return (
+                        <optgroup key={topCat.id} label={topCat.name}>
+                          <option value={topCat.id}>{topCat.name}</option>
+                          {children.map((child) => (
+                            <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -146,27 +189,12 @@ export default function CategoryEdit() {
               <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
             </div>
 
-            {/* Parent selector — only for sub-categories */}
-            {!isTopLevel && (
-              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Options</h3>
-                <div>
-                  <label className={labelClass}>Parent Category</label>
-                  <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} className={inputClass}>
-                    <option value="">— Select Corner —</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
 
             <div className="flex flex-col gap-3">
               <button type="submit" disabled={saving} className="w-full py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
                 {saving ? t('common.loading') : t('common.save')}
               </button>
-              <Link to="/categories" className="w-full py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+              <Link to={backUrl} className="w-full py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
                 {t('common.cancel')}
               </Link>
             </div>

@@ -11,7 +11,7 @@ const ChangePassword = () => {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
 
-  const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
+  const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

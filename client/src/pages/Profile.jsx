@@ -32,7 +32,7 @@ const Profile = () => {
     } finally { setLoading(false); }
   };
 
-  const inputClass = 'w-full px-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
+  const inputClass = 'w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
   const iconInputClass = `${inputClass} ps-11`;
   const labelClass = 'block text-sm font-semibold text-foreground mb-1.5';
 
@@ -65,7 +65,7 @@ const Profile = () => {
                 <label className={labelClass}>{t('auth.email')}</label>
                 <div className="relative">
                   <FiMail className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
-                  <input type="email" value={user?.email || ''} disabled className="w-full ps-11 pe-4 py-3 bg-surface-alt border border-muted/10 rounded-xl text-foreground/40 text-sm cursor-not-allowed" />
+                  <input type="email" value={user?.email || ''} disabled className="w-full ps-11 pe-4 py-3 bg-surface-alt border border-gray-300 rounded-xl text-foreground/40 text-sm cursor-not-allowed" />
                 </div>
               </div>
               <div>

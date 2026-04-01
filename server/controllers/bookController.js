@@ -5,7 +5,7 @@ const { BOOK_SORT_OPTIONS } = require('../config/constants');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search, category, minPrice, maxPrice, author, language, sort } = req.query;
+    const { search, category, minPrice, maxPrice, author, publisher, language, sort } = req.query;
 
     const where = {
       isActive: true,
@@ -27,18 +27,27 @@ exports.list = async (req, res, next) => {
       });
     }
 
-    // Category filter — includes sub-categories
+    // Category filter — includes sub-categories and grandchildren (3 levels)
     if (category) {
       const cat = await prisma.category.findUnique({
         where: { slug: category },
-        include: { children: { select: { id: true } } },
+        include: {
+          children: {
+            select: { id: true, children: { select: { id: true } } },
+          },
+        },
       });
       if (cat) {
-        if (cat.children && cat.children.length > 0) {
-          where.categoryId = { in: [cat.id, ...cat.children.map((c) => c.id)] };
-        } else {
-          where.categoryId = cat.id;
+        const allIds = [cat.id];
+        if (cat.children) {
+          cat.children.forEach(child => {
+            allIds.push(child.id);
+            if (child.children) {
+              child.children.forEach(gc => allIds.push(gc.id));
+            }
+          });
         }
+        where.categoryId = { in: allIds };
       }
     }
 
@@ -52,6 +61,11 @@ exports.list = async (req, res, next) => {
     // Author filter
     if (author) {
       where.author = { contains: author, mode: 'insensitive' };
+    }
+
+    // Publisher filter
+    if (publisher) {
+      where.publisher = { contains: publisher, mode: 'insensitive' };
     }
 
     // Language filter
@@ -143,10 +157,23 @@ const getCornerCategoryIds = async (cornerSlug) => {
   if (!cornerSlug) return null;
   const cat = await prisma.category.findUnique({
     where: { slug: cornerSlug },
-    include: { children: { select: { id: true } } },
+    include: {
+      children: {
+        select: { id: true, children: { select: { id: true } } },
+      },
+    },
   });
   if (!cat) return null;
-  return [cat.id, ...(cat.children || []).map((c) => c.id)];
+  const allIds = [cat.id];
+  if (cat.children) {
+    cat.children.forEach(child => {
+      allIds.push(child.id);
+      if (child.children) {
+        child.children.forEach(gc => allIds.push(gc.id));
+      }
+    });
+  }
+  return allIds;
 };
 
 exports.featured = async (req, res, next) => {

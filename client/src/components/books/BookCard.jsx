@@ -108,7 +108,7 @@ const BookCard = ({ book, comingSoon = false }) => {
           <h3 className="text-[13px] sm:text-[15px] font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
             {title}
           </h3>
-          <p className="text-[11px] sm:text-[13px] text-muted mt-0.5 sm:mt-1 line-clamp-1">{author}</p>
+          <p className="text-[11px] sm:text-[13px] text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>
 
           {!comingSoon && (
             <div className="mt-1.5 sm:mt-2">
@@ -117,7 +117,7 @@ const BookCard = ({ book, comingSoon = false }) => {
                   {formatPrice(book.price)}
                 </span>
                 {book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price) && (
-                  <span className="text-[10px] sm:text-[11px] text-muted line-through">
+                  <span className="text-[10px] sm:text-[11px] text-foreground/60 line-through">
                     {formatPrice(book.compareAtPrice)}
                   </span>
                 )}

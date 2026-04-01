@@ -73,7 +73,10 @@
     "lowStock": "Only {{count}} left in stock",
     "langArabic": "Arabic",
     "langEnglish": "English",
-    "section": "Collection"
+    "section": "Collection",
+    "publisher": "Publisher",
+    "authorPlaceholder": "Search by author...",
+    "publisherPlaceholder": "Search by publisher..."
   },
   "book": {
     "description": "Description",
@@ -112,7 +115,9 @@
     "quantity": "Quantity",
     "freeShipping": "Free Shipping",
     "clearCart": "Clear Cart",
-    "freeShippingThreshold": "Free shipping on orders over QAR {{amount}}"
+    "freeShippingThreshold": "Free shipping on orders over QAR {{amount}}",
+    "codTitle": "Cash on Delivery",
+    "phoneRequired": "Phone number required to complete purchase"
   },
   "checkout": {
     "title": "Checkout",
@@ -130,7 +135,8 @@
     "orderPlaced": "Order Placed!",
     "orderNumber": "Order number",
     "orderSuccess": "Order placed successfully!",
-    "orderFailed": "Failed to place order"
+    "orderFailed": "Failed to place order",
+    "phoneNote": "Required for delivery confirmation"
   },
   "auth": {
     "login": "Login",

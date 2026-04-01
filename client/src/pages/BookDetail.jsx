@@ -78,7 +78,7 @@ const BookDetail = () => {
     return (
       <PageTransition>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <p className="text-xl text-muted">{t('common.noResults')}</p>
+          <p className="text-xl text-foreground/60">{t('common.noResults')}</p>
           <Link to="/books" className="mt-4 inline-flex items-center gap-2 text-accent hover:text-accent-light">
             <FiArrowLeft /> {t('common.back')}
           </Link>
@@ -107,7 +107,7 @@ const BookDetail = () => {
     <PageTransition>
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-4 pb-16">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted mb-6">
+        <nav className="flex items-center gap-2 text-sm text-foreground/60 mb-6">
           <Link to="/" className="hover:text-accent transition-colors">{t('nav.home')}</Link>
           {parentCatName && (
             <>
@@ -192,7 +192,7 @@ const BookDetail = () => {
                     {parentCatName}
                   </Link>
                 )}
-                {parentCatName && catName && <span className="text-muted">/</span>}
+                {parentCatName && catName && <span className="text-foreground/60">/</span>}
                 {catName && (
                   <Link to={`/books?category=${book.category.slug}`} className="text-accent hover:text-accent-light transition-colors">
                     {catName}

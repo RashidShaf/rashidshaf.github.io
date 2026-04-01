@@ -9,7 +9,13 @@ exports.list = async (req, res, next) => {
         _count: { select: { books: true, children: true } },
         children: {
           orderBy: { displayOrder: 'asc' },
-          include: { _count: { select: { books: true } } },
+          include: {
+            _count: { select: { books: true, children: true } },
+            children: {
+              orderBy: { displayOrder: 'asc' },
+              include: { _count: { select: { books: true } } },
+            },
+          },
         },
       },
     });
@@ -25,8 +31,18 @@ exports.create = async (req, res, next) => {
     if (!name || !name.trim()) return res.status(400).json({ message: 'Name is required' });
     if (name.length > 200) return res.status(400).json({ message: 'Name must be under 200 characters' });
     const image = req.file ? `uploads/categories/${req.file.filename}` : null;
+    // Validate parent exists if provided
+    let parentSlug = null;
+    if (parentId) {
+      const parent = await prisma.category.findUnique({ where: { id: parentId }, select: { slug: true } });
+      if (!parent) return res.status(400).json({ message: 'Parent category not found' });
+      parentSlug = parent.slug;
+    }
+    // Generate parent-aware slug to allow same names under different parents
+    let slug = generateSlug(name);
+    if (parentSlug) slug = `${parentSlug}-${slug}`;
     const category = await prisma.category.create({
-      data: { name: name.trim(), nameAr: nameAr?.trim() || null, slug: generateSlug(name), description, descriptionAr, parentId: parentId || null, displayOrder: parseInt(displayOrder) || 0, image },
+      data: { name: name.trim(), nameAr: nameAr?.trim() || null, slug, description, descriptionAr, parentId: parentId || null, displayOrder: parseInt(displayOrder) || 0, image },
     });
     res.status(201).json(category);
   } catch (error) {
@@ -37,9 +53,30 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { name, nameAr, description, descriptionAr, parentId, displayOrder, isActive } = req.body;
-    const data = { nameAr: nameAr || null, description: description || null, descriptionAr: descriptionAr || null, parentId: parentId || null, displayOrder: parseInt(displayOrder) || 0 };
+    const current = await prisma.category.findUnique({ where: { id: req.params.id }, select: { name: true, parentId: true } });
+    if (!current) return res.status(404).json({ message: 'Category not found' });
+
+    // Prevent moving a sub-category to top level
+    if (current.parentId && (parentId === '' || parentId === null)) {
+      return res.status(400).json({ message: 'Cannot move a sub-category to top level' });
+    }
+
+    const data = { nameAr: nameAr || null, description: description || null, descriptionAr: descriptionAr || null, displayOrder: parseInt(displayOrder) || 0 };
+    // Only update parentId if explicitly provided and not empty
+    if (parentId && parentId !== '') data.parentId = parentId;
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;
-    if (name) { data.name = name; data.slug = generateSlug(name); }
+    if (name) data.name = name;
+    // Regenerate slug when name or parent changes
+    if (name || (parentId && parentId !== '')) {
+      const finalName = name || current.name;
+      const finalParentId = data.parentId || current.parentId;
+      let slug = generateSlug(finalName);
+      if (finalParentId) {
+        const parent = await prisma.category.findUnique({ where: { id: finalParentId }, select: { slug: true } });
+        if (parent) slug = `${parent.slug}-${slug}`;
+      }
+      data.slug = slug;
+    }
     if (req.file) { data.image = `uploads/categories/${req.file.filename}`; }
 
     const category = await prisma.category.update({ where: { id: req.params.id }, data });

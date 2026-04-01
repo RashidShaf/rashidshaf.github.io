@@ -53,21 +53,21 @@ const Register = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.firstName')}</label>
                   <div className="relative">
-                    <FiUser className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                    <input type="text" value={form.firstName} onChange={(e) => update('firstName', e.target.value)} required className="w-full ps-10 pe-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" />
+                    <FiUser className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
+                    <input type="text" value={form.firstName} onChange={(e) => update('firstName', e.target.value)} required className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.lastName')}</label>
-                  <input type="text" value={form.lastName} onChange={(e) => update('lastName', e.target.value)} required className="w-full px-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" />
+                  <input type="text" value={form.lastName} onChange={(e) => update('lastName', e.target.value)} required className="w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>
                 <div className="relative">
-                  <FiMail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required className="w-full ps-10 pe-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="email@example.com" />
+                  <FiMail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
+                  <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="email@example.com" />
                 </div>
               </div>
 
@@ -79,9 +79,9 @@ const Register = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.password')}</label>
                 <div className="relative">
-                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => update('password', e.target.value)} required minLength={6} className="w-full ps-10 pe-10 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
+                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
+                  <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => update('password', e.target.value)} required minLength={6} className="w-full ps-10 pe-10 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-foreground/60 hover:text-foreground">
                     {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
                 </div>
@@ -90,8 +90,8 @@ const Register = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.confirmPassword')}</label>
                 <div className="relative">
-                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                  <input type="password" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} required minLength={6} className="w-full ps-10 pe-4 py-3 bg-background border border-muted/20 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="••••••••" />
+                  <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
+                  <input type="password" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} required minLength={6} className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30" placeholder="••••••••" />
                 </div>
               </div>
 
@@ -100,7 +100,7 @@ const Register = () => {
               </button>
             </div>
 
-            <p className="mt-6 text-center text-sm text-muted">
+            <p className="mt-6 text-center text-sm text-foreground/60">
               {t('auth.hasAccount')}{' '}
               <Link to="/login" className="text-accent font-medium hover:underline">{t('nav.login')}</Link>
             </p>
