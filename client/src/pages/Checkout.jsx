@@ -41,7 +41,7 @@ const Checkout = () => {
   const total = getTotal();
   const shipping = total >= shippingConfig.threshold ? 0 : shippingConfig.cost;
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
-  const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
+  const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
 
   if (items.length === 0 && !success) {
     navigate('/cart');
@@ -128,11 +128,12 @@ const Checkout = () => {
                     <div>
                       <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.phone')}</label>
                       <PhoneInput value={form.shippingPhone} onChange={(val) => update('shippingPhone', val)} required />
+                      <p className="text-[11px] text-foreground/40 mt-1">{t('checkout.phoneNote')}</p>
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.city')}</label>
-                    <input type="text" value={form.shippingCity} onChange={(e) => update('shippingCity', e.target.value)} required className="w-full px-4 py-3 bg-background border border-muted/15 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors" />
+                    <input type="text" value={form.shippingCity} onChange={(e) => update('shippingCity', e.target.value)} required className="w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1.5">{t('checkout.address')}</label>
@@ -151,19 +152,6 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Payment */}
-              <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-8">
-                <h2 className="text-lg font-bold text-foreground mb-4">{t('checkout.paymentMethod')}</h2>
-                <div className="flex items-center gap-4 p-4 bg-accent/5 border border-accent/20 rounded-xl">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-white font-bold text-xs">
-                    COD
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground">{t('checkout.cod')}</p>
-                    <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Right — Summary */}
@@ -191,7 +179,7 @@ const Checkout = () => {
                   })}
                 </div>
 
-                <div className="border-t border-muted/10 pt-4 space-y-2.5 text-sm">
+                <div className="border-t border-gray-300 pt-4 space-y-2.5 text-sm">
                   <div className="flex justify-between">
                     <span className="text-foreground/50">{t('cart.subtotal')}</span>
                     <span className="font-medium text-foreground">{formatPrice(total)}</span>
@@ -200,16 +188,27 @@ const Checkout = () => {
                     <span className="text-foreground/50">{t('cart.shipping')}</span>
                     <span className="font-medium text-foreground">{shipping === 0 ? t('cart.freeShipping') : formatPrice(shipping)}</span>
                   </div>
-                  <div className="border-t border-muted/10 pt-3 flex justify-between">
+                  <div className="border-t border-gray-300 pt-3 flex justify-between">
                     <span className="font-bold text-foreground">{t('cart.total')}</span>
                     <span className="font-extrabold text-xl text-foreground">{formatPrice(total + shipping)}</span>
+                  </div>
+                </div>
+
+                {/* COD Info */}
+                <div className="flex items-center gap-3 p-3 bg-accent/5 border border-gray-300 rounded-xl mt-4">
+                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                    COD
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
+                    <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-6 py-3.5 bg-accent text-white font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3.5 bg-accent text-white font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <FiShoppingBag size={18} />
                   {loading ? t('common.loading') : t('checkout.placeOrder')}

@@ -32,7 +32,7 @@ const Cart = () => {
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <FiShoppingBag className="w-16 h-16 text-muted/30 mx-auto mb-6" />
           <h1 className="text-2xl font-display font-bold text-foreground mb-2">{t('cart.empty')}</h1>
-          <p className="text-muted mb-8">{t('home.heroSubtitle')}</p>
+          <p className="text-foreground/60 mb-8">{t('home.heroSubtitle')}</p>
           <Link to="/books" className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white font-medium rounded-xl hover:bg-accent-light transition-colors">
             {t('cart.continueShopping')} <FiArrowRight />
           </Link>
@@ -81,14 +81,14 @@ const Cart = () => {
                     <Link to={`/books/${item.book.slug}`} className="text-sm font-semibold text-foreground hover:text-accent transition-colors line-clamp-1">
                       {title}
                     </Link>
-                    <p className="text-xs text-muted mt-0.5">{author}</p>
+                    <p className="text-xs text-foreground/60 mt-0.5">{author}</p>
 
                     <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                       {/* Quantity */}
                       <div className="flex items-center border border-muted/20 rounded-lg">
                         <button
                           onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center text-muted hover:text-foreground transition-colors"
+                          className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
                         >
                           <FiMinus size={14} />
                         </button>
@@ -97,7 +97,7 @@ const Cart = () => {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-muted hover:text-foreground transition-colors"
+                          className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
                         >
                           <FiPlus size={14} />
                         </button>
@@ -110,7 +110,7 @@ const Cart = () => {
                         </span>
                         <button
                           onClick={() => removeItem(item.bookId)}
-                          className="p-1.5 text-muted hover:text-red-500 transition-colors"
+                          className="p-1.5 text-foreground/60 hover:text-red-500 transition-colors"
                         >
                           <FiTrash2 size={16} />
                         </button>
@@ -122,7 +122,7 @@ const Cart = () => {
             })}
 
             <div className="flex items-center justify-between pt-4">
-              <Link to="/books" className="inline-flex items-center gap-2 px-5 py-2.5 border border-muted/20 text-foreground text-sm font-medium rounded-xl hover:border-accent hover:text-accent transition-colors">
+              <Link to="/books" className="inline-flex items-center gap-2 px-5 py-2.5 border border-accent text-accent text-sm font-medium rounded-xl hover:bg-accent hover:text-white transition-colors">
                 {t('cart.continueShopping')}
               </Link>
               <button onClick={clearCart} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-red-500 border border-red-200 rounded-xl hover:bg-red-50 transition-colors">
@@ -139,37 +139,44 @@ const Cart = () => {
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted">{t('cart.subtotal')}</span>
+                  <span className="text-foreground/70">{t('cart.subtotal')}</span>
                   <span className="font-medium text-foreground">{formatPrice(total)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">{t('cart.shipping')}</span>
+                  <span className="text-foreground/70">{t('cart.shipping')}</span>
                   <span className="font-medium text-foreground">
                     {shipping === 0 ? t('cart.freeShipping') : formatPrice(shipping)}
                   </span>
                 </div>
-                <div className="border-t border-muted/10 pt-3 flex justify-between">
+                <div className="border-t border-gray-300 pt-3 flex justify-between">
                   <span className="font-semibold text-foreground">{t('cart.total')}</span>
                   <span className="font-bold text-lg text-foreground">{formatPrice(total + shipping)}</span>
                 </div>
               </div>
 
-              {shipping > 0 && (
-                <p className="text-xs text-muted mt-3">
-                  {t('cart.freeShippingThreshold', { amount: shippingConfig.threshold })}
-                </p>
-              )}
+              {/* COD Info */}
+              <div className="flex items-center gap-3 p-3 bg-accent/5 border border-gray-300 rounded-xl mt-4">
+                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                  COD
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
+                  <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
+                </div>
+              </div>
 
               <Link
                 to="/checkout"
-                className="block w-full mt-6 py-3 bg-accent text-white text-center font-semibold rounded-xl hover:bg-accent-light transition-colors"
+                className="block w-full mt-4 py-3 bg-accent text-white text-center font-semibold rounded-xl hover:bg-accent-light transition-colors"
               >
                 {t('cart.checkout')}
               </Link>
 
-              <p className="text-xs text-muted text-center mt-3">
-                {t('checkout.codNote')}
-              </p>
+              {shipping > 0 && (
+                <p className="text-xs text-foreground/60 text-center mt-3">
+                  {t('cart.freeShippingThreshold', { amount: shippingConfig.threshold })}
+                </p>
+              )}
             </div>
           </div>
         </div>
