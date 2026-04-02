@@ -14,7 +14,6 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [restockId, setRestockId] = useState(null);
   const [restockQty, setRestockQty] = useState('');
-  const [restockNote, setRestockNote] = useState('');
   const [restocking, setRestocking] = useState(false);
   const [summary, setSummary] = useState(null);
   const [invSearch, setInvSearch] = useState('');
@@ -57,17 +56,25 @@ export default function Inventory() {
     try {
       await api.post(`/admin/inventory/${bookId}/restock`, {
         quantity: qty,
-        note: restockNote,
       });
       toast.success('Restocked successfully');
       setRestockId(null);
       setRestockQty('');
-      setRestockNote('');
       fetchInventory();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to restock');
     } finally {
       setRestocking(false);
+    }
+  };
+
+  const handleToggleOutOfStock = async (bookId, currentValue) => {
+    try {
+      await api.put(`/admin/books/${bookId}`, { isOutOfStock: !currentValue });
+      toast.success(currentValue ? 'Marked as In Stock' : 'Marked as Out of Stock');
+      fetchInventory();
+    } catch (err) {
+      toast.error('Failed to update');
     }
   };
 
@@ -163,6 +170,7 @@ export default function Inventory() {
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Value</th>
                 <th className="text-left px-4 py-3 font-medium text-admin-muted">Sales</th>
+                <th className="text-left px-4 py-3 font-medium text-admin-muted">Availability</th>
                 <th className="text-right px-4 py-3 font-medium text-admin-muted">
                   {t('common.actions')}
                 </th>
@@ -172,14 +180,14 @@ export default function Inventory() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={5} className="px-4 py-4">
+                    <td colSpan={6} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : inventory.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={6} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -220,6 +228,16 @@ export default function Inventory() {
                       <td className="px-4 py-3 text-admin-muted">
                         {item.salesCount ?? item.totalSold ?? '-'}
                       </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleToggleOutOfStock(bookId, item.isOutOfStock)}
+                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-pointer transition-colors ${
+                            item.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {item.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                        </button>
+                      </td>
                       <td className="px-4 py-3 text-right">
                         {restockId === bookId ? (
                           <div className="flex items-center gap-3 justify-end">
@@ -235,13 +253,6 @@ export default function Inventory() {
                                 autoFocus
                               />
                             </div>
-                            <input
-                              type="text"
-                              value={restockNote}
-                              onChange={(e) => setRestockNote(e.target.value)}
-                              placeholder="Note (optional)"
-                              className="w-36 px-3 py-2 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-                            />
                             <button
                               onClick={() => handleRestock(bookId)}
                               disabled={restocking || !restockQty}
@@ -250,7 +261,7 @@ export default function Inventory() {
                               {restocking ? '...' : 'Restock'}
                             </button>
                             <button
-                              onClick={() => { setRestockId(null); setRestockQty(''); setRestockNote(''); }}
+                              onClick={() => { setRestockId(null); setRestockQty(''); }}
                               className="p-1.5 text-admin-muted hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                             >
                               <FiX size={16} />

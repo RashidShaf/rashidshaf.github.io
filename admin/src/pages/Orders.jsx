@@ -169,7 +169,10 @@ export default function Orders() {
                       {order.orderNumber}
                     </td>
                     <td className="px-4 py-3 text-admin-muted">
-                      {order.user?.firstName} {order.user?.lastName}
+                      {order.user
+                        ? `${order.user.firstName} ${order.user.lastName}`
+                        : <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Guest</span>
+                      }
                     </td>
                     <td className="px-4 py-3 text-admin-muted text-xs">
                       {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}

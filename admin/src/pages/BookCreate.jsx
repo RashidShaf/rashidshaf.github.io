@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { FiArrowLeft, FiUpload, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -18,14 +18,16 @@ export default function BookCreate() {
   const [coverPreview, setCoverPreview] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [expandedSubs, setExpandedSubs] = useState({});
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
-    stock: '0', parentCategoryId: '', categoryId: '', tags: '',
+    stock: '0', parentCategoryId: '', tags: '',
     brand: '', material: '', color: '', dimensions: '', ageRange: '',
-    isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false,
+    isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false,
   });
 
   // Fetch all categories (with children)
@@ -48,7 +50,9 @@ export default function BookCreate() {
   }, [searchParams, allCategories]);
 
   const parentCategories = useMemo(() => allCategories.filter((c) => !c.parentId), [allCategories]);
-  const subCategories = useMemo(() => {
+
+  // Level 2 categories for selected corner
+  const cornerChildren = useMemo(() => {
     if (!form.parentCategoryId) return [];
     return allCategories.filter((c) => c.parentId === form.parentCategoryId);
   }, [form.parentCategoryId, allCategories]);
@@ -65,11 +69,28 @@ export default function BookCreate() {
     if (name === 'isComingSoon' && checked) {
       setForm((prev) => ({ ...prev, isComingSoon: true, isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false }));
     } else if (name === 'parentCategoryId') {
-      setForm((prev) => ({ ...prev, parentCategoryId: value, categoryId: '' }));
+      setForm((prev) => ({ ...prev, parentCategoryId: value }));
+      setSelectedCategoryIds([]);
+      setExpandedSubs({});
     } else {
       setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
   };
+
+  const toggleCategorySelect = (catId) => {
+    const isSelecting = !selectedCategoryIds.includes(catId);
+    setSelectedCategoryIds((prev) =>
+      isSelecting ? [...prev, catId] : prev.filter((id) => id !== catId)
+    );
+    // Auto-expand if checking a Level 2 that has Level 3 children
+    if (isSelecting) {
+      const hasChildren = allCategories.some((c) => c.parentId === catId);
+      if (hasChildren) setExpandedSubs((prev) => ({ ...prev, [catId]: true }));
+    }
+  };
+
+  // Compute primary category ID (first selected or corner)
+  const primaryCategoryId = selectedCategoryIds[0] || '';
 
   const handleAdditionalImages = (e) => {
     const files = Array.from(e.target.files);
@@ -99,13 +120,17 @@ export default function BookCreate() {
     setSaving(true);
     try {
       const payload = { ...form };
-      // Use sub-category if selected, otherwise parent
-      if (payload.categoryId) {
-        // keep it
-      } else if (payload.parentCategoryId) {
-        payload.categoryId = payload.parentCategoryId;
-      }
       delete payload.parentCategoryId;
+
+      // First selected = primary, rest = additional
+      if (selectedCategoryIds.length > 0) {
+        payload.categoryId = selectedCategoryIds[0];
+        if (selectedCategoryIds.length > 1) {
+          payload.additionalCategoryIds = selectedCategoryIds.slice(1);
+        }
+      } else if (form.parentCategoryId) {
+        payload.categoryId = form.parentCategoryId;
+      }
 
       if (!payload.categoryId) delete payload.categoryId;
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
@@ -160,31 +185,71 @@ export default function BookCreate() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Category — at top for easy selection */}
+            {/* Category — Corner dropdown + checkbox tree */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Corner *</label>
-                  <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
-                    <option value="">— Select Corner —</option>
-                    {parentCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{getName(cat)}</option>
-                    ))}
-                  </select>
-                </div>
-                {subCategories.length > 0 && (
-                  <div>
-                    <label className={labelClass}>Sub-category</label>
-                    <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClass}>
-                      <option value="">— All {selectedParent ? getName(selectedParent) : ''} —</option>
-                      {subCategories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{getName(cat)}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+              <div>
+                <label className={labelClass}>Corner *</label>
+                <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
+                  <option value="">— Select Corner —</option>
+                  {parentCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{getName(cat)}</option>
+                  ))}
+                </select>
               </div>
+
+              {cornerChildren.length > 0 && (
+                <div>
+                  <label className={labelClass}>Select Categories</label>
+                  <div className="border border-admin-input-border rounded-lg max-h-64 overflow-y-auto">
+                    {cornerChildren.map((sub) => {
+                      const subChildren = allCategories.filter((c) => c.parentId === sub.id);
+                      const hasChildren = subChildren.length > 0;
+                      const isExpanded = expandedSubs[sub.id];
+                      const isChecked = selectedCategoryIds.includes(sub.id);
+                      return (
+                        <div key={sub.id} className="border-b border-admin-border last:border-0">
+                          <div className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleCategorySelect(sub.id)}
+                              className="w-4 h-4 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                            />
+                            <span className="flex-1 text-sm text-admin-text font-medium">{getName(sub)}</span>
+                            {hasChildren && (
+                              <button type="button" onClick={() => setExpandedSubs((prev) => ({ ...prev, [sub.id]: !prev[sub.id] }))} className="p-1 text-admin-muted hover:text-admin-text">
+                                <FiChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+                            )}
+                          </div>
+                          {hasChildren && isExpanded && (
+                            <div className="ps-8 pb-2 space-y-0.5">
+                              {subChildren.map((l3) => {
+                                const l3Checked = selectedCategoryIds.includes(l3.id);
+                                return (
+                                  <div key={l3.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded">
+                                    <input
+                                      type="checkbox"
+                                      checked={l3Checked}
+                                      onChange={() => toggleCategorySelect(l3.id)}
+                                      className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                                    />
+                                    <span className="text-sm text-admin-muted">{getName(l3)}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {selectedCategoryIds.length > 0 && (
+                    <p className="text-xs text-admin-muted mt-2">{selectedCategoryIds.length} {selectedCategoryIds.length === 1 ? 'category' : 'categories'} selected</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Product Details */}
@@ -366,6 +431,14 @@ export default function BookCreate() {
               <p className="text-[11px] text-admin-muted">Upload multiple product images</p>
             </div>
 
+
+            {/* Out of Stock */}
+            <div className={`bg-admin-card rounded-xl border ${form.isOutOfStock ? 'border-red-300' : 'border-admin-border'} p-6 shadow-sm`}>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="isOutOfStock" checked={form.isOutOfStock} onChange={handleChange} className="w-4 h-4 rounded border-red-300 text-red-500 focus:ring-red-400" />
+                <span className={`text-sm font-semibold ${form.isOutOfStock ? 'text-red-600' : 'text-admin-text'}`}>Out of Stock</span>
+              </label>
+            </div>
 
             {/* Section Flags */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">

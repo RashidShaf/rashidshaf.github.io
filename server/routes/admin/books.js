@@ -34,6 +34,8 @@ const createBookSchema = Joi.object({
   isNewArrival: Joi.any(),
   isTrending: Joi.any(),
   isComingSoon: Joi.any(),
+  isOutOfStock: Joi.any(),
+  additionalCategoryIds: Joi.array().items(Joi.string()).allow(null),
 });
 
 const updateBookSchema = Joi.object({
@@ -63,7 +65,9 @@ const updateBookSchema = Joi.object({
   isNewArrival: Joi.any(),
   isTrending: Joi.any(),
   isComingSoon: Joi.any(),
+  isOutOfStock: Joi.any(),
   isActive: Joi.any(),
+  additionalCategoryIds: Joi.array().items(Joi.string()).allow(null),
 }).min(1);
 
 router.get('/', [auth, admin], adminBookController.list);

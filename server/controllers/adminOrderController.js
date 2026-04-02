@@ -11,6 +11,8 @@ exports.list = async (req, res, next) => {
     if (search) {
       where.OR = [
         { orderNumber: { contains: search, mode: 'insensitive' } },
+        { shippingPhone: { contains: search, mode: 'insensitive' } },
+        { shippingName: { contains: search, mode: 'insensitive' } },
         { user: { firstName: { contains: search, mode: 'insensitive' } } },
         { user: { lastName: { contains: search, mode: 'insensitive' } } },
         { user: { email: { contains: search, mode: 'insensitive' } } },

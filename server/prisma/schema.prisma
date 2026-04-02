@@ -88,9 +88,10 @@ model Category {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryHierarchy")
-  books    Book[]
+  parent         Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children       Category[]      @relation("CategoryHierarchy")
+  books          Book[]
+  bookCategories BookCategory[]
 
   @@map("categories")
 }
@@ -140,6 +141,7 @@ model Book {
   isNewArrival  Boolean    @default(false) @map("is_new_arrival")
   isTrending    Boolean    @default(false) @map("is_trending")
   isComingSoon  Boolean    @default(false) @map("is_coming_soon")
+  isOutOfStock  Boolean    @default(false) @map("is_out_of_stock")
   isActive      Boolean    @default(true) @map("is_active")
   viewCount     Int        @default(0) @map("view_count")
   salesCount    Int        @default(0) @map("sales_count")
@@ -147,6 +149,7 @@ model Book {
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
   category        Category?        @relation(fields: [categoryId], references: [id])
+  bookCategories  BookCategory[]
   reviews         Review[]
   cartItems       CartItem[]
   orderItems      OrderItem[]
@@ -160,6 +163,23 @@ model Book {
   @@index([isActive])
   @@index([salesCount])
   @@map("books")
+}
+
+// ==================== BOOK CATEGORIES (Many-to-Many) ====================
+
+model BookCategory {
+  id         String   @id @default(uuid())
+  bookId     String   @map("book_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  book     Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, categoryId])
+  @@index([bookId])
+  @@index([categoryId])
+  @@map("book_categories")
 }
 
 // ==================== REVIEWS ====================
@@ -206,7 +226,7 @@ model CartItem {
 model Order {
   id              String      @id @default(uuid())
   orderNumber     String      @unique @map("order_number")
-  userId          String      @map("user_id")
+  userId          String?     @map("user_id")
   status          OrderStatus @default(PENDING)
   subtotal        Decimal     @db.Decimal(10, 2)
   shippingCost    Decimal     @default(0) @map("shipping_cost") @db.Decimal(10, 2)
@@ -228,7 +248,7 @@ model Order {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user  User        @relation(fields: [userId], references: [id])
+  user  User?       @relation(fields: [userId], references: [id])
   items OrderItem[]
 
   @@index([userId])

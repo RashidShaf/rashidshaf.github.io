@@ -94,6 +94,16 @@ export default function Books() {
     }
   };
 
+  const handleToggleOutOfStock = async (book) => {
+    try {
+      await api.put(`/admin/books/${book.id}`, { isOutOfStock: !book.isOutOfStock });
+      toast.success(book.isOutOfStock ? 'Marked as In Stock' : 'Marked as Out of Stock');
+      fetchBooks();
+    } catch (err) {
+      toast.error('Failed to update');
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       {/* Stat Cards */}
@@ -189,7 +199,20 @@ export default function Books() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-admin-muted text-xs">
-                      {book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : '—'}
+                      <div className="flex items-center gap-1.5">
+                        <span>{book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : '—'}</span>
+                        {(() => {
+                          const extra = (book.bookCategories || []).filter((bc) => bc.category.id !== book.categoryId);
+                          return extra.length > 0 ? (
+                            <span
+                              className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full bg-admin-accent/10 text-admin-accent text-[10px] font-semibold leading-none cursor-default"
+                              title={extra.map((bc) => language === 'ar' && bc.category.nameAr ? bc.category.nameAr : bc.category.name).join(', ')}
+                            >
+                              +{extra.length}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
                     </td>
                     <td className="px-4 py-3 font-medium text-admin-text">QAR {parseFloat(book.price).toFixed(2)}</td>
                     <td className="px-4 py-3">
@@ -206,7 +229,15 @@ export default function Books() {
                       </button>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleToggleOutOfStock(book)}
+                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-pointer transition-colors ${
+                            book.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {book.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                        </button>
                         <Link to={`/books/${book.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} /></Link>
                         <button onClick={() => setDeleteId(book.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"><FiTrash2 size={15} /></button>
                       </div>

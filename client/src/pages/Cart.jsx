@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
+import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
@@ -10,7 +10,7 @@ import api from '../utils/api';
 
 const Cart = () => {
   const { t, language } = useLanguageStore();
-  const { items, updateQuantity, removeItem, getTotal, clearCart } = useCartStore();
+  const { items, updateQuantity, removeItem, getTotal, clearCart, paymentMethod, setPaymentMethod } = useCartStore();
   const [shippingConfig, setShippingConfig] = useState({ threshold: 100, cost: 15 });
 
   useEffect(() => {
@@ -154,15 +154,60 @@ const Cart = () => {
                 </div>
               </div>
 
-              {/* COD Info */}
-              <div className="flex items-center gap-3 p-3 bg-accent/5 border border-gray-300 rounded-xl mt-4">
-                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                  COD
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
-                  <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
-                </div>
+              {/* Payment Method */}
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-semibold text-foreground mb-2">{t('checkout.paymentMethod')}</p>
+
+                {/* COD Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('COD')}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
+                    paymentMethod === 'COD'
+                      ? 'border-accent bg-accent/5'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    paymentMethod === 'COD' ? 'border-accent' : 'border-gray-300'
+                  }`}>
+                    {paymentMethod === 'COD' && <div className="w-2 h-2 rounded-full bg-accent" />}
+                  </div>
+                  <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+                    COD
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
+                    <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
+                  </div>
+                </button>
+
+                {/* Online Payment Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('ONLINE')}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
+                    paymentMethod === 'ONLINE'
+                      ? 'border-accent bg-accent/5'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    paymentMethod === 'ONLINE' ? 'border-accent' : 'border-gray-300'
+                  }`}>
+                    {paymentMethod === 'ONLINE' && <div className="w-2 h-2 rounded-full bg-accent" />}
+                  </div>
+                  <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white flex-shrink-0">
+                    <FiCreditCard size={16} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">{t('cart.onlinePayment')}</p>
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-600 rounded">{t('cart.comingSoon')}</span>
+                    </div>
+                    <p className="text-xs text-foreground/50">{t('cart.onlinePaymentDesc')}</p>
+                  </div>
+                </button>
               </div>
 
               <Link

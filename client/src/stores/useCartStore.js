@@ -5,6 +5,9 @@ const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      paymentMethod: 'COD',
+
+      setPaymentMethod: (method) => set({ paymentMethod: method }),
 
       addItem: (book, quantity = 1) => {
         const { items } = get();

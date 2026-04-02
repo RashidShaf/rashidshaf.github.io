@@ -18,7 +18,7 @@ const BookCard = ({ book, comingSoon = false }) => {
   const inWishlist = wishlistItems.includes(book.id);
 
   const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
-  const isOutOfStock = !comingSoon && book.stock === 0;
+  const isOutOfStock = !comingSoon && book.isOutOfStock;
 
   return (
     <motion.div

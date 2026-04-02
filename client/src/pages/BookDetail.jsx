@@ -201,6 +201,21 @@ const BookDetail = () => {
               </div>
             )}
 
+            {/* Additional Categories Tags */}
+            {book.bookCategories && book.bookCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {book.bookCategories.map((bc) => (
+                  <Link
+                    key={bc.category.id}
+                    to={`/books?category=${bc.category.slug}`}
+                    className="px-2 py-0.5 text-[10px] font-medium bg-accent/10 text-accent rounded-full hover:bg-accent/20 transition-colors"
+                  >
+                    {language === 'ar' && bc.category.nameAr ? bc.category.nameAr : bc.category.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {/* Title */}
             <h1 className="text-xl sm:text-3xl lg:text-4xl 3xl:text-6xl font-display font-bold text-foreground mt-2 leading-tight">
               {title}
@@ -243,7 +258,7 @@ const BookDetail = () => {
               <div className="flex items-center border border-muted/20 rounded-lg">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-xs sm:text-sm">-</button>
                 <span className="w-8 h-7 sm:w-10 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-muted/20">{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(book.stock, quantity + 1))} disabled={quantity >= book.stock} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">+</button>
+                <button onClick={() => setQuantity(quantity + 1)} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-xs sm:text-sm">+</button>
               </div>
 
               <motion.button
@@ -267,16 +282,16 @@ const BookDetail = () => {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                disabled={book.stock === 0}
+                disabled={book.isOutOfStock}
                 className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-[#A39666] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart size={14} />
                 {t('common.addToCart')}
               </motion.button>
 
-              {book.stock > 0 ? (
+              {!book.isOutOfStock ? (
                 <Link
-                  to="/checkout"
+                  to="/cart"
                   onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
                   className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors"
                   style={{ backgroundColor: '#7A1B4E', color: 'white' }}
@@ -295,14 +310,9 @@ const BookDetail = () => {
             </div>
 
             {/* Stock info */}
-            {(
-              <p className={`text-xs sm:text-sm mt-2 sm:mt-3 font-medium ${book.stock > 5 ? 'text-secondary' : book.stock > 0 ? 'text-red-500' : 'text-red-500'}`}>
-                {book.stock > 5
-                  ? `${t('books.inStock')}`
-                  : book.stock > 0
-                  ? t('books.lowStock', { count: book.stock })
-                  : t('books.outOfStock')
-                }
+            {book.isOutOfStock && (
+              <p className="text-xs sm:text-sm mt-2 sm:mt-3 font-medium text-red-500">
+                {t('books.outOfStock')}
               </p>
             )}
 

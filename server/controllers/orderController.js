@@ -4,7 +4,7 @@ const { generateOrderNumber } = require('../utils/helpers');
 
 exports.create = async (req, res, next) => {
   try {
-    const { shippingName, shippingPhone, shippingAddress, shippingCity, shippingNotes, cartItems: clientCart } = req.body;
+    const { shippingName, shippingPhone, shippingAddress, shippingCity, shippingNotes, paymentMethod, cartItems: clientCart } = req.body;
 
     // Accept cart items from request body (local cart)
     if (!clientCart || clientCart.length === 0) {
@@ -23,9 +23,9 @@ exports.create = async (req, res, next) => {
       if (!book) {
         return res.status(404).json({ message: `Book not found: ${item.bookId}` });
       }
-      if (book.stock < item.quantity) {
+      if (book.isOutOfStock) {
         return res.status(400).json({
-          message: `Not enough stock for "${book.title}". Available: ${book.stock}`,
+          message: `"${book.title}" is currently out of stock`,
         });
       }
       validItems.push({ book, quantity: item.quantity });
@@ -58,15 +58,26 @@ exports.create = async (req, res, next) => {
     });
     const orderNumber = generateOrderNumber(orderCount);
 
+    // Resolve userId: logged-in user, or match guest phone to existing account
+    let userId = req.user?.id || null;
+    if (!userId && shippingPhone) {
+      const matchedUser = await prisma.user.findFirst({
+        where: { phone: shippingPhone, isBlocked: false },
+        select: { id: true },
+      });
+      if (matchedUser) userId = matchedUser.id;
+    }
+
     // Create order in transaction
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
-          userId: req.user.id,
+          userId,
           subtotal,
           shippingCost,
           total,
+          paymentMethod: paymentMethod || 'COD',
           shippingName,
           shippingPhone,
           shippingAddress,
@@ -128,6 +139,29 @@ exports.create = async (req, res, next) => {
   }
 };
 
+exports.track = async (req, res, next) => {
+  try {
+    const { phone } = req.query;
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { shippingPhone: phone },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        items: {
+          include: { book: { select: { id: true, slug: true, coverImage: true, titleAr: true, authorAr: true } } },
+        },
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
@@ -164,7 +198,7 @@ exports.getById = async (req, res, next) => {
       },
     });
 
-    if (!order || order.userId !== req.user.id) {
+    if (!order || (order.userId && order.userId !== req.user.id)) {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
@@ -181,7 +215,7 @@ exports.cancel = async (req, res, next) => {
       include: { items: { include: { book: true } } },
     });
 
-    if (!order || order.userId !== req.user.id) {
+    if (!order || (order.userId && order.userId !== req.user.id)) {
       return res.status(404).json({ message: 'Order not found.' });
     }
 

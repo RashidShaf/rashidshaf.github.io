@@ -21,6 +21,7 @@ import OrderHistory from './pages/OrderHistory';
 import OrderDetail from './pages/OrderDetail';
 import Wishlist from './pages/Wishlist';
 import ChangePassword from './pages/ChangePassword';
+import TrackOrder from './pages/TrackOrder';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
@@ -40,14 +41,7 @@ const AnimatedRoutes = () => {
           <Route path="books" element={<Books />} />
           <Route path="books/:slug" element={<BookDetail />} />
           <Route path="cart" element={<Cart />} />
-          <Route
-            path="checkout"
-            element={
-              <PrivateRoute>
-                <Checkout />
-              </PrivateRoute>
-            }
-          />
+          <Route path="checkout" element={<Checkout />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route
@@ -90,6 +84,7 @@ const AnimatedRoutes = () => {
               </PrivateRoute>
             }
           />
+          <Route path="track-order" element={<TrackOrder />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />

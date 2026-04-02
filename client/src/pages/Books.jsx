@@ -53,6 +53,7 @@ const Books = () => {
 
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
+  const selectedCategories = category ? category.split(',').filter(Boolean) : [];
   const sort = searchParams.get('sort') || 'newest';
   const bookLang = searchParams.get('language') || '';
   const section = searchParams.get('section') || '';
@@ -68,34 +69,41 @@ const Books = () => {
     setSearchParams(params);
   };
 
+  const toggleCategory = (slug) => {
+    const current = selectedCategories.includes(slug)
+      ? selectedCategories.filter((s) => s !== slug)
+      : [...selectedCategories, slug];
+    updateParam('category', current.join(','));
+  };
+
+  const isCatSelected = (slug) => selectedCategories.includes(slug);
+
   useEffect(() => {
     api.get('/categories').then((res) => {
       const cats = res.data;
       setCategories(cats);
-      // Auto-expand the category matching the URL param
-      if (category) {
-        const parent = cats.find((c) => c.slug === category);
-        if (parent) {
-          setExpandedCats((prev) => ({ ...prev, [parent.id]: true }));
-        } else {
-          // Check Level 2
-          const parentOfChild = cats.find((c) => c.children?.some((s) => s.slug === category));
-          if (parentOfChild) {
-            setExpandedCats((prev) => ({ ...prev, [parentOfChild.id]: true }));
-          } else {
-            // Check Level 3: find the Level 2 parent and its Level 1 grandparent
-            for (const topCat of cats) {
-              if (!topCat.children) continue;
-              for (const sub of topCat.children) {
-                if (sub.children?.some((l3) => l3.slug === category)) {
-                  setExpandedCats((prev) => ({ ...prev, [topCat.id]: true, [sub.id]: true }));
-                  break;
-                }
+      // Auto-expand categories matching URL params
+      const slugs = category ? category.split(',').filter(Boolean) : [];
+      slugs.forEach((slug) => {
+        for (const topCat of cats) {
+          if (topCat.slug === slug) {
+            setExpandedCats((prev) => ({ ...prev, [topCat.id]: true }));
+            return;
+          }
+          if (topCat.children) {
+            for (const sub of topCat.children) {
+              if (sub.slug === slug) {
+                setExpandedCats((prev) => ({ ...prev, [topCat.id]: true }));
+                return;
+              }
+              if (sub.children?.some((l3) => l3.slug === slug)) {
+                setExpandedCats((prev) => ({ ...prev, [topCat.id]: true, [sub.id]: true }));
+                return;
               }
             }
           }
         }
-      }
+      });
     }).catch(() => {});
   }, []);
 
@@ -130,24 +138,26 @@ const Books = () => {
   const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter;
   const totalBooks = pagination?.total || books.length;
 
-  // Dynamic page title based on selected category
+  // Dynamic page title based on selected categories
   const getPageTitle = () => {
-    if (!category) return t('books.title');
-    for (const cat of categories) {
-      if (cat.slug === category) return `${t('books.browse')} ${getName(cat)}`;
-      if (cat.children) {
-        for (const sub of cat.children) {
-          if (sub.slug === category) return `${t('books.browse')} ${getName(sub)}`;
-          if (sub.children) {
-            const l3 = sub.children.find((s) => s.slug === category);
-            if (l3) return `${t('books.browse')} ${getName(l3)}`;
+    if (selectedCategories.length === 0) return t('books.title');
+    if (selectedCategories.length > 2) return `${t('books.browse')} (${selectedCategories.length})`;
+    const names = selectedCategories.map((slug) => {
+      for (const cat of categories) {
+        if (cat.slug === slug) return getName(cat);
+        if (cat.children) {
+          for (const sub of cat.children) {
+            if (sub.slug === slug) return getName(sub);
+            if (sub.children) {
+              const l3 = sub.children.find((s) => s.slug === slug);
+              if (l3) return getName(l3);
+            }
           }
         }
       }
-    }
-    // Fallback: capitalize the slug while categories are loading
-    if (category) return `${t('books.browse')} ${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`;
-    return t('books.title');
+      return slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
+    });
+    return `${t('books.browse')} ${names.join(' & ')}`;
   };
 
   return (
@@ -176,7 +186,7 @@ const Books = () => {
                 </div>
               )}
 
-              {/* Category */}
+              {/* Category — multi-select */}
               <div className="mb-6">
                 <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.category')}
@@ -184,19 +194,22 @@ const Books = () => {
                 <div className="space-y-0.5">
                   {categories.map((cat) => {
                     const hasChildren = cat.children && cat.children.length > 0;
-                    const isSelected = category === cat.slug;
-                    const childSelected = cat.children?.some((s) => s.slug === category);
-                    const grandchildSelected = cat.children?.some((s) => s.children?.some((l3) => l3.slug === category));
+                    const isSelected = isCatSelected(cat.slug);
+                    const childSelected = cat.children?.some((s) => isCatSelected(s.slug));
+                    const grandchildSelected = cat.children?.some((s) => s.children?.some((l3) => isCatSelected(l3.slug)));
                     const isExpanded = expandedCats[cat.id] || isSelected || childSelected || grandchildSelected;
                     return (
                       <div key={cat.id}>
                         <div className="flex items-center">
                           <button
-                            onClick={() => { updateParam('category', cat.slug); if (hasChildren) setExpandedCats((prev) => ({ ...prev, [cat.id]: true })); }}
-                            className={`flex-1 text-start py-1.5 text-sm 3xl:text-lg font-medium transition-colors ${
+                            onClick={() => { toggleCategory(cat.slug); if (hasChildren) setExpandedCats((prev) => ({ ...prev, [cat.id]: true })); }}
+                            className={`flex-1 flex items-center gap-2 text-start py-1.5 text-sm 3xl:text-lg font-medium transition-colors ${
                               isSelected ? 'text-accent' : 'text-foreground hover:text-accent'
                             }`}
                           >
+                            <span className={`w-3.5 h-3.5 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[8px]">✓</span>}
+                            </span>
                             {getName(cat)}
                           </button>
                           {hasChildren && (
@@ -209,18 +222,21 @@ const Books = () => {
                           <div className="ps-3 border-s border-muted/15 ms-2 space-y-0.5 mb-1">
                             {cat.children.map((sub) => {
                               const subHasChildren = sub.children && sub.children.length > 0;
-                              const subSelected = category === sub.slug;
-                              const subChildSelected = sub.children?.some((l3) => l3.slug === category);
+                              const subSelected = isCatSelected(sub.slug);
+                              const subChildSelected = sub.children?.some((l3) => isCatSelected(l3.slug));
                               const subExpanded = expandedCats[sub.id] || subSelected || subChildSelected;
                               return (
                                 <div key={sub.id}>
                                   <div className="flex items-center">
                                     <button
-                                      onClick={() => { updateParam('category', sub.slug); if (subHasChildren) setExpandedCats((prev) => ({ ...prev, [sub.id]: true })); }}
-                                      className={`flex-1 text-start py-1 text-sm 3xl:text-lg transition-colors ${
+                                      onClick={() => { toggleCategory(sub.slug); if (subHasChildren) setExpandedCats((prev) => ({ ...prev, [sub.id]: true })); }}
+                                      className={`flex-1 flex items-center gap-2 text-start py-1 text-sm 3xl:text-lg transition-colors ${
                                         subSelected ? 'text-accent font-medium' : 'text-foreground/60 hover:text-accent'
                                       }`}
                                     >
+                                      <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${subSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                        {subSelected && <span className="text-white text-[7px]">✓</span>}
+                                      </span>
                                       {getName(sub)}
                                     </button>
                                     {subHasChildren && (
@@ -234,11 +250,14 @@ const Books = () => {
                                       {sub.children.map((l3) => (
                                         <button
                                           key={l3.id}
-                                          onClick={() => updateParam('category', l3.slug)}
-                                          className={`w-full text-start py-0.5 text-[13px] transition-colors ${
-                                            category === l3.slug ? 'text-accent font-medium' : 'text-foreground/45 hover:text-accent'
+                                          onClick={() => toggleCategory(l3.slug)}
+                                          className={`w-full flex items-center gap-2 text-start py-0.5 text-[13px] transition-colors ${
+                                            isCatSelected(l3.slug) ? 'text-accent font-medium' : 'text-foreground/45 hover:text-accent'
                                           }`}
                                         >
+                                          <span className={`w-2.5 h-2.5 rounded border-2 flex-shrink-0 flex items-center justify-center ${isCatSelected(l3.slug) ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                            {isCatSelected(l3.slug) && <span className="text-white text-[6px]">✓</span>}
+                                          </span>
                                           {getName(l3)}
                                         </button>
                                       ))}

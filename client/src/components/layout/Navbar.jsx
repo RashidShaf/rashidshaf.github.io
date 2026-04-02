@@ -416,6 +416,13 @@ const Navbar = () => {
                       ) : (
                         <div className="p-4">
                           <Link
+                            to="/track-order"
+                            onClick={() => setAccountOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2.5 text-sm text-foreground/70 hover:text-accent hover:bg-surface-alt rounded-lg transition-colors mb-3"
+                          >
+                            <FiPackage size={15} /> {t('nav.trackOrder')}
+                          </Link>
+                          <Link
                             to="/login"
                             onClick={() => setAccountOpen(false)}
                             className="block w-full text-center py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors"
@@ -634,6 +641,13 @@ const Navbar = () => {
                   </>
                 ) : (
                   <div className="flex flex-col gap-2 px-4">
+                    <Link
+                      to="/track-order"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-2 py-3 rounded-lg text-foreground/70 hover:text-accent hover:bg-surface-alt transition-colors font-medium"
+                    >
+                      <FiPackage size={16} /> {t('nav.trackOrder')}
+                    </Link>
                     <Link
                       to="/login"
                       onClick={() => setMobileOpen(false)}

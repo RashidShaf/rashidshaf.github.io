@@ -27,27 +27,36 @@ exports.list = async (req, res, next) => {
       });
     }
 
-    // Category filter — includes sub-categories and grandchildren (3 levels)
+    // Category filter — supports multiple comma-separated slugs, includes sub-categories (3 levels)
     if (category) {
-      const cat = await prisma.category.findUnique({
-        where: { slug: category },
+      const slugs = category.split(',').map(s => s.trim()).filter(Boolean);
+      const cats = await prisma.category.findMany({
+        where: { slug: { in: slugs } },
         include: {
           children: {
             select: { id: true, children: { select: { id: true } } },
           },
         },
       });
-      if (cat) {
-        const allIds = [cat.id];
-        if (cat.children) {
-          cat.children.forEach(child => {
-            allIds.push(child.id);
-            if (child.children) {
-              child.children.forEach(gc => allIds.push(gc.id));
-            }
-          });
-        }
-        where.categoryId = { in: allIds };
+      if (cats.length > 0) {
+        const allIds = [];
+        cats.forEach(cat => {
+          allIds.push(cat.id);
+          if (cat.children) {
+            cat.children.forEach(child => {
+              allIds.push(child.id);
+              if (child.children) {
+                child.children.forEach(gc => allIds.push(gc.id));
+              }
+            });
+          }
+        });
+        where.AND.push({
+          OR: [
+            { categoryId: { in: allIds } },
+            { bookCategories: { some: { categoryId: { in: allIds } } } },
+          ],
+        });
       }
     }
 
@@ -122,6 +131,7 @@ exports.getBySlug = async (req, res, next) => {
             parent: { select: { id: true, name: true, nameAr: true, slug: true } },
           },
         },
+        bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } } },
         reviews: {
           where: { isVisible: true },
           take: 5,
@@ -178,9 +188,13 @@ const getCornerCategoryIds = async (cornerSlug) => {
 
 exports.featured = async (req, res, next) => {
   try {
-    const where = { isActive: true, isFeatured: true, ...activeCategoryFilter };
+    const where = { isActive: true, isFeatured: true, AND: [activeCategoryFilter] };
     const catIds = await getCornerCategoryIds(req.query.corner);
-    if (catIds) where.categoryId = { in: catIds };
+    if (catIds) {
+      where.AND.push({
+        OR: [{ categoryId: { in: catIds } }, { bookCategories: { some: { categoryId: { in: catIds } } } }],
+      });
+    }
     const books = await prisma.book.findMany({
       where, orderBy: { createdAt: 'desc' }, take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
@@ -191,9 +205,13 @@ exports.featured = async (req, res, next) => {
 
 exports.newArrivals = async (req, res, next) => {
   try {
-    const where = { isActive: true, isNewArrival: true, ...activeCategoryFilter };
+    const where = { isActive: true, isNewArrival: true, AND: [activeCategoryFilter] };
     const catIds = await getCornerCategoryIds(req.query.corner);
-    if (catIds) where.categoryId = { in: catIds };
+    if (catIds) {
+      where.AND.push({
+        OR: [{ categoryId: { in: catIds } }, { bookCategories: { some: { categoryId: { in: catIds } } } }],
+      });
+    }
     const books = await prisma.book.findMany({
       where, orderBy: { createdAt: 'desc' }, take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
@@ -204,9 +222,13 @@ exports.newArrivals = async (req, res, next) => {
 
 exports.bestsellers = async (req, res, next) => {
   try {
-    const where = { isActive: true, isBestseller: true, ...activeCategoryFilter };
+    const where = { isActive: true, isBestseller: true, AND: [activeCategoryFilter] };
     const catIds = await getCornerCategoryIds(req.query.corner);
-    if (catIds) where.categoryId = { in: catIds };
+    if (catIds) {
+      where.AND.push({
+        OR: [{ categoryId: { in: catIds } }, { bookCategories: { some: { categoryId: { in: catIds } } } }],
+      });
+    }
     const books = await prisma.book.findMany({
       where, orderBy: { createdAt: 'desc' }, take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
@@ -219,9 +241,13 @@ exports.bestsellers = async (req, res, next) => {
 
 exports.trending = async (req, res, next) => {
   try {
-    const where = { isActive: true, isTrending: true, ...activeCategoryFilter };
+    const where = { isActive: true, isTrending: true, AND: [activeCategoryFilter] };
     const catIds = await getCornerCategoryIds(req.query.corner);
-    if (catIds) where.categoryId = { in: catIds };
+    if (catIds) {
+      where.AND.push({
+        OR: [{ categoryId: { in: catIds } }, { bookCategories: { some: { categoryId: { in: catIds } } } }],
+      });
+    }
     const books = await prisma.book.findMany({
       where, orderBy: { createdAt: 'desc' }, take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
@@ -232,9 +258,13 @@ exports.trending = async (req, res, next) => {
 
 exports.comingSoon = async (req, res, next) => {
   try {
-    const where = { isActive: true, isComingSoon: true, ...activeCategoryFilter };
+    const where = { isActive: true, isComingSoon: true, AND: [activeCategoryFilter] };
     const catIds = await getCornerCategoryIds(req.query.corner);
-    if (catIds) where.categoryId = { in: catIds };
+    if (catIds) {
+      where.AND.push({
+        OR: [{ categoryId: { in: catIds } }, { bookCategories: { some: { categoryId: { in: catIds } } } }],
+      });
+    }
     const books = await prisma.book.findMany({
       where, orderBy: { createdAt: 'desc' }, take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },

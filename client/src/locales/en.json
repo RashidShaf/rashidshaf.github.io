@@ -34,7 +34,8 @@
     "logout": "Logout",
     "readingLists": "Reading Lists",
     "orders": "Orders",
-    "myAccount": "My Account"
+    "myAccount": "My Account",
+    "trackOrder": "Track Order"
   },
   "home": {
     "heroTitle": "Discover Your Next Great Read",
@@ -117,7 +118,10 @@
     "clearCart": "Clear Cart",
     "freeShippingThreshold": "Free shipping on orders over QAR {{amount}}",
     "codTitle": "Cash on Delivery",
-    "phoneRequired": "Phone number required to complete purchase"
+    "phoneRequired": "Phone number required to complete purchase",
+    "onlinePayment": "Online Payment",
+    "onlinePaymentDesc": "Pay now with card",
+    "comingSoon": "Coming Soon"
   },
   "checkout": {
     "title": "Checkout",
@@ -136,7 +140,14 @@
     "orderNumber": "Order number",
     "orderSuccess": "Order placed successfully!",
     "orderFailed": "Failed to place order",
-    "phoneNote": "Required for delivery confirmation"
+    "phoneNote": "Required for delivery confirmation",
+    "guestNote": "Checking out as guest.",
+    "loginLink": "Log in for faster checkout",
+    "loginBenefit": "Save your details and track your orders easily",
+    "or": "or",
+    "optional": "Optional",
+    "guestTrackNote": "Save your order number. Contact us to track your order.",
+    "contactUs": "Contact Us"
   },
   "auth": {
     "login": "Login",
@@ -189,6 +200,13 @@
     "orderCancelledToast": "Order cancelled",
     "cancelFailed": "Failed to cancel",
     "cancelConfirm": "Are you sure you want to cancel this order? This action cannot be undone."
+  },
+  "trackOrder": {
+    "title": "Track Your Order",
+    "subtitle": "Enter your phone number to check your orders",
+    "phone": "Phone Number",
+    "submit": "Track Order",
+    "notFound": "No orders found for this phone number."
   },
   "footer": {
     "about": "Arkaan Bookstore is your trusted destination for books in Qatar. We offer a curated collection of Arabic and English titles spanning literature, science, children's books, and more.",

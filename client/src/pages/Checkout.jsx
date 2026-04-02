@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
+import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft, FiCreditCard, FiLogIn } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import PhoneInput from '../components/common/PhoneInput';
@@ -13,7 +13,7 @@ import api from '../utils/api';
 
 const Checkout = () => {
   const { t, language } = useLanguageStore();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, getTotal, clearCart, paymentMethod } = useCartStore();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
@@ -54,6 +54,7 @@ const Checkout = () => {
     try {
       const res = await api.post('/orders', {
         ...form,
+        paymentMethod,
         cartItems: items.map((item) => ({ bookId: item.bookId, quantity: item.quantity })),
       });
       setSuccess(res.data.order);
@@ -87,10 +88,17 @@ const Checkout = () => {
           </p>
           <p className="text-xl font-bold text-accent mb-2">{success.orderNumber}</p>
           <p className="text-sm text-foreground/50 mb-10">{t('checkout.codNote')}</p>
+
           <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none mx-auto">
-            <Link to="/orders" className="text-center px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors text-sm sm:text-base">
-              {t('orders.track')}
-            </Link>
+            {user ? (
+              <Link to="/orders" className="text-center px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors text-sm sm:text-base">
+                {t('orders.track')}
+              </Link>
+            ) : (
+              <Link to="/track-order" className="text-center px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors text-sm sm:text-base">
+                {t('orders.track')}
+              </Link>
+            )}
             <Link to="/books" className="text-center px-8 py-3 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary hover:text-white transition-colors text-sm sm:text-base">
               {t('cart.continueShopping')}
             </Link>
@@ -113,37 +121,67 @@ const Checkout = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left — Form */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Guest login prompt */}
+              {!user && (
+                <div className="flex items-center justify-between gap-4 p-4 bg-accent/5 rounded-2xl border border-accent/15">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <FiUser className="w-[18px] h-[18px] text-accent" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{t('checkout.loginLink')}</p>
+                      <p className="text-xs text-foreground/45">{t('checkout.loginBenefit')}</p>
+                    </div>
+                  </div>
+                  <Link to="/login" className="flex-shrink-0 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent-light transition-colors">
+                    {t('auth.login')}
+                  </Link>
+                </div>
+              )}
+
               {/* Shipping */}
               <div className="bg-surface rounded-2xl border border-muted/10 p-4 sm:p-8">
                 <h2 className="text-lg 3xl:text-2xl font-bold text-foreground mb-6">{t('checkout.shippingInfo')}</h2>
                 <div className="space-y-4">
+                  {/* Phone — Primary field */}
+                  <div>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">
+                      {t('checkout.phone')} <span className="text-xs font-normal text-red-500">*</span>
+                    </label>
+                    <PhoneInput value={form.shippingPhone} onChange={(val) => update('shippingPhone', val)} required />
+                    <p className="text-[11px] text-foreground/40 mt-1">{t('checkout.phoneNote')}</p>
+                  </div>
+
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.name')}</label>
+                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">
+                        {t('checkout.name')} <span className="text-xs font-normal text-foreground/40">({t('checkout.optional')})</span>
+                      </label>
                       <div className="relative">
                         <FiUser className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-                        <input type="text" value={form.shippingName} onChange={(e) => update('shippingName', e.target.value)} required className={inputClass} />
+                        <input type="text" value={form.shippingName} onChange={(e) => update('shippingName', e.target.value)} className={inputClass} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.phone')}</label>
-                      <PhoneInput value={form.shippingPhone} onChange={(val) => update('shippingPhone', val)} required />
-                      <p className="text-[11px] text-foreground/40 mt-1">{t('checkout.phoneNote')}</p>
+                      <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">
+                        {t('checkout.city')} <span className="text-xs font-normal text-foreground/40">({t('checkout.optional')})</span>
+                      </label>
+                      <input type="text" value={form.shippingCity} onChange={(e) => update('shippingCity', e.target.value)} className="w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.city')}</label>
-                    <input type="text" value={form.shippingCity} onChange={(e) => update('shippingCity', e.target.value)} required className="w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors" />
-                  </div>
-                  <div>
-                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.address')}</label>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">
+                      {t('checkout.address')} <span className="text-xs font-normal text-foreground/40">({t('checkout.optional')})</span>
+                    </label>
                     <div className="relative">
                       <FiMapPin className="absolute start-4 top-3.5 w-4 h-4 text-foreground/30" />
-                      <textarea value={form.shippingAddress} onChange={(e) => update('shippingAddress', e.target.value)} required rows={3} className={`${inputClass} resize-none`} />
+                      <textarea value={form.shippingAddress} onChange={(e) => update('shippingAddress', e.target.value)} rows={3} className={`${inputClass} resize-none`} />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">{t('checkout.notes')}</label>
+                    <label className="block text-sm 3xl:text-lg font-semibold text-foreground mb-1.5">
+                      {t('checkout.notes')} <span className="text-xs font-normal text-foreground/40">({t('checkout.optional')})</span>
+                    </label>
                     <div className="relative">
                       <FiFileText className="absolute start-4 top-3.5 w-4 h-4 text-foreground/30" />
                       <textarea value={form.shippingNotes} onChange={(e) => update('shippingNotes', e.target.value)} rows={2} className={`${inputClass} resize-none`} />
@@ -194,16 +232,31 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* COD Info */}
-                <div className="flex items-center gap-3 p-3 bg-accent/5 border border-gray-300 rounded-xl mt-4">
-                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                    COD
+                {/* Payment Method */}
+                {paymentMethod === 'ONLINE' ? (
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl mt-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white flex-shrink-0">
+                      <FiCreditCard size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{t('cart.onlinePayment')}</p>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-600 rounded">{t('cart.comingSoon')}</span>
+                      </div>
+                      <p className="text-xs text-foreground/50">{t('cart.onlinePaymentDesc')}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
-                    <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 bg-accent/5 border border-gray-300 rounded-xl mt-4">
+                    <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                      COD
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{t('cart.codTitle')}</p>
+                      <p className="text-xs text-foreground/50">{t('checkout.codNote')}</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <button
                   type="submit"

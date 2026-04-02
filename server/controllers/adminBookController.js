@@ -7,15 +7,17 @@ exports.list = async (req, res, next) => {
     const { page, limit, skip } = getPagination(req.query);
     const { search, category } = req.query;
 
-    const where = {};
+    const where = { AND: [] };
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { titleAr: { contains: search, mode: 'insensitive' } },
-        { author: { contains: search, mode: 'insensitive' } },
-        { authorAr: { contains: search, mode: 'insensitive' } },
-        { isbn: { contains: search, mode: 'insensitive' } },
-      ];
+      where.AND.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { titleAr: { contains: search, mode: 'insensitive' } },
+          { author: { contains: search, mode: 'insensitive' } },
+          { authorAr: { contains: search, mode: 'insensitive' } },
+          { isbn: { contains: search, mode: 'insensitive' } },
+        ],
+      });
     }
 
     // Filter by category (includes sub-categories and grandchildren — 3 levels)
@@ -30,13 +32,21 @@ exports.list = async (req, res, next) => {
         select: { id: true },
       });
       const categoryIds = [category, ...childIds, ...grandchildren.map((c) => c.id)];
-      where.categoryId = { in: categoryIds };
+      where.AND.push({
+        OR: [
+          { categoryId: { in: categoryIds } },
+          { bookCategories: { some: { categoryId: { in: categoryIds } } } },
+        ],
+      });
     }
 
     const [books, total] = await Promise.all([
       prisma.book.findMany({
         where, orderBy: { createdAt: 'desc' }, skip, take: limit,
-        include: { category: { select: { id: true, name: true, nameAr: true, parentId: true } } },
+        include: {
+          category: { select: { id: true, name: true, nameAr: true, parentId: true } },
+          bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+        },
       }),
       prisma.book.count({ where }),
     ]);
@@ -51,7 +61,10 @@ exports.getById = async (req, res, next) => {
   try {
     const book = await prisma.book.findUnique({
       where: { id: req.params.id },
-      include: { category: true },
+      include: {
+        category: true,
+        bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+      },
     });
     if (!book) return res.status(404).json({ message: 'Book not found.' });
     res.json(book);
@@ -77,11 +90,29 @@ exports.create = async (req, res, next) => {
     ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
       if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
-    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
+    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon', 'isOutOfStock'].forEach((f) => {
       data[f] = data[f] === 'true' || data[f] === true;
     });
 
-    const book = await prisma.book.create({ data, include: { category: true } });
+    // Extract additionalCategoryIds before creating (not a Book field)
+    const additionalCategoryIds = data.additionalCategoryIds;
+    delete data.additionalCategoryIds;
+
+    const book = await prisma.book.create({ data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } } });
+
+    // Create BookCategory records for additional categories
+    if (additionalCategoryIds && Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
+      await prisma.bookCategory.createMany({
+        data: additionalCategoryIds.map((catId) => ({ bookId: book.id, categoryId: catId })),
+      });
+      // Re-fetch to include the new bookCategories
+      const updated = await prisma.book.findUnique({
+        where: { id: book.id },
+        include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
+      });
+      return res.status(201).json(updated);
+    }
+
     res.status(201).json(book);
   } catch (error) {
     next(error);
@@ -102,14 +133,35 @@ exports.update = async (req, res, next) => {
     ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
       if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
-    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon'].forEach((f) => {
+    ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon', 'isOutOfStock'].forEach((f) => {
       if (data[f] !== undefined) data[f] = data[f] === 'true' || data[f] === true;
     });
     if (data.isActive !== undefined) data.isActive = data.isActive === 'true' || data.isActive === true;
 
+    // Extract additionalCategoryIds before updating (not a Book field)
+    const additionalCategoryIds = data.additionalCategoryIds;
+    delete data.additionalCategoryIds;
+
     const book = await prisma.book.update({
-      where: { id: req.params.id }, data, include: { category: true },
+      where: { id: req.params.id }, data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
     });
+
+    // Update BookCategory records if additionalCategoryIds provided
+    if (additionalCategoryIds !== undefined) {
+      await prisma.bookCategory.deleteMany({ where: { bookId: req.params.id } });
+      if (Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
+        await prisma.bookCategory.createMany({
+          data: additionalCategoryIds.map((catId) => ({ bookId: req.params.id, categoryId: catId })),
+        });
+      }
+      // Re-fetch to include updated bookCategories
+      const updated = await prisma.book.findUnique({
+        where: { id: req.params.id },
+        include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
+      });
+      return res.json(updated);
+    }
+
     res.json(book);
   } catch (error) {
     next(error);
