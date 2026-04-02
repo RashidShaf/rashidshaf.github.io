@@ -87,7 +87,7 @@ export default function Dashboard() {
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-admin-border last:border-0">
                   <div>
                     <p className="text-sm font-medium text-admin-text">{order.orderNumber}</p>
-                    <p className="text-xs text-admin-muted">{order.user?.firstName} {order.user?.lastName}</p>
+                    <p className="text-xs text-admin-muted">{order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}</p>
                   </div>
                   <div className="text-end">
                     <p className="text-sm font-semibold text-admin-text">QAR {parseFloat(order.total).toFixed(2)}</p>

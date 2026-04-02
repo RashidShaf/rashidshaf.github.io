@@ -82,6 +82,12 @@ exports.create = async (req, res, next) => {
     data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     data.stock = data.stock ? parseInt(data.stock) : 0;
     data.pages = data.pages ? parseInt(data.pages) : null;
+    data.weight = data.weight ? parseFloat(data.weight) : null;
+    if (data.publishedDate && typeof data.publishedDate === 'string') {
+      data.publishedDate = new Date(data.publishedDate);
+    } else if (!data.publishedDate) {
+      delete data.publishedDate;
+    }
     if (!data.isbn || data.isbn === '') delete data.isbn;
     if (!data.categoryId || data.categoryId === '') delete data.categoryId;
     if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
@@ -127,6 +133,10 @@ exports.update = async (req, res, next) => {
     data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     if (data.stock !== undefined) data.stock = data.stock ? parseInt(data.stock) : 0;
     data.pages = data.pages && data.pages !== '' ? parseInt(data.pages) : null;
+    if (data.weight !== undefined) data.weight = data.weight ? parseFloat(data.weight) : null;
+    if (data.publishedDate !== undefined) {
+      data.publishedDate = data.publishedDate ? new Date(data.publishedDate) : null;
+    }
     if (data.isbn === '') delete data.isbn;
     if (data.categoryId === '') delete data.categoryId;
     if (typeof data.tags === 'string') data.tags = data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];

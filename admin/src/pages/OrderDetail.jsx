@@ -36,17 +36,11 @@ export default function OrderDetail() {
   const fetchOrder = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/admin/orders?limit=100`);
-      const allOrders = res.data.data || res.data;
-      const found = allOrders.find((o) => o.id === id);
-      if (found) {
-        setOrder(found);
-        setNewStatus(found.status);
-      } else {
-        toast.error('Order not found');
-      }
+      const res = await api.get(`/admin/orders/${id}`);
+      setOrder(res.data);
+      setNewStatus(res.data.status);
     } catch (err) {
-      toast.error('Failed to fetch order');
+      toast.error('Order not found');
     } finally {
       setLoading(false);
     }
@@ -120,11 +114,13 @@ export default function OrderDetail() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-admin-muted">Customer</span>
-                <p className="font-medium text-admin-text mt-1">{order.user?.firstName} {order.user?.lastName}</p>
+                <p className="font-medium text-admin-text mt-1">
+                  {order.user ? `${order.user.firstName} ${order.user.lastName}` : <span className="text-amber-600">Guest</span>}
+                </p>
               </div>
               <div>
                 <span className="text-admin-muted">Email</span>
-                <p className="font-medium text-admin-text mt-1">{order.user?.email}</p>
+                <p className="font-medium text-admin-text mt-1">{order.user?.email || '—'}</p>
               </div>
               <div>
                 <span className="text-admin-muted">{t('common.total')}</span>

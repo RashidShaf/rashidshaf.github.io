@@ -26,6 +26,7 @@ export default function BookCreate() {
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
+    publishedDate: '', weight: '',
     brand: '', material: '', color: '', dimensions: '', ageRange: '',
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false,
   });
@@ -136,9 +137,14 @@ export default function BookCreate() {
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
       // Clean empty optional fields
-      ['brand', 'material', 'color', 'dimensions', 'ageRange'].forEach((f) => {
+      ['brand', 'material', 'color', 'dimensions', 'ageRange', 'weight'].forEach((f) => {
         if (!payload[f]) delete payload[f];
       });
+      if (payload.publishedDate) {
+        payload.publishedDate = new Date(payload.publishedDate).toISOString();
+      } else {
+        delete payload.publishedDate;
+      }
 
       const res = await api.post('/admin/books', payload);
       const bookId = res.data.id;
@@ -316,6 +322,10 @@ export default function BookCreate() {
                     <option value="ar">Arabic</option>
                   </select>
                 </div>
+                <div>
+                  <label className={labelClass}>Published Date</label>
+                  <input name="publishedDate" type="date" value={form.publishedDate} onChange={handleChange} className={inputClass} />
+                </div>
               </div>
             )}
 
@@ -339,6 +349,10 @@ export default function BookCreate() {
                   <div>
                     <label className={labelClass}>Dimensions</label>
                     <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Weight (g)</label>
+                    <input name="weight" type="number" step="0.01" min="0" value={form.weight} onChange={handleChange} placeholder="e.g. 500" className={inputClass} />
                   </div>
                   {(cornerSlug === 'toys' || cornerSlug === 'school-project') && (
                     <div>

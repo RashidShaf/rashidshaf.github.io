@@ -5,6 +5,7 @@ const auth = require('../../middleware/auth');
 const admin = require('../../middleware/admin');
 
 router.get('/', [auth, admin], adminOrderController.list);
+router.get('/:id', [auth, admin], adminOrderController.getById);
 router.put('/:id/status', [auth, admin], adminOrderController.updateStatus);
 
 module.exports = router;

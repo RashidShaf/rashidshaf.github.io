@@ -36,6 +36,22 @@ exports.list = async (req, res, next) => {
   }
 };
 
+exports.getById = async (req, res, next) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: {
+        user: { select: { firstName: true, lastName: true, email: true } },
+        items: { select: { title: true, quantity: true, price: true, book: { select: { title: true, author: true, coverImage: true } } } },
+      },
+    });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body;

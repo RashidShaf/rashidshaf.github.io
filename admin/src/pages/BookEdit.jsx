@@ -30,6 +30,7 @@ export default function BookEdit() {
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
+    publishedDate: '', weight: '',
     brand: '', material: '', color: '', dimensions: '', ageRange: '',
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false, isActive: true,
   });
@@ -88,6 +89,8 @@ export default function BookEdit() {
           stock: book.stock != null ? book.stock.toString() : '0',
           parentCategoryId: cornerId,
           tags: Array.isArray(book.tags) ? book.tags.join(', ') : '',
+          publishedDate: book.publishedDate ? new Date(book.publishedDate).toISOString().split('T')[0] : '',
+          weight: book.weight ? parseFloat(book.weight).toString() : '',
           brand: book.brand || '',
           material: book.material || '',
           color: book.color || '',
@@ -232,6 +235,16 @@ export default function BookEdit() {
       ['brand', 'material', 'color', 'dimensions', 'ageRange'].forEach((f) => {
         if (!payload[f]) payload[f] = null;
       });
+      if (payload.weight) {
+        payload.weight = parseFloat(payload.weight);
+      } else {
+        payload.weight = null;
+      }
+      if (payload.publishedDate) {
+        payload.publishedDate = new Date(payload.publishedDate).toISOString();
+      } else {
+        payload.publishedDate = null;
+      }
 
       await api.put(`/admin/books/${id}`, payload);
 
@@ -416,6 +429,10 @@ export default function BookEdit() {
                     <option value="ar">Arabic</option>
                   </select>
                 </div>
+                <div>
+                  <label className={labelClass}>Published Date</label>
+                  <input name="publishedDate" type="date" value={form.publishedDate} onChange={handleChange} className={inputClass} />
+                </div>
               </div>
             )}
 
@@ -439,6 +456,10 @@ export default function BookEdit() {
                   <div>
                     <label className={labelClass}>Dimensions</label>
                     <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Weight (g)</label>
+                    <input name="weight" type="number" step="0.01" min="0" value={form.weight} onChange={handleChange} placeholder="e.g. 500" className={inputClass} />
                   </div>
                   {(cornerSlug === 'toys' || cornerSlug === 'school-project') && (
                     <div>
