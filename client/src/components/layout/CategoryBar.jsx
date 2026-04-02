@@ -1,12 +1,45 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import useLanguageStore from '../../stores/useLanguageStore';
+
+const SubcategoryColumn = ({ sub, getName, language }) => (
+  <div className="min-w-[150px]">
+    <Link
+      to={`/books?category=${sub.slug}`}
+      className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
+    >
+      {getName(sub)}
+    </Link>
+    {sub.children && sub.children.length > 0 && (
+      <div className="mt-1.5 space-y-0.5">
+        {sub.children.map((l3) => (
+          <Link
+            key={l3.id}
+            to={`/books?category=${l3.slug}`}
+            className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
+          >
+            {getName(l3)}
+          </Link>
+        ))}
+      </div>
+    )}
+    <Link
+      to={`/books?category=${sub.slug}`}
+      className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
+    >
+      {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
+    </Link>
+  </div>
+);
 
 const CategoryBar = ({ categories = [] }) => {
   const { t, language } = useLanguageStore();
   const [searchParams] = useSearchParams();
   const [hoveredId, setHoveredId] = useState(null);
   const closeTimeout = useRef(null);
+  const itemRefs = useRef({});
+  const barRef = useRef(null);
+  const [menuStyle, setMenuStyle] = useState({});
 
   const currentCategory = searchParams.get('category') || '';
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
@@ -21,11 +54,40 @@ const CategoryBar = ({ categories = [] }) => {
   };
 
   const hoveredCat = categories.find((c) => c.id === hoveredId);
+  const subCount = hoveredCat?.children?.length || 0;
+  const isCompact = subCount > 0 && subCount <= 3;
+
+  // Calculate position for compact menus, clamped to viewport
+  useEffect(() => {
+    if (!isCompact || !hoveredId) { setMenuStyle({}); return; }
+    const itemEl = itemRefs.current[hoveredId];
+    const barEl = barRef.current;
+    if (!itemEl || !barEl) return;
+
+    const itemRect = itemEl.getBoundingClientRect();
+    const barRect = barEl.getBoundingClientRect();
+    const itemCenter = itemRect.left + itemRect.width / 2 - barRect.left;
+
+    // Estimate menu width: ~180px per subcategory + padding + gaps
+    const estimatedWidth = subCount * 180 + (subCount - 1) * 32 + 48;
+    const barWidth = barRect.width;
+    const padding = 16;
+
+    let left = itemCenter - estimatedWidth / 2;
+    // Clamp: don't overflow left
+    if (left < padding) left = padding;
+    // Clamp: don't overflow right
+    if (left + estimatedWidth > barWidth - padding) left = barWidth - padding - estimatedWidth;
+    // Safety: if menu wider than bar, just use left padding
+    if (left < padding) left = padding;
+
+    setMenuStyle({ left });
+  }, [hoveredId, isCompact, subCount]);
 
   if (categories.length === 0) return null;
 
   return (
-    <div className="hidden lg:block bg-surface/50 border-t border-muted/10 border-b border-b-gray-300 mb-0.5 relative">
+    <div ref={barRef} className="hidden lg:block bg-surface/50 border-t border-muted/10 border-b border-b-gray-300 mb-0.5 relative">
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12">
         <div className={`flex items-center overflow-x-auto scrollbar-hide ${categories.length < 5 ? 'justify-center gap-2' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
@@ -36,6 +98,7 @@ const CategoryBar = ({ categories = [] }) => {
             return (
               <div
                 key={cat.id}
+                ref={(el) => { itemRefs.current[cat.id] = el; }}
                 className={categories.length >= 5 ? 'flex-1 min-w-0' : ''}
                 onMouseEnter={() => handleEnter(cat.id)}
                 onMouseLeave={handleLeave}
@@ -56,47 +119,40 @@ const CategoryBar = ({ categories = [] }) => {
         </div>
       </div>
 
-      {/* Mega menu for hovered category */}
+      {/* Mega menu */}
       {hoveredCat && hoveredCat.children && hoveredCat.children.length > 0 && (
-        <div
-          className="absolute top-full left-0 right-0 z-40 px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12 pt-2"
-          onMouseEnter={() => handleEnter(hoveredCat.id)}
-          onMouseLeave={handleLeave}
-        >
-          <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
-            <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
-              {hoveredCat.children.map((sub) => (
-                <div key={sub.id}>
-                  <Link
-                    to={`/books?category=${sub.slug}`}
-                    className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
-                  >
-                    {getName(sub)}
-                  </Link>
-                  {sub.children && sub.children.length > 0 && (
-                    <div className="mt-1.5 space-y-0.5">
-                      {sub.children.map((l3) => (
-                        <Link
-                          key={l3.id}
-                          to={`/books?category=${l3.slug}`}
-                          className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
-                        >
-                          {getName(l3)}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  <Link
-                    to={`/books?category=${sub.slug}`}
-                    className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
-                  >
-                    {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
-                  </Link>
-                </div>
-              ))}
+        isCompact ? (
+          /* Compact: positioned under the hovered category, sized to content */
+          <div
+            className="absolute top-full z-40 pt-2"
+            style={menuStyle}
+            onMouseEnter={() => handleEnter(hoveredCat.id)}
+            onMouseLeave={handleLeave}
+          >
+            <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
+              <div className="flex gap-8">
+                {hoveredCat.children.map((sub) => (
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Full width: for 4+ subcategories */
+          <div
+            className="absolute top-full left-0 right-0 z-40 px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12 pt-2"
+            onMouseEnter={() => handleEnter(hoveredCat.id)}
+            onMouseLeave={handleLeave}
+          >
+            <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
+              <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
+                {hoveredCat.children.map((sub) => (
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )
       )}
     </div>
   );
