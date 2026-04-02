@@ -4,6 +4,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import AutocompleteInput from '../components/AutocompleteInput';
 import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
@@ -25,6 +26,9 @@ export default function BookEdit() {
   const [expandedSubs, setExpandedSubs] = useState({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [suggestedAuthors, setSuggestedAuthors] = useState([]);
+  const [suggestedPublishers, setSuggestedPublishers] = useState([]);
+  const [suggestedBrands, setSuggestedBrands] = useState([]);
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
@@ -38,10 +42,14 @@ export default function BookEdit() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bookRes, catRes] = await Promise.all([
+        const [bookRes, catRes, filtersRes] = await Promise.all([
           api.get(`/admin/books/${id}`),
           api.get('/admin/categories'),
+          api.get('/books/filters'),
         ]);
+        setSuggestedAuthors(filtersRes.data.authors || []);
+        setSuggestedPublishers(filtersRes.data.publishers || []);
+        setSuggestedBrands(filtersRes.data.brands || []);
         const book = bookRes.data;
         const cats = catRes.data.data || catRes.data;
         setAllCategories(cats);
@@ -397,7 +405,7 @@ export default function BookEdit() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Author (English)</label>
-                    <input name="author" value={form.author} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Author (Arabic)</label>
@@ -415,7 +423,7 @@ export default function BookEdit() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Publisher (English)</label>
-                    <input name="publisher" value={form.publisher} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Publisher (Arabic)</label>
@@ -443,7 +451,7 @@ export default function BookEdit() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Brand</label>
-                    <input name="brand" value={form.brand} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Material</label>

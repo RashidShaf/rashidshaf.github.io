@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import AutocompleteInput from '../components/AutocompleteInput';
 import api from '../utils/api';
 
 export default function BookCreate() {
@@ -31,11 +32,21 @@ export default function BookCreate() {
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false,
   });
 
+  const [suggestedAuthors, setSuggestedAuthors] = useState([]);
+  const [suggestedPublishers, setSuggestedPublishers] = useState([]);
+  const [suggestedBrands, setSuggestedBrands] = useState([]);
+
   // Fetch all categories (with children)
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const all = res.data.data || res.data;
       setAllCategories(all);
+    }).catch(() => {});
+    // Fetch existing authors, publishers, brands for autocomplete
+    api.get('/books/filters').then((res) => {
+      setSuggestedAuthors(res.data.authors || []);
+      setSuggestedPublishers(res.data.publishers || []);
+      setSuggestedBrands(res.data.brands || []);
     }).catch(() => {});
   }, []);
 
@@ -290,7 +301,7 @@ export default function BookCreate() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Author (English) *</label>
-                    <input name="author" value={form.author} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Author (Arabic)</label>
@@ -308,7 +319,7 @@ export default function BookCreate() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Publisher (English)</label>
-                    <input name="publisher" value={form.publisher} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Publisher (Arabic)</label>
@@ -336,7 +347,7 @@ export default function BookCreate() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Brand</label>
-                    <input name="brand" value={form.brand} onChange={handleChange} className={inputClass} />
+                    <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Material</label>

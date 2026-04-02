@@ -50,6 +50,19 @@ exports.create = async (req, res, next) => {
   }
 };
 
+exports.reorder = async (req, res, next) => {
+  try {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds)) return res.status(400).json({ message: 'orderedIds must be an array' });
+    await Promise.all(
+      orderedIds.map((id, index) => prisma.category.update({ where: { id }, data: { displayOrder: index } }))
+    );
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.update = async (req, res, next) => {
   try {
     const { name, nameAr, description, descriptionAr, parentId, displayOrder, isActive } = req.body;
@@ -61,7 +74,10 @@ exports.update = async (req, res, next) => {
       return res.status(400).json({ message: 'Cannot move a sub-category to top level' });
     }
 
-    const data = { nameAr: nameAr || null, description: description || null, descriptionAr: descriptionAr || null, displayOrder: parseInt(displayOrder) || 0 };
+    const data = { nameAr: nameAr || null, description: description || null, descriptionAr: descriptionAr || null };
+    if (displayOrder !== undefined && displayOrder !== null && displayOrder !== '') {
+      data.displayOrder = parseInt(displayOrder);
+    }
     // Only update parentId if explicitly provided and not empty
     if (parentId && parentId !== '') data.parentId = parentId;
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;

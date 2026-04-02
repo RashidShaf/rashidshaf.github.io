@@ -7,6 +7,7 @@ const { uploadCategoryImage } = require('../../config/multer');
 
 router.get('/', [auth, admin], adminCategoryController.list);
 router.post('/', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.create);
+router.put('/reorder', [auth, admin], adminCategoryController.reorder);
 router.put('/:id', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.update);
 router.delete('/:id', [auth, admin], adminCategoryController.remove);
 

@@ -22,7 +22,9 @@ exports.list = async (req, res, next) => {
           { titleAr: { contains: search, mode: 'insensitive' } },
           { author: { contains: search, mode: 'insensitive' } },
           { authorAr: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
+          { publisher: { contains: search, mode: 'insensitive' } },
+          { publisherAr: { contains: search, mode: 'insensitive' } },
+          { isbn: { contains: search, mode: 'insensitive' } },
         ],
       });
     }

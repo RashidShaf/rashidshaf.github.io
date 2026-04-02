@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw, FiChevronDown, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -67,6 +67,21 @@ export default function Categories() {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete');
       setDeleteId(null);
+    }
+  };
+
+  const handleReorder = async (cat, direction) => {
+    const siblings = categories.filter((c) => c.parentId === cat.parentId).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    const idx = siblings.findIndex((c) => c.id === cat.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= siblings.length) return;
+    const reordered = [...siblings];
+    [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+    try {
+      await api.put('/admin/categories/reorder', { orderedIds: reordered.map((c) => c.id) });
+      fetchCategories();
+    } catch {
+      toast.error('Failed to reorder');
     }
   };
 
@@ -308,6 +323,16 @@ export default function Categories() {
                             <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Expand">
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
+                          )}
+                          {isTopLevel && !isChild && (
+                            <>
+                              <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
+                                <FiArrowUp size={15} />
+                              </button>
+                              <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
+                                <FiArrowDown size={15} />
+                              </button>
+                            </>
                           )}
                           <Link to={`/categories/${rowCat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                             <FiEdit2 size={15} />

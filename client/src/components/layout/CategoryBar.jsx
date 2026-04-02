@@ -27,7 +27,7 @@ const CategoryBar = ({ categories = [] }) => {
   return (
     <div className="hidden lg:block bg-surface/50 border-t border-muted/10 border-b border-b-gray-300 mb-0.5 relative">
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12">
-        <div className="flex items-center justify-between overflow-x-auto scrollbar-hide">
+        <div className={`flex items-center overflow-x-auto scrollbar-hide ${categories.length < 5 ? 'justify-center gap-2' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
             const selectedSlugs = currentCategory ? currentCategory.split(',').filter(Boolean) : [];
             const isActive = selectedSlugs.includes(cat.slug) ||
@@ -36,13 +36,13 @@ const CategoryBar = ({ categories = [] }) => {
             return (
               <div
                 key={cat.id}
-                className="flex-1 min-w-0"
+                className={categories.length >= 5 ? 'flex-1 min-w-0' : ''}
                 onMouseEnter={() => handleEnter(cat.id)}
                 onMouseLeave={handleLeave}
               >
                 <Link
                   to={`/books?category=${cat.slug}`}
-                  className={`block text-center px-3 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-200 border-b-2 truncate ${
+                  className={`block text-center px-4 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-200 border-b-2 ${
                     isActive
                       ? 'text-accent border-accent'
                       : 'text-foreground/60 border-transparent hover:text-accent hover:border-accent'
