@@ -81,7 +81,12 @@
     "section": "Collection",
     "publisher": "Publisher",
     "authorPlaceholder": "Search by author...",
-    "publisherPlaceholder": "Search by publisher..."
+    "publisherPlaceholder": "Search by publisher...",
+    "brand": "Brand",
+    "color": "Color",
+    "material": "Material",
+    "dimensions": "Dimensions",
+    "ageRange": "Age Range"
   },
   "book": {
     "description": "Description",

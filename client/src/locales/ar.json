@@ -81,7 +81,12 @@
     "section": "المجموعة",
     "publisher": "الناشر",
     "authorPlaceholder": "ابحث بالمؤلف...",
-    "publisherPlaceholder": "ابحث بالناشر..."
+    "publisherPlaceholder": "ابحث بالناشر...",
+    "brand": "العلامة التجارية",
+    "color": "اللون",
+    "material": "المادة",
+    "dimensions": "الأبعاد",
+    "ageRange": "الفئة العمرية"
   },
   "book": {
     "description": "الوصف",

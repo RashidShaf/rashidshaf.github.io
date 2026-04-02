@@ -36,8 +36,14 @@ const Books = () => {
   const [scopedParentSlug, setScopedParentSlug] = useState('');
   const [availableAuthors, setAvailableAuthors] = useState([]);
   const [availablePublishers, setAvailablePublishers] = useState([]);
+  const [availableBrands, setAvailableBrands] = useState([]);
+  const [availableColors, setAvailableColors] = useState([]);
+  const [availableMaterials, setAvailableMaterials] = useState([]);
   const [authorsOpen, setAuthorsOpen] = useState(false);
   const [publishersOpen, setPublishersOpen] = useState(false);
+  const [brandsOpen, setBrandsOpen] = useState(false);
+  const [colorsOpen, setColorsOpen] = useState(false);
+  const [materialsOpen, setMaterialsOpen] = useState(false);
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
 
@@ -66,6 +72,12 @@ const Books = () => {
   const selectedAuthors = authorFilter ? authorFilter.split(',').filter(Boolean) : [];
   const publisherFilter = searchParams.get('publisher') || '';
   const selectedPublishers = publisherFilter ? publisherFilter.split(',').filter(Boolean) : [];
+  const brandFilter = searchParams.get('brand') || '';
+  const selectedBrands = brandFilter ? brandFilter.split(',').filter(Boolean) : [];
+  const colorFilter = searchParams.get('color') || '';
+  const selectedColors = colorFilter ? colorFilter.split(',').filter(Boolean) : [];
+  const materialFilter = searchParams.get('material') || '';
+  const selectedMaterials = materialFilter ? materialFilter.split(',').filter(Boolean) : [];
   const page = parseInt(searchParams.get('page') || '1');
 
   const updateParam = (key, value) => {
@@ -186,6 +198,9 @@ const Books = () => {
     api.get(`/books/filters?${params}`).then((res) => {
       setAvailableAuthors(res.data.authors || []);
       setAvailablePublishers(res.data.publishers || []);
+      setAvailableBrands(res.data.brands || []);
+      setAvailableColors(res.data.colors || []);
+      setAvailableMaterials(res.data.materials || []);
     }).catch(() => {});
   }, [category]);
 
@@ -203,6 +218,9 @@ const Books = () => {
         if (sort) params.set('sort', sort);
         if (authorFilter) params.set('author', authorFilter);
         if (publisherFilter) params.set('publisher', publisherFilter);
+        if (brandFilter) params.set('brand', brandFilter);
+        if (colorFilter) params.set('color', colorFilter);
+        if (materialFilter) params.set('material', materialFilter);
 
         const res = await api.get(`/books?${params}`);
         setBooks(res.data.data || res.data);
@@ -214,10 +232,11 @@ const Books = () => {
       }
     };
     fetchBooks();
-  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, page]);
+  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter, page]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
-  const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter;
+  const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter || brandFilter || colorFilter || materialFilter;
+  const isBooksDept = scopedParentSlug === 'books' || categories.find((c) => c.slug === 'books' && selectedCategories.includes('books'));
   const totalBooks = pagination?.total || books.length;
 
   // Find the top-level parent for any slug
@@ -393,32 +412,34 @@ const Books = () => {
                 </div>
               </div>
 
-              {/* Language */}
-              <div className="mb-6">
-                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
-                  {t('books.language')}
-                </label>
-                <div className="space-y-0.5">
-                  {[
-                    { value: '', label: language === 'ar' ? 'الكل' : 'All' },
-                    { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
-                    { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => updateParam('language', opt.value)}
-                      className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
-                        bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {/* Book-specific filters: Language */}
+              {(isBooksDept || !scopedParentSlug) && (
+                <div className="mb-6">
+                  <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                    {t('books.language')}
+                  </label>
+                  <div className="space-y-0.5">
+                    {[
+                      { value: '', label: language === 'ar' ? 'الكل' : 'All' },
+                      { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
+                      { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => updateParam('language', opt.value)}
+                        className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
+                          bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Author */}
-              {availableAuthors.length > 0 && (
+              {/* Author (books only) */}
+              {(isBooksDept || !scopedParentSlug) && availableAuthors.length > 0 && (
                 <div className="mb-6">
                   <button
                     onClick={() => setAuthorsOpen(!authorsOpen)}
@@ -454,8 +475,8 @@ const Books = () => {
                 </div>
               )}
 
-              {/* Publisher */}
-              {availablePublishers.length > 0 && (
+              {/* Publisher (books only) */}
+              {(isBooksDept || !scopedParentSlug) && availablePublishers.length > 0 && (
                 <div className="mb-6">
                   <button
                     onClick={() => setPublishersOpen(!publishersOpen)}
@@ -483,6 +504,117 @@ const Books = () => {
                               {isSelected && <span className="text-white text-[7px]">✓</span>}
                             </span>
                             {publisher}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Brand (non-books only) */}
+              {(!isBooksDept || !scopedParentSlug) && availableBrands.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setBrandsOpen(!brandsOpen)}
+                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                  >
+                    {t('books.brand')}
+                    <FiChevronDown size={14} className={`transition-transform ${brandsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {brandsOpen && (
+                    <div className="space-y-0.5">
+                      {availableBrands.map((brand) => {
+                        const isSelected = selectedBrands.includes(brand);
+                        return (
+                          <button
+                            key={brand}
+                            onClick={() => {
+                              const next = isSelected ? selectedBrands.filter((b) => b !== brand) : [...selectedBrands, brand];
+                              updateParam('brand', next.join(','));
+                            }}
+                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[7px]">✓</span>}
+                            </span>
+                            {brand}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Color (non-books only) */}
+              {(!isBooksDept || !scopedParentSlug) && availableColors.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setColorsOpen(!colorsOpen)}
+                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                  >
+                    {t('books.color')}
+                    <FiChevronDown size={14} className={`transition-transform ${colorsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {colorsOpen && (
+                    <div className="space-y-0.5">
+                      {availableColors.map((color) => {
+                        const isSelected = selectedColors.includes(color);
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => {
+                              const next = isSelected ? selectedColors.filter((c) => c !== color) : [...selectedColors, color];
+                              updateParam('color', next.join(','));
+                            }}
+                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[7px]">✓</span>}
+                            </span>
+                            {color}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Material (non-books only) */}
+              {(!isBooksDept || !scopedParentSlug) && availableMaterials.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setMaterialsOpen(!materialsOpen)}
+                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                  >
+                    {t('books.material')}
+                    <FiChevronDown size={14} className={`transition-transform ${materialsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {materialsOpen && (
+                    <div className="space-y-0.5">
+                      {availableMaterials.map((mat) => {
+                        const isSelected = selectedMaterials.includes(mat);
+                        return (
+                          <button
+                            key={mat}
+                            onClick={() => {
+                              const next = isSelected ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat];
+                              updateParam('material', next.join(','));
+                            }}
+                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[7px]">✓</span>}
+                            </span>
+                            {mat}
                           </button>
                         );
                       })}

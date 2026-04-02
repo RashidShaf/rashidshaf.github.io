@@ -5,7 +5,7 @@ const { BOOK_SORT_OPTIONS } = require('../config/constants');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search, category, minPrice, maxPrice, author, publisher, language, sort } = req.query;
+    const { search, category, minPrice, maxPrice, author, publisher, language, sort, brand, color, material } = req.query;
 
     const where = {
       isActive: true,
@@ -90,6 +90,36 @@ exports.list = async (req, res, next) => {
     // Language filter
     if (language) {
       where.language = language;
+    }
+
+    // Brand filter (comma-separated multi-select)
+    if (brand) {
+      const brands = brand.split(',').map(b => b.trim()).filter(Boolean);
+      if (brands.length === 1) {
+        where.brand = { equals: brands[0], mode: 'insensitive' };
+      } else {
+        where.AND.push({ OR: brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } })) });
+      }
+    }
+
+    // Color filter (comma-separated multi-select)
+    if (color) {
+      const colors = color.split(',').map(c => c.trim()).filter(Boolean);
+      if (colors.length === 1) {
+        where.color = { equals: colors[0], mode: 'insensitive' };
+      } else {
+        where.AND.push({ OR: colors.map(c => ({ color: { equals: c, mode: 'insensitive' } })) });
+      }
+    }
+
+    // Material filter (comma-separated multi-select)
+    if (material) {
+      const materials = material.split(',').map(m => m.trim()).filter(Boolean);
+      if (materials.length === 1) {
+        where.material = { equals: materials[0], mode: 'insensitive' };
+      } else {
+        where.AND.push({ OR: materials.map(m => ({ material: { equals: m, mode: 'insensitive' } })) });
+      }
     }
 
     // Section filter
@@ -336,14 +366,20 @@ exports.filters = async (req, res, next) => {
       ];
     }
 
-    const [authors, publishers] = await Promise.all([
+    const [authors, publishers, brands, colors, materials] = await Promise.all([
       prisma.book.findMany({ where, select: { author: true }, distinct: ['author'], orderBy: { author: 'asc' } }),
       prisma.book.findMany({ where, select: { publisher: true }, distinct: ['publisher'], orderBy: { publisher: 'asc' } }),
+      prisma.book.findMany({ where, select: { brand: true }, distinct: ['brand'], orderBy: { brand: 'asc' } }),
+      prisma.book.findMany({ where, select: { color: true }, distinct: ['color'], orderBy: { color: 'asc' } }),
+      prisma.book.findMany({ where, select: { material: true }, distinct: ['material'], orderBy: { material: 'asc' } }),
     ]);
 
     res.json({
       authors: authors.map(a => a.author).filter(Boolean),
       publishers: publishers.map(p => p.publisher).filter(Boolean),
+      brands: brands.map(b => b.brand).filter(Boolean),
+      colors: colors.map(c => c.color).filter(Boolean),
+      materials: materials.map(m => m.material).filter(Boolean),
     });
   } catch (error) {
     next(error);

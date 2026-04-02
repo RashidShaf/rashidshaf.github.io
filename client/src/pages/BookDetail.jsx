@@ -201,21 +201,6 @@ const BookDetail = () => {
               </div>
             )}
 
-            {/* Additional Categories Tags */}
-            {book.bookCategories && book.bookCategories.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {book.bookCategories.map((bc) => (
-                  <Link
-                    key={bc.category.id}
-                    to={`/books?category=${bc.category.slug}`}
-                    className="px-2 py-0.5 text-[10px] font-medium bg-accent/10 text-accent rounded-full hover:bg-accent/20 transition-colors"
-                  >
-                    {language === 'ar' && bc.category.nameAr ? bc.category.nameAr : bc.category.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-
             {/* Title */}
             <h1 className="text-xl sm:text-3xl lg:text-4xl 3xl:text-6xl font-display font-bold text-foreground mt-2 leading-tight">
               {title}
@@ -333,6 +318,21 @@ const BookDetail = () => {
                 )}
                 {book.publishedDate && (
                   <div><span className="text-foreground/50">{t('book.published')}: </span><span className="text-foreground font-medium">{language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate)}</span></div>
+                )}
+                {book.brand && (
+                  <div><span className="text-foreground/50">{t('books.brand')}: </span><span className="text-foreground font-medium">{book.brand}</span></div>
+                )}
+                {book.color && (
+                  <div><span className="text-foreground/50">{t('books.color')}: </span><span className="text-foreground font-medium">{book.color}</span></div>
+                )}
+                {book.material && (
+                  <div><span className="text-foreground/50">{t('books.material')}: </span><span className="text-foreground font-medium">{book.material}</span></div>
+                )}
+                {book.dimensions && (
+                  <div><span className="text-foreground/50">{t('books.dimensions')}: </span><span className="text-foreground font-medium">{book.dimensions}</span></div>
+                )}
+                {book.ageRange && (
+                  <div><span className="text-foreground/50">{t('books.ageRange')}: </span><span className="text-foreground font-medium">{book.ageRange}</span></div>
                 )}
               </div>
             </div>
