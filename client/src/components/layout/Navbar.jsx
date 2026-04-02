@@ -90,7 +90,7 @@ const Navbar = () => {
             />
 
             {/* Right Side Icons */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 3xl:gap-4 flex-shrink-0">
               {/* Language Switcher */}
               <div className="hidden sm:block">
                 <LanguageSwitcher />
@@ -98,7 +98,7 @@ const Navbar = () => {
 
               {/* Cart */}
               <Link to="/cart" className="relative p-2 text-foreground hover:text-accent transition-colors">
-                <FiShoppingCart className="w-5 h-5" />
+                <FiShoppingCart className="w-5 h-5 3xl:w-6 3xl:h-6" />
                 {cartCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
@@ -117,8 +117,8 @@ const Navbar = () => {
                 onMouseLeave={handleAccountLeave}
               >
                 <button className="flex items-center gap-1.5 p-2 text-foreground hover:text-accent transition-colors">
-                  <FiUser className="w-5 h-5" />
-                  <span className="hidden md:inline text-sm font-medium">{t('nav.myAccount')}</span>
+                  <FiUser className="w-5 h-5 3xl:w-6 3xl:h-6" />
+                  <span className="hidden md:inline text-sm 3xl:text-base font-medium">{t('nav.myAccount')}</span>
                   <FiChevronDown className={`w-3 h-3 transition-transform ${accountOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -129,17 +129,17 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full mt-1 ltr:right-0 rtl:left-0 bg-surface border border-muted/20 rounded-xl shadow-xl overflow-hidden min-w-[180px] sm:min-w-[220px] z-50"
+                      className="absolute top-full mt-1 ltr:right-0 rtl:left-0 bg-surface border border-muted/20 rounded-xl shadow-xl overflow-hidden min-w-[180px] sm:min-w-[220px] 3xl:min-w-[260px] z-50"
                       onMouseEnter={handleAccountEnter}
                       onMouseLeave={handleAccountLeave}
                     >
                       {user ? (
                         <>
-                          <div className="px-4 py-3 border-b border-muted/10">
-                            <p className="text-sm font-semibold text-foreground truncate">
+                          <div className="px-4 py-3 3xl:px-5 3xl:py-4 border-b border-muted/10">
+                            <p className="text-sm 3xl:text-base font-semibold text-foreground truncate">
                               {user.firstName} {user.lastName}
                             </p>
-                            <p className="text-xs text-foreground/60 truncate">{user.email}</p>
+                            <p className="text-xs 3xl:text-sm text-foreground/60 truncate">{user.email}</p>
                           </div>
                           <div className="py-1">
                             {[
@@ -151,9 +151,9 @@ const Navbar = () => {
                                 key={item.to}
                                 to={item.to}
                                 onClick={() => setAccountOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-surface-alt transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 3xl:px-5 3xl:py-3 text-sm 3xl:text-base text-foreground hover:bg-surface-alt transition-colors"
                               >
-                                <item.icon className="w-4 h-4 text-foreground/60" />
+                                <item.icon className="w-4 h-4 3xl:w-5 3xl:h-5 text-foreground/60" />
                                 {item.label}
                               </Link>
                             ))}
@@ -161,30 +161,30 @@ const Navbar = () => {
                           <div className="border-t border-muted/10 py-1">
                             <button
                               onClick={handleLogout}
-                              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                              className="flex items-center gap-3 w-full px-4 py-2.5 3xl:px-5 3xl:py-3 text-sm 3xl:text-base text-red-500 hover:bg-red-50 transition-colors"
                             >
-                              <FiLogOut className="w-4 h-4" />
+                              <FiLogOut className="w-4 h-4 3xl:w-5 3xl:h-5" />
                               {t('nav.logout')}
                             </button>
                           </div>
                         </>
                       ) : (
-                        <div className="p-4">
+                        <div className="p-4 3xl:p-5">
                           <Link
                             to="/track-order"
                             onClick={() => setAccountOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2.5 text-sm text-foreground/70 hover:text-accent hover:bg-surface-alt rounded-lg transition-colors mb-3"
+                            className="flex items-center gap-2 px-3 py-2.5 3xl:py-3 text-sm 3xl:text-base text-foreground/70 hover:text-accent hover:bg-surface-alt rounded-lg transition-colors mb-3"
                           >
                             <FiPackage size={15} /> {t('nav.trackOrder')}
                           </Link>
                           <Link
                             to="/login"
                             onClick={() => setAccountOpen(false)}
-                            className="block w-full text-center py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors"
+                            className="block w-full text-center py-2.5 3xl:py-3 bg-accent text-white text-sm 3xl:text-base font-medium rounded-lg hover:bg-accent-light transition-colors"
                           >
                             {t('nav.login')}
                           </Link>
-                          <p className="mt-3 text-center text-xs text-foreground/60">
+                          <p className="mt-3 text-center text-xs 3xl:text-sm text-foreground/60">
                             {t('auth.noAccount')}{' '}
                             <Link
                               to="/register"

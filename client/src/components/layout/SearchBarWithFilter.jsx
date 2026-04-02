@@ -104,7 +104,7 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
           <button
             type="button"
             onClick={() => setFilterOpen(!filterOpen)}
-            className="flex items-center gap-1.5 h-full px-3 sm:px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-foreground border-e-2 border-gray-400 bg-surface-alt/40 rounded-s-lg whitespace-nowrap transition-colors"
+            className="flex items-center gap-1.5 h-full px-3 sm:px-4 3xl:px-5 py-2.5 3xl:py-3 text-sm 3xl:text-base font-medium text-foreground/70 hover:text-foreground border-e-2 border-gray-400 bg-surface-alt/40 rounded-s-lg whitespace-nowrap transition-colors"
           >
             <span className="max-w-[120px] truncate">{selectedCategoryName}</span>
             <FiChevronDown className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
@@ -145,9 +145,9 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Escape' && closeSuggestions()}
             placeholder={t('books.search')}
-            className="w-full px-4 py-2.5 ps-10 bg-transparent text-sm text-foreground placeholder:text-muted/40 focus:outline-none"
+            className="w-full px-4 py-2.5 3xl:py-3 ps-10 bg-transparent text-sm 3xl:text-base text-foreground placeholder:text-muted/40 focus:outline-none"
           />
-          <FiSearch className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/50 pointer-events-none" />
+          <FiSearch className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 3xl:w-5 3xl:h-5 text-muted/50 pointer-events-none" />
         </div>
       </form>
 

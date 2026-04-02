@@ -32,19 +32,19 @@ const Profile = () => {
     } finally { setLoading(false); }
   };
 
-  const inputClass = 'w-full px-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
-  const iconInputClass = `${inputClass} ps-11`;
-  const labelClass = 'block text-sm font-semibold text-foreground mb-1.5';
+  const inputClass = 'w-full px-4 py-3 3xl:px-5 3xl:py-4 bg-background border border-gray-300 rounded-xl text-foreground text-sm 3xl:text-base focus:outline-none focus:border-accent transition-colors';
+  const iconInputClass = `${inputClass} ps-11 3xl:ps-12`;
+  const labelClass = 'block text-sm 3xl:text-base font-semibold text-foreground mb-1.5';
 
   return (
     <PageTransition>
       <AccountLayout>
-        <h1 className="text-2xl font-display font-bold text-foreground mb-6">{t('profile.editProfile')}</h1>
+        <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('profile.editProfile')}</h1>
 
         <form onSubmit={handleSubmit}>
           {/* Personal Info */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
-            <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</h3>
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>{t('auth.firstName')}</label>
@@ -58,8 +58,8 @@ const Profile = () => {
           </div>
 
           {/* Contact */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
-            <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}</h3>
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}</h3>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>{t('auth.email')}</label>
@@ -76,8 +76,8 @@ const Profile = () => {
           </div>
 
           {/* Address */}
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
-            <h3 className="text-base font-bold text-foreground mb-5">{language === 'ar' ? 'العنوان' : 'Address'}</h3>
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'العنوان' : 'Address'}</h3>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>{t('checkout.city')}</label>
@@ -93,7 +93,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="flex items-center gap-2 px-8 py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 shadow-sm shadow-accent/20">
+          <button type="submit" disabled={loading} className="flex items-center gap-2 px-8 py-3 3xl:px-10 3xl:py-4 bg-accent text-white font-semibold 3xl:text-base rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 shadow-sm shadow-accent/20">
             <FiSave size={16} /> {loading ? t('common.loading') : t('common.save')}
           </button>
         </form>

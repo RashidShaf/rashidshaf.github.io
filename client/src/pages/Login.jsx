@@ -37,19 +37,19 @@ const Login = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md 3xl:max-w-lg"
         >
           <div className="text-center mb-8">
-            <Link to="/" className="inline-block text-3xl font-display font-bold text-foreground tracking-[0.15em] mb-2">
+            <Link to="/" className="inline-block text-3xl 3xl:text-4xl font-display font-bold text-foreground tracking-[0.15em] mb-2">
               ARKAAN
             </Link>
-            <h1 className="text-xl font-semibold text-foreground">{t('auth.login')}</h1>
+            <h1 className="text-xl 3xl:text-2xl font-semibold text-foreground">{t('auth.login')}</h1>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-5 sm:p-8 border border-muted/10 shadow-sm">
+          <form onSubmit={handleSubmit} className="bg-surface rounded-2xl p-5 sm:p-8 3xl:p-10 border border-muted/10 shadow-sm">
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>
+                <label className="block text-sm 3xl:text-base font-medium text-foreground mb-1.5">{t('auth.email')}</label>
                 <div className="relative">
                   <FiMail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
                   <input
@@ -57,14 +57,14 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                    className="w-full ps-10 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm 3xl:text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
                     placeholder="email@example.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.password')}</label>
+                <label className="block text-sm 3xl:text-base font-medium text-foreground mb-1.5">{t('auth.password')}</label>
                 <div className="relative">
                   <FiLock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
                   <input
@@ -72,7 +72,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full ps-10 pe-10 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
+                    className="w-full ps-10 pe-10 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm 3xl:text-base focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-colors"
                     placeholder="••••••••"
                   />
                   <button
@@ -88,13 +88,13 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50"
+                className="w-full py-3 3xl:py-4 bg-accent text-white font-semibold 3xl:text-base rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50"
               >
                 {loading ? t('common.loading') : t('auth.login')}
               </button>
             </div>
 
-            <p className="mt-6 text-center text-sm text-foreground/60">
+            <p className="mt-6 text-center text-sm 3xl:text-base text-foreground/60">
               {t('auth.noAccount')}{' '}
               <Link to="/register" className="text-accent font-medium hover:underline">
                 {t('nav.register')}

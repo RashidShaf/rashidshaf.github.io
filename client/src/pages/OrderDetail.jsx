@@ -87,11 +87,11 @@ const OrderDetail = () => {
         </Link>
 
         {/* Order Header Card */}
-        <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-5 sm:p-6 mb-6">
+        <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-5 sm:p-6 3xl:p-8 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">{order.orderNumber}</h1>
+                <h1 className="text-xl sm:text-2xl 3xl:text-3xl font-display font-bold text-foreground">{order.orderNumber}</h1>
                 <span className={`px-2.5 py-0.5 text-[11px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
                   {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
                 </span>
@@ -117,8 +117,8 @@ const OrderDetail = () => {
 
         {/* Status Timeline */}
         {!isCancelled ? (
-          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 mb-6">
-            <h3 className="text-sm font-bold text-foreground/50 uppercase tracking-wider mb-6">
+          <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-6 sm:p-8 3xl:p-10 mb-6">
+            <h3 className="text-sm 3xl:text-base font-bold text-foreground/50 uppercase tracking-wider mb-6">
               {t('orders.orderStatus')}
             </h3>
             <div className="flex items-center justify-between relative">
@@ -168,7 +168,7 @@ const OrderDetail = () => {
           <div className="lg:col-span-2">
             <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-muted/10">
-                <h2 className="text-base font-bold text-foreground">
+                <h2 className="text-base 3xl:text-lg font-bold text-foreground">
                   {t('orders.items')} ({order.items.length})
                 </h2>
               </div>
@@ -204,8 +204,8 @@ const OrderDetail = () => {
           {/* Sidebar — Summary + Shipping */}
           <div className="space-y-5">
             {/* Order Summary */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
-              <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 3xl:p-8">
+              <h2 className="text-base 3xl:text-lg font-bold text-foreground mb-4">{t('checkout.orderSummary')}</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-foreground/50">{t('cart.subtotal')}</span>
@@ -223,8 +223,8 @@ const OrderDetail = () => {
             </div>
 
             {/* Shipping Info */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
-              <h2 className="text-base font-bold text-foreground mb-4">{t('checkout.shippingInfo')}</h2>
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 3xl:p-8">
+              <h2 className="text-base 3xl:text-lg font-bold text-foreground mb-4">{t('checkout.shippingInfo')}</h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-surface-alt flex items-center justify-center flex-shrink-0">
@@ -248,8 +248,8 @@ const OrderDetail = () => {
             </div>
 
             {/* Order Info */}
-            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6">
-              <h2 className="text-base font-bold text-foreground mb-4">{t('orders.orderInfo')}</h2>
+            <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 3xl:p-8">
+              <h2 className="text-base 3xl:text-lg font-bold text-foreground mb-4">{t('orders.orderInfo')}</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-foreground/50 flex items-center gap-1.5"><FiHash size={12} /> {t('orders.orderHash')}</span>

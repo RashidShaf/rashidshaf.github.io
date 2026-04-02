@@ -32,7 +32,7 @@ const OrderHistory = () => {
   return (
     <PageTransition>
       <AccountLayout>
-        <h1 className="text-2xl font-display font-bold text-foreground mb-6">{t('orders.title')}</h1>
+        <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('orders.title')}</h1>
 
         {loading ? (
           <div className="space-y-4">
@@ -52,7 +52,7 @@ const OrderHistory = () => {
               <Link
                 key={order.id}
                 to={`/orders/${order.id}`}
-                className="block sm:flex sm:items-center gap-4 bg-surface rounded-xl border border-muted/10 shadow-sm p-4 sm:p-5 hover:shadow-lg hover:border-accent/20 transition-all group"
+                className="block sm:flex sm:items-center gap-4 bg-surface rounded-xl border border-muted/10 shadow-sm p-4 sm:p-5 3xl:p-6 hover:shadow-lg hover:border-accent/20 transition-all group"
               >
                 {/* Item Thumbnails */}
                 <div className="hidden sm:flex -space-x-3 flex-shrink-0">
@@ -74,7 +74,7 @@ const OrderHistory = () => {
                 {/* Order Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-bold text-foreground">{order.orderNumber}</p>
+                    <p className="text-sm 3xl:text-base font-bold text-foreground">{order.orderNumber}</p>
                     <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
                       {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
                     </span>
@@ -87,7 +87,7 @@ const OrderHistory = () => {
 
                 {/* Price + Arrow */}
                 <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-muted/10">
-                  <p className="text-base font-extrabold text-foreground">{formatPrice(order.total)}</p>
+                  <p className="text-base 3xl:text-lg font-extrabold text-foreground">{formatPrice(order.total)}</p>
                   <FiChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-accent transition-colors rtl:rotate-180" />
                 </div>
               </Link>

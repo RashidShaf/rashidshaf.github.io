@@ -55,20 +55,20 @@ const TrackOrder = () => {
     <PageTransition>
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         {/* Lookup Form */}
-        <div className="max-w-md mx-auto mb-10">
+        <div className="max-w-md 3xl:max-w-lg mx-auto mb-10">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-              <FiPackage className="w-7 h-7 text-accent" />
+            <div className="w-16 h-16 3xl:w-20 3xl:h-20 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <FiPackage className="w-7 h-7 3xl:w-9 3xl:h-9 text-accent" />
             </div>
             <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground mb-2">
               {t('trackOrder.title')}
             </h1>
-            <p className="text-sm text-foreground/50">{t('trackOrder.subtitle')}</p>
+            <p className="text-sm 3xl:text-base text-foreground/50">{t('trackOrder.subtitle')}</p>
           </div>
 
-          <form onSubmit={handleTrack} className="bg-surface rounded-2xl border border-muted/10 p-6 space-y-4">
+          <form onSubmit={handleTrack} className="bg-surface rounded-2xl border border-muted/10 p-6 3xl:p-8 space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1.5">
+              <label className="block text-sm 3xl:text-base font-semibold text-foreground mb-1.5">
                 {t('trackOrder.phone')}
               </label>
               <PhoneInput value={phone} onChange={setPhone} required />
@@ -76,7 +76,7 @@ const TrackOrder = () => {
             <button
               type="submit"
               disabled={loading || !phone.trim()}
-              className="w-full py-3 bg-accent text-white font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 3xl:py-4 bg-accent text-white font-bold 3xl:text-base rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <FiSearch size={16} />
               {loading ? t('common.loading') : t('trackOrder.submit')}
@@ -90,7 +90,7 @@ const TrackOrder = () => {
 
         {/* Orders List */}
         {orders && orders.length > 0 && (
-          <div className="max-w-4xl mx-auto space-y-4">
+          <div className="max-w-4xl 3xl:max-w-5xl mx-auto space-y-4">
             <p className="text-sm text-foreground/50 mb-2">
               {orders.length} {orders.length === 1 ? (isRTL ? 'طلب' : 'order') : (isRTL ? 'طلبات' : 'orders')}
             </p>
@@ -105,7 +105,7 @@ const TrackOrder = () => {
                   {/* Order Header — always visible, clickable */}
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                    className="w-full flex items-center gap-4 p-4 sm:p-5 text-left hover:bg-surface-alt/30 transition-colors"
+                    className="w-full flex items-center gap-4 p-4 sm:p-5 3xl:p-6 text-left hover:bg-surface-alt/30 transition-colors"
                   >
                     {/* Thumbnails */}
                     <div className="hidden sm:flex -space-x-2 flex-shrink-0">
@@ -121,7 +121,7 @@ const TrackOrder = () => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-bold text-foreground">{order.orderNumber}</p>
+                        <p className="text-sm 3xl:text-base font-bold text-foreground">{order.orderNumber}</p>
                         <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
                           {t(`orders.statuses.${order.status?.toLowerCase()}`) || order.status}
                         </span>
@@ -132,13 +132,13 @@ const TrackOrder = () => {
                       </div>
                     </div>
 
-                    <p className="text-base font-extrabold text-foreground flex-shrink-0">{formatPrice(order.total)}</p>
+                    <p className="text-base 3xl:text-lg font-extrabold text-foreground flex-shrink-0">{formatPrice(order.total)}</p>
                     <FiChevronDown className={`w-5 h-5 text-foreground/30 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="border-t border-muted/10 p-4 sm:p-6 space-y-6">
+                    <div className="border-t border-muted/10 p-4 sm:p-6 3xl:p-8 space-y-6">
                       {/* Status Timeline */}
                       {!isCancelled ? (
                         <div>
