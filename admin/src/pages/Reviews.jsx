@@ -101,18 +101,18 @@ export default function Reviews() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
           { icon: FiMessageSquare, label: 'Total Reviews', value: stats.total, bg: 'bg-blue-600' },
           { icon: FiStar, label: 'Average Rating', value: stats.avgRating, bg: 'bg-amber-500' },
           { icon: FiEye, label: 'Visible Reviews', value: stats.visible, bg: 'bg-emerald-600' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
       </div>
@@ -126,20 +126,20 @@ export default function Reviews() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search reviews..."
-            className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+            className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent"
           />
         </div>
         <div className="flex-1" />
         <button
           onClick={fetchReviews}
-          className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
+          className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium"
         >
           <FiRefreshCw size={14} /> Refresh
         </button>
         <select
           value={visibilityFilter}
           onChange={(e) => { setVisibilityFilter(e.target.value); setPage(1); }}
-          className="px-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[140px]"
+          className="px-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[140px]"
         >
           <option value="">{t('common.all')}</option>
           <option value="true">Visible</option>
@@ -150,18 +150,18 @@ export default function Reviews() {
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted w-12">#</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Book Title</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Customer</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Rating</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Comment</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Verified</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Visible</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
-                <th className="text-right px-4 py-3 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Book Title</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Customer</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Rating</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Comment</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Verified</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Visible</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.date')}</th>
+                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -182,33 +182,33 @@ export default function Reviews() {
               ) : (
                 reviews.map((review, index) => (
                   <tr key={review.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {(page - 1) * limit + index + 1}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className="font-medium text-admin-text truncate max-w-[200px] block">
                         {review.book?.title || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                       {review.user?.firstName} {review.user?.lastName}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       {renderStars(review.rating)}
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs max-w-[250px]">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs max-w-[250px]">
                       <span className="block truncate" title={review.comment}>
                         {review.comment ? (review.comment.length > 100 ? review.comment.slice(0, 100) + '...' : review.comment) : '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       {review.isVerified ? (
                         <FiCheckCircle className="w-4 h-4 text-green-500" />
                       ) : (
                         <span className="text-xs text-admin-muted">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <button
                         onClick={() => handleToggleVisibility(review)}
                         className={`px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${
@@ -218,10 +218,10 @@ export default function Reviews() {
                         {review.isVisible ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                       <button
                         onClick={() => setDeleteId(review.id)}
                         className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"

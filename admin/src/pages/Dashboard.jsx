@@ -47,23 +47,23 @@ export default function Dashboard() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 3xl:gap-8 mb-8">
         {statCards.map((card, i) => (
-          <motion.div key={card.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
-              <card.icon size={20} className={card.color} />
+          <motion.div key={card.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <card.icon size={20} className={`${card.color} 3xl:scale-125`} />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{t(`dashboard.${card.key}`)}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{t(`dashboard.${card.key}`)}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Sales Chart */}
-      <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm mb-6">
-        <h3 className="text-lg font-semibold text-admin-text mb-4">{t('dashboard.salesOverview')}</h3>
+      <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm mb-6">
+        <h3 className="text-lg 3xl:text-xl font-semibold text-admin-text mb-4">{t('dashboard.salesOverview')}</h3>
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={280} className="3xl:!h-[360px]">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d) => d.slice(5)} />
@@ -77,21 +77,21 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 3xl:gap-8">
         {/* Recent Orders */}
-        <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-admin-text mb-4">{t('dashboard.recentOrders')}</h3>
+        <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+          <h3 className="text-lg 3xl:text-xl font-semibold text-admin-text mb-4">{t('dashboard.recentOrders')}</h3>
           {recentOrders.length > 0 ? (
             <div className="space-y-3">
               {recentOrders.slice(0, 5).map((order) => (
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-admin-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-admin-text">{order.orderNumber}</p>
-                    <p className="text-xs text-admin-muted">{order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}</p>
+                    <p className="text-sm 3xl:text-base font-medium text-admin-text">{order.orderNumber}</p>
+                    <p className="text-xs 3xl:text-sm text-admin-muted">{order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}</p>
                   </div>
                   <div className="text-end">
-                    <p className="text-sm font-semibold text-admin-text">QAR {parseFloat(order.total).toFixed(2)}</p>
-                    <p className={`text-xs font-medium ${statusColor[order.status] || 'text-admin-muted'}`}>{order.status}</p>
+                    <p className="text-sm 3xl:text-base font-semibold text-admin-text">QAR {parseFloat(order.total).toFixed(2)}</p>
+                    <p className={`text-xs 3xl:text-sm font-medium ${statusColor[order.status] || 'text-admin-muted'}`}>{order.status}</p>
                   </div>
                 </div>
               ))}
@@ -102,18 +102,18 @@ export default function Dashboard() {
         </div>
 
         {/* Top Books */}
-        <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-admin-text mb-4">{t('dashboard.topBooks')}</h3>
+        <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+          <h3 className="text-lg 3xl:text-xl font-semibold text-admin-text mb-4">{t('dashboard.topBooks')}</h3>
           {topBooks.length > 0 ? (
             <div className="space-y-3">
               {topBooks.slice(0, 5).map((book, i) => (
                 <div key={book.id} className="flex items-center gap-3 py-2 border-b border-admin-border last:border-0">
                   <span className="text-xs font-bold text-admin-muted w-5">{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-admin-text truncate">{book.title}</p>
-                    <p className="text-xs text-admin-muted">{book.author}</p>
+                    <p className="text-sm 3xl:text-base font-medium text-admin-text truncate">{book.title}</p>
+                    <p className="text-xs 3xl:text-sm text-admin-muted">{book.author}</p>
                   </div>
-                  <span className="text-sm font-semibold text-admin-text">{book.salesCount} sold</span>
+                  <span className="text-sm 3xl:text-base font-semibold text-admin-text">{book.salesCount} sold</span>
                 </div>
               ))}
             </div>

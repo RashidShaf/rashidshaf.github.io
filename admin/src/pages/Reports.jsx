@@ -32,42 +32,42 @@ export default function Reports() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
+      <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
         {/* Stat Cards */}
         {salesLoading && !salesReport ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-[140px] bg-gray-50 rounded-xl animate-pulse" />)}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-[140px] 3xl:h-[170px] bg-gray-50 rounded-xl animate-pulse" />)}
           </div>
         ) : salesReport && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
             {[
               { icon: FiShoppingBag, label: 'Total Orders', value: salesReport.summary?.totalOrders ?? 0, bg: 'bg-blue-600' },
               { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(salesReport.summary?.totalRevenue ?? 0).toFixed(0)}`, bg: 'bg-emerald-600' },
               { icon: FiBarChart2, label: 'Avg Order', value: `QAR ${parseFloat(salesReport.summary?.averageOrder ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
               { icon: FiPackage, label: 'Total Items', value: salesReport.summary?.totalItems ?? 0, bg: 'bg-amber-500' },
             ].map((card, i) => (
-              <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-                <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+              <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+                <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
                   <card.icon className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-                <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+                <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+                <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Date Filter */}
-        <div className="flex flex-wrap items-end gap-3 mb-6 p-4 bg-gray-50 rounded-xl">
+        <div className="flex flex-wrap items-end gap-3 mb-6 3xl:mb-8 p-4 3xl:p-6 bg-gray-50 rounded-xl">
           <div>
-            <label className="block text-xs font-medium text-admin-muted mb-1.5">{t('reports.from')}</label>
-            <input type="date" value={salesFrom} onChange={(e) => setSalesFrom(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+            <label className="block text-xs 3xl:text-sm font-medium text-admin-muted mb-1.5">{t('reports.from')}</label>
+            <input type="date" value={salesFrom} onChange={(e) => setSalesFrom(e.target.value)} className="px-3 py-2.5 3xl:px-4 3xl:py-3 bg-white border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-admin-muted mb-1.5">{t('reports.to')}</label>
-            <input type="date" value={salesTo} onChange={(e) => setSalesTo(e.target.value)} className="px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+            <label className="block text-xs 3xl:text-sm font-medium text-admin-muted mb-1.5">{t('reports.to')}</label>
+            <input type="date" value={salesTo} onChange={(e) => setSalesTo(e.target.value)} className="px-3 py-2.5 3xl:px-4 3xl:py-3 bg-white border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
           </div>
-          <button onClick={generateSalesReport} disabled={salesLoading} className="px-5 py-2.5 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
+          <button onClick={generateSalesReport} disabled={salesLoading} className="px-5 py-2.5 3xl:px-6 3xl:py-3 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
             {salesLoading ? t('common.loading') : t('reports.generate')}
           </button>
           {salesReport && (salesReport.orders || []).length > 0 && (
@@ -89,7 +89,7 @@ export default function Reports() {
                   })
                   .catch(() => toast.error('Export failed'));
               }}
-              className="flex items-center gap-1.5 px-4 py-2.5 border border-admin-border text-admin-muted rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2.5 3xl:px-5 3xl:py-3 border border-admin-border text-admin-muted rounded-lg text-sm 3xl:text-base font-medium hover:bg-gray-100 transition-colors"
             >
               <FiDownload size={14} /> {t('common.export')}
             </button>
@@ -99,15 +99,15 @@ export default function Reports() {
         {/* Orders Table */}
         {salesReport && (
           <div className="overflow-x-auto border border-admin-border rounded-lg">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm 3xl:text-base">
               <thead className="bg-gray-50 border-b border-admin-border">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">Order #</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.customer')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('nav.products')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Order #</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('nav.products')}</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.date')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,15 +115,15 @@ export default function Reports() {
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-admin-muted">{t('common.noResults')}</td></tr>
                 ) : (salesReport.orders || []).map((order) => (
                   <tr key={order.id || order.orderNumber} className="border-b border-admin-border last:border-0">
-                    <td className="px-4 py-3 font-medium text-admin-text">{order.orderNumber}</td>
-                    <td className="px-4 py-3 text-admin-muted">{order.user?.firstName} {order.user?.lastName}</td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">{order.orderNumber}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{order.user?.firstName} {order.user?.lastName}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
                       {order.items?.length > 2 && ` +${order.items.length - 2}`}
                     </td>
-                    <td className="px-4 py-3 font-medium text-admin-text">QAR {parseFloat(order.total || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3"><span className="text-xs font-medium">{order.status}</span></td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {parseFloat(order.total || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4"><span className="text-xs font-medium">{order.status}</span></td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">{new Date(order.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

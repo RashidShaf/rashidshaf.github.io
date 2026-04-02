@@ -107,18 +107,18 @@ export default function Books() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
           { icon: FiBook, label: t('dashboard.totalBooks'), value: stats.total, bg: 'bg-blue-600' },
           { icon: FiStar, label: t('books.active'), value: pagination?.total || stats.total, bg: 'bg-amber-500' },
           { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: stats.lowStock, bg: 'bg-red-600' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
       </div>
@@ -127,7 +127,7 @@ export default function Books() {
       <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1">
         <button
           onClick={() => handleTabChange('')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+          className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
             selectedTab === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
           }`}
         >
@@ -137,7 +137,7 @@ export default function Books() {
           <button
             key={cat.id}
             onClick={() => handleTabChange(cat.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
               selectedTab === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
             }`}
           >
@@ -150,15 +150,15 @@ export default function Books() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+        <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
         <Link
           to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
-          className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
+          className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
         >
           <FiPlus size={16} /> {t('books.addBook')}
         </Link>
@@ -167,16 +167,16 @@ export default function Books() {
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted w-12">#</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.bookTitle')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.category')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.price')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.stock')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('books.active')}</th>
-                <th className="text-right px-4 py-3 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.stock')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.active')}</th>
+                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -189,8 +189,8 @@ export default function Books() {
               ) : (
                 books.map((book, index) => (
                   <tr key={book.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-admin-muted text-xs">{(page - 1) * limit + index + 1}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">{(page - 1) * limit + index + 1}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
                           {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-admin-muted">{book.title.charAt(0)}</div>}
@@ -198,7 +198,7 @@ export default function Books() {
                         <span className="font-medium text-admin-text truncate max-w-[200px]">{book.title}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       <div className="flex items-center gap-1.5">
                         <span>{book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : '—'}</span>
                         {(() => {
@@ -214,11 +214,11 @@ export default function Books() {
                         })()}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-medium text-admin-text">QAR {parseFloat(book.price).toFixed(2)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {parseFloat(book.price).toFixed(2)}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className={`font-medium ${book.stock <= 5 ? 'text-red-500' : 'text-admin-text'}`}>{book.stock}</span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <button
                         onClick={() => handleToggleActive(book)}
                         className={`px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${
@@ -228,7 +228,7 @@ export default function Books() {
                         {book.isActive ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleToggleOutOfStock(book)}

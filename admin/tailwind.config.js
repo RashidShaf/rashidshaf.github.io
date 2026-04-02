@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      screens: {
+        '3xl': '1800px',
+      },
       colors: {
         sidebar: '#0F172A',
         'sidebar-hover': '#1E293B',

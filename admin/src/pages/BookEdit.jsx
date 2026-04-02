@@ -282,8 +282,8 @@ export default function BookEdit() {
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent';
-  const labelClass = 'block text-sm font-medium text-admin-text mb-1.5';
+  const inputClass = 'w-full px-3 py-2.5 3xl:px-4 3xl:py-3 bg-white border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent';
+  const labelClass = 'block text-sm 3xl:text-base font-medium text-admin-text mb-1.5';
 
   if (loading) {
     return (
@@ -295,20 +295,20 @@ export default function BookEdit() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 3xl:mb-8">
         <Link to="/books" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
-        <h2 className="text-2xl font-bold text-admin-text">{t('books.editBook')}</h2>
+        <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">{t('books.editBook')}</h2>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 3xl:gap-8">
           {/* Main Info */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 3xl:space-y-8">
             {/* Category — Corner dropdown + checkbox tree */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Category</h3>
               <div>
                 <label className={labelClass}>Corner *</label>
                 <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
@@ -374,9 +374,9 @@ export default function BookEdit() {
             </div>
 
             {/* Product Details */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Product Details</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Details</h3>
+              <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>Title (English) *</label>
                   <input name="title" value={form.title} onChange={handleChange} required className={inputClass} />
@@ -386,7 +386,7 @@ export default function BookEdit() {
                   <input name="titleAr" value={form.titleAr} onChange={handleChange} dir="rtl" className={inputClass} />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>Description (English)</label>
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4} className={inputClass + ' resize-none'} />
@@ -400,9 +400,9 @@ export default function BookEdit() {
 
             {/* Book-specific fields */}
             {isBooks && (
-              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Book Details</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Book Details</h3>
+                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                   <div>
                     <label className={labelClass}>Author (English)</label>
                     <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
@@ -420,7 +420,7 @@ export default function BookEdit() {
                     <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                   <div>
                     <label className={labelClass}>Publisher (English)</label>
                     <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
@@ -446,9 +446,9 @@ export default function BookEdit() {
 
             {/* Non-book fields */}
             {!isBooks && form.parentCategoryId && (
-              <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Product Specifications</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Specifications</h3>
+                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                   <div>
                     <label className={labelClass}>Brand</label>
                     <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
@@ -480,10 +480,10 @@ export default function BookEdit() {
             )}
 
             {/* Pricing & Inventory */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Pricing & Inventory</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Pricing & Inventory</h3>
               {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">Coming Soon — pricing and stock fields are optional</p>}
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>Price (QAR) *</label>
                   <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required className={inputClass} />
@@ -501,20 +501,20 @@ export default function BookEdit() {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button type="submit" disabled={saving} className="px-8 py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={saving} className="px-8 py-3 3xl:px-10 3xl:py-3.5 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 text-sm 3xl:text-base">
                 {saving ? t('common.loading') : t('common.save')}
               </button>
-              <Link to="/books" className="px-8 py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+              <Link to="/books" className="px-8 py-3 3xl:px-10 3xl:py-3.5 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm 3xl:text-base font-medium">
                 {t('common.cancel')}
               </Link>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 3xl:space-y-8">
             {/* Cover Image */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-4">Cover Image</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Cover Image</h3>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="relative w-full aspect-[3/4] border-2 border-dashed border-admin-border rounded-xl cursor-pointer hover:border-admin-accent transition-colors overflow-hidden flex items-center justify-center"
@@ -538,8 +538,8 @@ export default function BookEdit() {
             </div>
 
             {/* Additional Images */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-4">Additional Images</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Additional Images</h3>
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {existingImages.map((img, i) => (
                   <div key={`existing-${i}`} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -570,7 +570,7 @@ export default function BookEdit() {
 
 
             {/* Out of Stock */}
-            <div className={`bg-admin-card rounded-xl border ${form.isOutOfStock ? 'border-red-300' : 'border-admin-border'} p-6 shadow-sm`}>
+            <div className={`bg-admin-card rounded-xl border ${form.isOutOfStock ? 'border-red-300' : 'border-admin-border'} p-6 3xl:p-8 shadow-sm`}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="isOutOfStock" checked={form.isOutOfStock} onChange={handleChange} className="w-4 h-4 rounded border-red-300 text-red-500 focus:ring-red-400" />
                 <span className={`text-sm font-semibold ${form.isOutOfStock ? 'text-red-600' : 'text-admin-text'}`}>Out of Stock</span>
@@ -578,8 +578,8 @@ export default function BookEdit() {
             </div>
 
             {/* Section Flags */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Show in Sections</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Show in Sections</h3>
               {[
                 { name: 'isComingSoon', label: 'Coming Soon' },
                 { name: 'isFeatured', label: 'Featured' },
@@ -604,8 +604,8 @@ export default function BookEdit() {
             </div>
 
             {/* Tags */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Tags</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Tags</h3>
               <div>
                 <label className={labelClass}>Tags (comma separated)</label>
                 <input name="tags" value={form.tags} onChange={handleChange} placeholder="fiction, bestseller, classic" className={inputClass} />

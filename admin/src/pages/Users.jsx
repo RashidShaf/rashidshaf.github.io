@@ -68,17 +68,17 @@ export default function Users() {
       transition={{ duration: 0.4 }}
     >
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
           { icon: FiUsers, label: 'Total Users', value: totalUsers, bg: 'bg-blue-600', color: 'text-white' },
           { icon: FiUserCheck, label: 'Active Users', value: pagination?.total || totalUsers, bg: 'bg-emerald-600', color: 'text-white' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
       </div>
@@ -87,10 +87,10 @@ export default function Users() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchUsers} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+        <button onClick={fetchUsers} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
       </div>
@@ -98,17 +98,17 @@ export default function Users() {
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.name')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.email')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Phone</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.role')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('users.blocked')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Orders</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Joined</th>
-                <th className="text-right px-4 py-3 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.name')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.email')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Phone</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.role')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.blocked')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Orders</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Joined</th>
+                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -132,14 +132,14 @@ export default function Users() {
                     key={user.id}
                     className="border-b border-admin-border hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <p className="font-medium text-admin-text">
                         {user.firstName} {user.lastName}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">{user.email}</td>
-                    <td className="px-4 py-3 text-admin-muted" dir="ltr">{user.phone || '-'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{user.email}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted" dir="ltr">{user.phone || '-'}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span
                         className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
                           roleColors[user.role] || 'bg-gray-100 text-gray-700'
@@ -148,7 +148,7 @@ export default function Users() {
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span
                         className={`w-2 h-2 rounded-full inline-block ${
                           user.isBlocked ? 'bg-red-500' : 'bg-green-500'
@@ -158,13 +158,13 @@ export default function Users() {
                         {user.isBlocked ? t('users.blocked') : 'Active'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                       {user.orderCount ?? user._count?.orders ?? '-'}
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                       <button
                         onClick={() => handleToggleBlock(user)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${

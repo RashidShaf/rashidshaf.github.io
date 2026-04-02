@@ -30,15 +30,15 @@ export default function Login() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md 3xl:max-w-lg"
       >
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 3xl:p-10">
           {/* Logo */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-admin-text tracking-wider">
+            <h1 className="text-3xl 3xl:text-4xl font-bold text-admin-text tracking-wider">
               ARKAAN
             </h1>
-            <p className="text-admin-muted mt-1 text-sm">{t('auth.login')}</p>
+            <p className="text-admin-muted mt-1 text-sm 3xl:text-base">{t('auth.login')}</p>
           </div>
 
           {/* Error */}
@@ -55,7 +55,7 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-admin-text mb-1.5">
+              <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">
                 {t('auth.email')}
               </label>
               <input
@@ -63,13 +63,13 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-admin-border focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 3xl:px-5 3xl:py-3.5 rounded-lg border border-admin-border focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 outline-none transition-all text-sm 3xl:text-base"
                 placeholder="admin@arkaan.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-admin-text mb-1.5">
+              <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">
                 {t('auth.password')}
               </label>
               <input
@@ -77,7 +77,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-admin-border focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 outline-none transition-all text-sm"
+                className="w-full px-4 py-2.5 3xl:px-5 3xl:py-3.5 rounded-lg border border-admin-border focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 outline-none transition-all text-sm 3xl:text-base"
                 placeholder="••••••••"
               />
             </div>
@@ -85,7 +85,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 rounded-lg bg-admin-accent text-white font-semibold text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 3xl:py-3.5 rounded-lg bg-admin-accent text-white font-semibold text-sm 3xl:text-base hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? t('common.loading') : t('auth.signIn')}
             </button>

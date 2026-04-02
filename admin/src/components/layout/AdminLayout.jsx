@@ -47,8 +47,8 @@ export default function AdminLayout() {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
-        <span className="text-lg font-bold text-white tracking-wider">
+      <div className="flex items-center justify-between h-16 3xl:h-20 px-6 border-b border-white/10">
+        <span className="text-lg 3xl:text-xl font-bold text-white tracking-wider">
           ARKAAN <span className="text-admin-accent">ADMIN</span>
         </span>
         <button
@@ -60,7 +60,7 @@ export default function AdminLayout() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-4 3xl:py-5 px-3 3xl:px-4 space-y-1 3xl:space-y-1.5 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -68,26 +68,26 @@ export default function AdminLayout() {
             end={item.end}
             onClick={() => setSidebarOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 3xl:px-4 3xl:py-3 rounded-lg text-sm 3xl:text-base font-medium transition-colors ${
                 isActive
                   ? 'bg-admin-accent text-white'
                   : 'text-white/85 hover:text-white hover:bg-sidebar-hover'
               }`
             }
           >
-            <item.icon size={18} />
+            <item.icon size={18} className="3xl:scale-110" />
             <span>{t(item.labelKey)}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* Logout */}
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3 3xl:p-4 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/85 hover:text-white hover:bg-sidebar-hover transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 3xl:px-4 3xl:py-3 rounded-lg text-sm 3xl:text-base font-medium text-white/85 hover:text-white hover:bg-sidebar-hover transition-colors"
         >
-          <FiLogOut size={18} />
+          <FiLogOut size={18} className="3xl:scale-110" />
           <span>{t('nav.logout')}</span>
         </button>
       </div>
@@ -98,7 +98,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-admin-bg">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:block fixed ${isRTL ? 'right-2' : 'left-2'} top-2 bottom-2 w-64 bg-sidebar z-30 rounded-2xl`}
+        className={`hidden lg:block fixed ${isRTL ? 'right-2' : 'left-2'} top-2 bottom-2 w-64 3xl:w-72 bg-sidebar z-30 rounded-2xl`}
       >
         {sidebarContent}
       </aside>
@@ -128,9 +128,9 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`${isRTL ? 'lg:mr-64' : 'lg:ml-64'}`}>
+      <div className={`${isRTL ? 'lg:mr-64 3xl:mr-72' : 'lg:ml-64 3xl:ml-72'}`}>
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 3xl:p-10">
           <Outlet />
         </main>
       </div>

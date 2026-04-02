@@ -168,17 +168,17 @@ export default function Categories() {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
           { icon: FiLayers, label: 'Total Categories', value: totalCategories, bg: 'bg-blue-600' },
           { icon: FiCheckCircle, label: 'Active', value: activeCategories, bg: 'bg-emerald-600' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
       </div>
@@ -187,7 +187,7 @@ export default function Categories() {
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         <button
           onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); }}
-          className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${selectedParent === 'top' ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+          className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === 'top' ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
         >
           Top Level
         </button>
@@ -195,7 +195,7 @@ export default function Categories() {
           <button
             key={cat.id}
             onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); }}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${selectedParent === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+            className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             {getName(cat)}
           </button>
@@ -207,7 +207,7 @@ export default function Categories() {
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => setSelectedLevel2('')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+            className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             All {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
           </button>
@@ -215,7 +215,7 @@ export default function Categories() {
             <button
               key={cat.id}
               onClick={() => setSelectedLevel2(cat.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedLevel2 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+              className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${selectedLevel2 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
             >
               {getName(cat)}
             </button>
@@ -227,16 +227,16 @@ export default function Categories() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder="Search categories..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder="Search categories..." className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchCategories} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+        <button onClick={fetchCategories} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
         {selectedParent !== 'top' && (
           <Link
             to={`/categories/create${getCreateParent() ? `?parent=${getCreateParent()}` : ''}`}
-            className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
           >
             <FiPlus size={16} /> {t('common.create')}
           </Link>
@@ -246,18 +246,18 @@ export default function Categories() {
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Image</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Name (EN)</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Name (AR)</th>
-                {!isTopLevel && !selectedLevel2 && selectedParent && <th className="text-left px-4 py-3 font-medium text-admin-muted">Sub-categories</th>}
-                {!isTopLevel && <th className="text-left px-4 py-3 font-medium text-admin-muted">Parent</th>}
-                {isTopLevel && <th className="text-left px-4 py-3 font-medium text-admin-muted">Sub-categories</th>}
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{isTopLevel ? 'Total Items' : 'Items'}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Image</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (EN)</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (AR)</th>
+                {!isTopLevel && !selectedLevel2 && selectedParent && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Sub-categories</th>}
+                {!isTopLevel && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Parent</th>}
+                {isTopLevel && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Sub-categories</th>}
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{isTopLevel ? 'Total Items' : 'Items'}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
+                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -282,33 +282,33 @@ export default function Categories() {
                       onClick={() => { if (hasLevel3 && !isChild) setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] })); }}
                       className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasLevel3 && !isChild ? 'cursor-pointer' : ''}`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <div className={`${isChild ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg overflow-hidden bg-gray-100 flex-shrink-0`}>
                           {rowCat.image ? <img src={`${API_BASE}/${rowCat.image}`} alt={rowCat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FiImage size={isChild ? 12 : 16} /></div>}
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-medium text-admin-text">
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
                         {isChild && <span className="text-admin-muted me-1 ms-4">└</span>}
                         <span className={isChild ? 'text-admin-muted' : ''}>{rowCat.name}</span>
                       </td>
-                      <td className="px-4 py-3 text-admin-muted" dir="rtl">{rowCat.nameAr || rowCat.name_ar || '-'}</td>
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted" dir="rtl">{rowCat.nameAr || rowCat.name_ar || '-'}</td>
                       {!isTopLevel && !selectedLevel2 && selectedParent && (
-                        <td className="px-4 py-3 text-admin-muted font-medium">
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted font-medium">
                           {isChild ? '-' : categories.filter((c) => c.parentId === rowCat.id).length}
                         </td>
                       )}
                       {!isTopLevel && (
-                        <td className="px-4 py-3 text-admin-muted text-xs">
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                           {rowCat.parentId ? categories.find((c) => c.id === rowCat.parentId)?.name || '-' : '—'}
                         </td>
                       )}
                       {isTopLevel && (
-                        <td className="px-4 py-3 text-admin-muted font-medium">{rowCat._count?.children || 0}</td>
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted font-medium">{rowCat._count?.children || 0}</td>
                       )}
-                      <td className="px-4 py-3 text-admin-muted">
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                         {!rowCat.parentId ? getTotalItems(rowCat) : (rowCat._count?.books ?? 0)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         {(isBooks && !isChild) ? (
                           <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
                         ) : (
@@ -317,7 +317,7 @@ export default function Categories() {
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {hasLevel3 && !isChild && (
                             <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Expand">

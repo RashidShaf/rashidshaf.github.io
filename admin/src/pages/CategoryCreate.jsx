@@ -68,27 +68,27 @@ export default function CategoryCreate() {
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent';
-  const labelClass = 'block text-sm font-medium text-admin-text mb-1.5';
+  const inputClass = 'w-full px-3 py-2.5 3xl:px-4 3xl:py-3 bg-white border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent';
+  const labelClass = 'block text-sm 3xl:text-base font-medium text-admin-text mb-1.5';
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 3xl:mb-8">
         <Link to="/categories" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
-        <h2 className="text-2xl font-bold text-admin-text">
+        <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">
           {parentName ? `Create Sub-Category in ${parentName}` : 'Create Sub-Category'}
         </h2>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 3xl:gap-8">
           {/* Main */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 3xl:space-y-8">
             {/* Parent Category — at top */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
               <div>
                 <label className={labelClass}>Select Parent</label>
                 <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
@@ -141,9 +141,9 @@ export default function CategoryCreate() {
               </div>
             </div>
 
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
+              <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>Name (English) *</label>
                   <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className={inputClass} placeholder="e.g. Books Corner" />
@@ -157,10 +157,10 @@ export default function CategoryCreate() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 3xl:space-y-8">
             {/* Image */}
-            <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-4">Image</h3>
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Image</h3>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="relative w-full h-40 border-2 border-dashed border-admin-border rounded-xl cursor-pointer hover:border-admin-accent transition-colors flex items-center justify-center overflow-hidden"
@@ -185,10 +185,10 @@ export default function CategoryCreate() {
 
             {/* Actions */}
             <div className="flex flex-col gap-3">
-              <button type="submit" disabled={saving} className="w-full py-3 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={saving} className="w-full py-3 3xl:py-3.5 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 text-sm 3xl:text-base">
                 {saving ? t('common.loading') : t('common.create')}
               </button>
-              <Link to="/categories" className="w-full py-3 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+              <Link to="/categories" className="w-full py-3 3xl:py-3.5 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm 3xl:text-base font-medium">
                 {t('common.cancel')}
               </Link>
             </div>

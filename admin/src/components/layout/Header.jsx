@@ -136,7 +136,7 @@ export default function Header({ onMenuClick }) {
 
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-admin-border">
-      <div className="flex items-center justify-between h-16 px-4 md:px-6">
+      <div className="flex items-center justify-between h-16 3xl:h-20 px-4 md:px-6 3xl:px-8">
         {/* Left: Menu button + Page title */}
         <div className="flex items-center gap-3">
           <button
@@ -145,17 +145,17 @@ export default function Header({ onMenuClick }) {
           >
             <FiMenu size={20} />
           </button>
-          <h1 className="text-xl font-extrabold text-admin-text">
+          <h1 className="text-xl 3xl:text-2xl font-extrabold text-admin-text">
             {getPageTitle()}
           </h1>
         </div>
 
         {/* Right: Language toggle, Notifications, User dropdown */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4 3xl:gap-5">
           {/* Language Toggle */}
           <button
             onClick={toggleLanguage}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-admin-muted hover:bg-gray-200 transition-colors"
+            className="px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-semibold bg-gray-100 text-admin-muted hover:bg-gray-200 transition-colors"
           >
             {language === 'en' ? 'AR' : 'EN'}
           </button>
@@ -166,7 +166,7 @@ export default function Header({ onMenuClick }) {
               onClick={handleBellClick}
               className="relative p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors"
             >
-              <FiBell size={18} />
+              <FiBell size={18} className="3xl:scale-125" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-admin-danger text-white text-[10px] font-bold rounded-full leading-none">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -175,14 +175,14 @@ export default function Header({ onMenuClick }) {
             </button>
 
             {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-80 3xl:w-96 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-admin-border">
-                  <h3 className="text-sm font-bold text-admin-text">Notifications</h3>
+                <div className="flex items-center justify-between px-4 py-3 3xl:px-5 3xl:py-4 border-b border-admin-border">
+                  <h3 className="text-sm 3xl:text-base font-bold text-admin-text">Notifications</h3>
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="flex items-center gap-1 text-xs text-admin-accent hover:underline font-medium"
+                      className="flex items-center gap-1 text-xs 3xl:text-sm text-admin-accent hover:underline font-medium"
                     >
                       <FiCheck size={12} /> Mark all as read
                     </button>
@@ -190,17 +190,17 @@ export default function Header({ onMenuClick }) {
                 </div>
 
                 {/* Notification list */}
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-80 3xl:max-h-96 overflow-y-auto">
                   {notifLoading ? (
-                    <div className="px-4 py-6 text-center text-sm text-admin-muted">Loading...</div>
+                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">Loading...</div>
                   ) : notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-sm text-admin-muted">No notifications</div>
+                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">No notifications</div>
                   ) : (
                     notifications.map((notif) => (
                       <div
                         key={notif.id}
                         onClick={() => handleMarkRead(notif)}
-                        className={`px-4 py-3 border-b border-admin-border cursor-pointer hover:bg-gray-50 transition-colors ${
+                        className={`px-4 py-3 3xl:px-5 3xl:py-4 border-b border-admin-border cursor-pointer hover:bg-gray-50 transition-colors ${
                           !notif.isRead ? 'bg-blue-50/50' : ''
                         }`}
                       >
@@ -209,13 +209,13 @@ export default function Header({ onMenuClick }) {
                             <span className="w-2 h-2 mt-1.5 bg-admin-accent rounded-full flex-shrink-0" />
                           )}
                           <div className={`flex-1 ${notif.isRead ? 'ml-4' : ''}`}>
-                            <p className="text-sm font-medium text-admin-text leading-snug">
+                            <p className="text-sm 3xl:text-base font-medium text-admin-text leading-snug">
                               {notif.title}
                             </p>
-                            <p className="text-xs text-admin-muted mt-0.5 line-clamp-2">
+                            <p className="text-xs 3xl:text-sm text-admin-muted mt-0.5 line-clamp-2">
                               {notif.message}
                             </p>
-                            <p className="text-[10px] text-admin-muted mt-1">
+                            <p className="text-[10px] 3xl:text-xs text-admin-muted mt-1">
                               {timeAgo(notif.createdAt)}
                             </p>
                           </div>
@@ -234,10 +234,10 @@ export default function Header({ onMenuClick }) {
               onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false); }}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-admin-accent flex items-center justify-center text-white text-sm font-semibold">
+              <div className="w-8 h-8 3xl:w-10 3xl:h-10 rounded-full bg-admin-accent flex items-center justify-center text-white text-sm 3xl:text-base font-semibold">
                 {user?.name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
-              <span className="hidden md:block text-sm font-medium text-admin-text">
+              <span className="hidden md:block text-sm 3xl:text-base font-medium text-admin-text">
                 {user?.name || 'Admin'}
               </span>
               <FiChevronDown
@@ -247,10 +247,10 @@ export default function Header({ onMenuClick }) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-admin-border py-1 z-50">
-                <div className="px-4 py-2 border-b border-admin-border">
-                  <p className="text-sm font-medium text-admin-text">{user?.name}</p>
-                  <p className="text-xs text-admin-muted">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-48 3xl:w-56 bg-white rounded-lg shadow-lg border border-admin-border py-1 z-50">
+                <div className="px-4 py-2 3xl:px-5 3xl:py-3 border-b border-admin-border">
+                  <p className="text-sm 3xl:text-base font-medium text-admin-text">{user?.name}</p>
+                  <p className="text-xs 3xl:text-sm text-admin-muted">{user?.email}</p>
                 </div>
                 <button
                   onClick={async () => {
@@ -258,7 +258,7 @@ export default function Header({ onMenuClick }) {
                     await logout();
                     window.location.href = '/login';
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-admin-danger hover:bg-gray-50 transition-colors"
+                  className="w-full text-left px-4 py-2 3xl:px-5 3xl:py-3 text-sm 3xl:text-base text-admin-danger hover:bg-gray-50 transition-colors"
                 >
                   {t('nav.logout')}
                 </button>

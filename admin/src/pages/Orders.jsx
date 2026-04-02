@@ -85,19 +85,19 @@ export default function Orders() {
       transition={{ duration: 0.4 }}
     >
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
           { icon: FiShoppingBag, label: 'Total Orders', value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
           { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
           { icon: FiClock, label: 'Processing', value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
           { icon: FiCheckCircle, label: 'Delivered', value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
         ].map((card, i) => (
-          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 h-[140px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
-            <div className={`w-11 h-11 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
+          <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
-            <p className="text-2xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
-            <p className="text-xs font-medium text-admin-muted mt-1.5">{card.label}</p>
+            <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
+            <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
           </div>
         ))}
       </div>
@@ -106,10 +106,10 @@ export default function Orders() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
-        <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-2 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+        <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
         <div className="relative">
@@ -117,7 +117,7 @@ export default function Orders() {
           <select
             value={statusFilter}
             onChange={handleStatusChange}
-            className="pl-10 pr-4 py-2 bg-admin-bg border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
+            className="pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[160px]"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -131,16 +131,16 @@ export default function Orders() {
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.orderNumber')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('orders.customer')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('nav.products')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">Items</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.date')}</th>
-                <th className="text-left px-4 py-3 font-medium text-admin-muted">{t('common.status')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.orderNumber')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('nav.products')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Items</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.date')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -165,29 +165,29 @@ export default function Orders() {
                     onClick={() => navigate(`/orders/${order.id}`)}
                     className="border-b border-admin-border hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <td className="px-4 py-3 font-medium text-admin-text">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
                       {order.orderNumber}
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                       {order.user
                         ? `${order.user.firstName} ${order.user.lastName}`
                         : <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Guest</span>
                       }
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
                       {order.items?.length > 2 && ` +${order.items.length - 2}`}
                     </td>
-                    <td className="px-4 py-3 text-admin-muted">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                       {order.items?.reduce((sum, i) => sum + i.quantity, 0) || 0}
                     </td>
-                    <td className="px-4 py-3 font-medium text-admin-text">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
                       QAR {parseFloat(order.total || 0).toFixed(2)}
                     </td>
-                    <td className="px-4 py-3 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span
                         className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
                           statusColors[order.status] || 'bg-gray-100 text-gray-700'
