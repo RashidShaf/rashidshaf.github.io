@@ -35,7 +35,11 @@
     "readingLists": "قوائم القراءة",
     "orders": "الطلبات",
     "myAccount": "حسابي",
-    "trackOrder": "تتبع الطلب"
+    "trackOrder": "تتبع الطلب",
+    "allCategories": "جميع الأقسام",
+    "all": "الكل",
+    "browseAll": "تصفح الكل",
+    "allDepartments": "جميع الأقسام"
   },
   "home": {
     "heroTitle": "اكتشف قراءتك العظيمة القادمة",

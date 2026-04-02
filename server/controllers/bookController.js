@@ -67,14 +67,24 @@ exports.list = async (req, res, next) => {
       if (maxPrice) where.price.lte = parseFloat(maxPrice);
     }
 
-    // Author filter
+    // Author filter (supports comma-separated multi-select)
     if (author) {
-      where.author = { contains: author, mode: 'insensitive' };
+      const authors = author.split(',').map(a => a.trim()).filter(Boolean);
+      if (authors.length === 1) {
+        where.author = { contains: authors[0], mode: 'insensitive' };
+      } else {
+        where.OR = [...(where.OR || []), ...authors.map(a => ({ author: { contains: a, mode: 'insensitive' } }))];
+      }
     }
 
-    // Publisher filter
+    // Publisher filter (supports comma-separated multi-select)
     if (publisher) {
-      where.publisher = { contains: publisher, mode: 'insensitive' };
+      const publishers = publisher.split(',').map(p => p.trim()).filter(Boolean);
+      if (publishers.length === 1) {
+        where.publisher = { contains: publishers[0], mode: 'insensitive' };
+      } else {
+        where.OR = [...(where.OR || []), ...publishers.map(p => ({ publisher: { contains: p, mode: 'insensitive' } }))];
+      }
     }
 
     // Language filter
@@ -296,6 +306,45 @@ exports.recommendations = async (req, res, next) => {
     });
 
     res.json(books);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.filters = async (req, res, next) => {
+  try {
+    const { category } = req.query;
+    const where = { isActive: true };
+
+    if (category) {
+      const slugs = category.split(',').map(s => s.trim()).filter(Boolean);
+      const cats = await prisma.category.findMany({
+        where: { slug: { in: slugs } },
+        include: { children: { select: { id: true, children: { select: { id: true } } } } },
+      });
+      const allIds = [];
+      cats.forEach(cat => {
+        allIds.push(cat.id);
+        cat.children?.forEach(child => {
+          allIds.push(child.id);
+          child.children?.forEach(gc => allIds.push(gc.id));
+        });
+      });
+      where.OR = [
+        { categoryId: { in: allIds } },
+        { bookCategories: { some: { categoryId: { in: allIds } } } },
+      ];
+    }
+
+    const [authors, publishers] = await Promise.all([
+      prisma.book.findMany({ where, select: { author: true }, distinct: ['author'], orderBy: { author: 'asc' } }),
+      prisma.book.findMany({ where, select: { publisher: true }, distinct: ['publisher'], orderBy: { publisher: 'asc' } }),
+    ]);
+
+    res.json({
+      authors: authors.map(a => a.author).filter(Boolean),
+      publishers: publishers.map(p => p.publisher).filter(Boolean),
+    });
   } catch (error) {
     next(error);
   }

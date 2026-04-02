@@ -35,7 +35,11 @@
     "readingLists": "Reading Lists",
     "orders": "Orders",
     "myAccount": "My Account",
-    "trackOrder": "Track Order"
+    "trackOrder": "Track Order",
+    "allCategories": "All Categories",
+    "all": "All",
+    "browseAll": "Browse All",
+    "allDepartments": "All Departments"
   },
   "home": {
     "heroTitle": "Discover Your Next Great Read",

@@ -33,6 +33,11 @@ const Books = () => {
   const [sortOpen, setSortOpen] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
+  const [scopedParentSlug, setScopedParentSlug] = useState('');
+  const [availableAuthors, setAvailableAuthors] = useState([]);
+  const [availablePublishers, setAvailablePublishers] = useState([]);
+  const [authorsOpen, setAuthorsOpen] = useState(false);
+  const [publishersOpen, setPublishersOpen] = useState(false);
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
 
@@ -58,7 +63,9 @@ const Books = () => {
   const bookLang = searchParams.get('language') || '';
   const section = searchParams.get('section') || '';
   const authorFilter = searchParams.get('author') || '';
+  const selectedAuthors = authorFilter ? authorFilter.split(',').filter(Boolean) : [];
   const publisherFilter = searchParams.get('publisher') || '';
+  const selectedPublishers = publisherFilter ? publisherFilter.split(',').filter(Boolean) : [];
   const page = parseInt(searchParams.get('page') || '1');
 
   const updateParam = (key, value) => {
@@ -70,13 +77,78 @@ const Books = () => {
   };
 
   const toggleCategory = (slug) => {
-    const current = selectedCategories.includes(slug)
-      ? selectedCategories.filter((s) => s !== slug)
-      : [...selectedCategories, slug];
-    updateParam('category', current.join(','));
+    const wasDirectlySelected = selectedCategories.includes(slug);
+    if (wasDirectlySelected || isCatSelected(slug)) {
+      // Deselecting — remove slug and all its children
+      let current = selectedCategories.filter((s) => s !== slug);
+      for (const topCat of categories) {
+        if (topCat.slug === slug && topCat.children) {
+          const childSlugs = topCat.children.flatMap((s) => [s.slug, ...(s.children?.map((l3) => l3.slug) || [])]);
+          current = current.filter((s) => !childSlugs.includes(s));
+        }
+        if (topCat.children) {
+          const sub = topCat.children.find((s) => s.slug === slug);
+          if (sub && sub.children) {
+            const l3Slugs = sub.children.map((l3) => l3.slug);
+            current = current.filter((s) => !l3Slugs.includes(s));
+          }
+        }
+      }
+      // Only re-add L2 parent if this was a directly selected L3 (not a parent uncheck)
+      if (wasDirectlySelected) {
+        for (const topCat of categories) {
+          if (topCat.children) {
+            for (const sub of topCat.children) {
+              if (sub.children?.some((l3) => l3.slug === slug)) {
+                const hasOtherL3 = sub.children.some((l3) => l3.slug !== slug && current.includes(l3.slug));
+                if (!hasOtherL3 && !current.includes(sub.slug)) {
+                  current.push(sub.slug);
+                }
+              }
+            }
+          }
+        }
+      }
+      // If nothing left, re-add the top-level parent so sidebar stays scoped and category bar stays active
+      if (current.length === 0 && scopedParentSlug) {
+        current.push(scopedParentSlug);
+      }
+      updateParam('category', current.join(','));
+    } else {
+      // Selecting — remove parent slugs so only the selected level filters
+      let current = [...selectedCategories];
+      for (const topCat of categories) {
+        // L2 selected: remove L1 parent
+        const isL2 = topCat.children?.some((s) => s.slug === slug);
+        if (isL2 && current.includes(topCat.slug)) {
+          current = current.filter((s) => s !== topCat.slug);
+        }
+        // L3 selected: remove L1 parent and L2 parent
+        if (topCat.children) {
+          for (const sub of topCat.children) {
+            if (sub.children?.some((l3) => l3.slug === slug)) {
+              current = current.filter((s) => s !== topCat.slug && s !== sub.slug);
+            }
+          }
+        }
+      }
+      current.push(slug);
+      updateParam('category', current.join(','));
+    }
   };
 
-  const isCatSelected = (slug) => selectedCategories.includes(slug);
+  // Check if a category appears selected (directly or because a child is selected)
+  const isCatSelected = (slug) => {
+    if (selectedCategories.includes(slug)) return true;
+    // L2 appears selected if any of its L3 children are selected
+    for (const topCat of categories) {
+      if (topCat.children) {
+        const sub = topCat.children.find((s) => s.slug === slug);
+        if (sub && sub.children?.some((l3) => selectedCategories.includes(l3.slug))) return true;
+      }
+    }
+    return false;
+  };
 
   useEffect(() => {
     api.get('/categories').then((res) => {
@@ -106,6 +178,16 @@ const Books = () => {
       });
     }).catch(() => {});
   }, []);
+
+  // Fetch available authors & publishers (scoped to category)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    api.get(`/books/filters?${params}`).then((res) => {
+      setAvailableAuthors(res.data.authors || []);
+      setAvailablePublishers(res.data.publishers || []);
+    }).catch(() => {});
+  }, [category]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -137,6 +219,43 @@ const Books = () => {
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
   const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter;
   const totalBooks = pagination?.total || books.length;
+
+  // Find the top-level parent for any slug
+  const findTopParent = (slugs) => {
+    for (const slug of slugs) {
+      const topMatch = categories.find((c) => c.slug === slug);
+      if (topMatch && topMatch.children?.length > 0) return topMatch;
+      for (const topCat of categories) {
+        if (topCat.children) {
+          if (topCat.children.some((s) => s.slug === slug)) return topCat;
+          for (const sub of topCat.children) {
+            if (sub.children?.some((l3) => l3.slug === slug)) return topCat;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  // Track the scoped department via effect (avoids setState during render)
+  useEffect(() => {
+    if (selectedCategories.length > 0 && categories.length > 0) {
+      const parent = findTopParent(selectedCategories);
+      if (parent) setScopedParentSlug(parent.slug);
+    }
+  }, [category, categories]);
+
+  // Scope sidebar categories: show only the active department's children
+  const getScopedCategories = () => {
+    const parent = findTopParent(selectedCategories);
+    if (parent) return parent.children;
+    if (scopedParentSlug) {
+      const remembered = categories.find((c) => c.slug === scopedParentSlug);
+      if (remembered && remembered.children?.length > 0) return remembered.children;
+    }
+    return categories;
+  };
+  const sidebarCategories = getScopedCategories();
 
   // Dynamic page title based on selected categories
   const getPageTitle = () => {
@@ -186,13 +305,13 @@ const Books = () => {
                 </div>
               )}
 
-              {/* Category — multi-select */}
+              {/* Category — multi-select (scoped to selected department) */}
               <div className="mb-6">
                 <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.category')}
                 </label>
                 <div className="space-y-0.5">
-                  {categories.map((cat) => {
+                  {sidebarCategories.map((cat) => {
                     const hasChildren = cat.children && cat.children.length > 0;
                     const isSelected = isCatSelected(cat.slug);
                     const childSelected = cat.children?.some((s) => isCatSelected(s.slug));
@@ -299,32 +418,78 @@ const Books = () => {
               </div>
 
               {/* Author */}
-              <div className="mb-6">
-                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
-                  {t('books.author')}
-                </label>
-                <input
-                  type="text"
-                  value={authorFilter}
-                  onChange={(e) => updateParam('author', e.target.value)}
-                  placeholder={t('books.authorPlaceholder')}
-                  className="w-full px-3 py-2 bg-surface border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent"
-                />
-              </div>
+              {availableAuthors.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setAuthorsOpen(!authorsOpen)}
+                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                  >
+                    {t('books.author')}
+                    <FiChevronDown size={14} className={`transition-transform ${authorsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {authorsOpen && (
+                    <div className="space-y-0.5">
+                      {availableAuthors.map((author) => {
+                        const isSelected = selectedAuthors.includes(author);
+                        return (
+                          <button
+                            key={author}
+                            onClick={() => {
+                              const next = isSelected ? selectedAuthors.filter((a) => a !== author) : [...selectedAuthors, author];
+                              updateParam('author', next.join(','));
+                            }}
+                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[7px]">✓</span>}
+                            </span>
+                            {author}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Publisher */}
-              <div className="mb-6">
-                <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
-                  {t('books.publisher')}
-                </label>
-                <input
-                  type="text"
-                  value={publisherFilter}
-                  onChange={(e) => updateParam('publisher', e.target.value)}
-                  placeholder={t('books.publisherPlaceholder')}
-                  className="w-full px-3 py-2 bg-surface border border-gray-300 rounded-lg text-sm text-foreground placeholder:text-muted/40 focus:outline-none focus:border-accent"
-                />
-              </div>
+              {availablePublishers.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setPublishersOpen(!publishersOpen)}
+                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                  >
+                    {t('books.publisher')}
+                    <FiChevronDown size={14} className={`transition-transform ${publishersOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {publishersOpen && (
+                    <div className="space-y-0.5">
+                      {availablePublishers.map((publisher) => {
+                        const isSelected = selectedPublishers.includes(publisher);
+                        return (
+                          <button
+                            key={publisher}
+                            onClick={() => {
+                              const next = isSelected ? selectedPublishers.filter((p) => p !== publisher) : [...selectedPublishers, publisher];
+                              updateParam('publisher', next.join(','));
+                            }}
+                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                              {isSelected && <span className="text-white text-[7px]">✓</span>}
+                            </span>
+                            {publisher}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Clear Filters */}
               {hasActiveFilters && (
