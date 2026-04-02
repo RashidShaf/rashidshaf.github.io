@@ -88,7 +88,7 @@ const CategoryBar = ({ categories = [] }) => {
 
   return (
     <div ref={barRef} className="hidden lg:block bg-surface/50 border-t border-muted/10 border-b border-b-gray-300 mb-0.5 relative">
-      <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12">
+      <div className="mx-auto px-2 sm:px-4 lg:px-4 xl:px-4 3xl:px-10">
         <div className={`flex items-center overflow-x-auto scrollbar-hide ${categories.length < 5 ? 'justify-center gap-2' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
             const selectedSlugs = currentCategory ? currentCategory.split(',').filter(Boolean) : [];
