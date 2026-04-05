@@ -153,6 +153,13 @@ export default function BookEdit() {
   const cornerSlug = selectedParent?.slug?.toLowerCase() || '';
   const isBooks = cornerSlug === 'books';
 
+  // Dynamic detail fields based on category config
+  const visibleFields = useMemo(() => {
+    if (!selectedParent?.detailFields) return null;
+    try { return JSON.parse(selectedParent.detailFields); } catch { return null; }
+  }, [selectedParent]);
+  const show = (key) => !visibleFields || visibleFields.includes(key);
+
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
   const totalImages = existingImages.length + newImageFiles.length;
@@ -398,11 +405,85 @@ export default function BookEdit() {
               </div>
             </div>
 
-            {/* Book-specific fields */}
-            {isBooks && (
+            {/* Product Details — fields shown based on category detailFields config */}
+            {form.parentCategoryId && (
               <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Book Details</h3>
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">
+                  {isBooks ? 'Book Details' : 'Product Specifications'}
+                </h3>
                 <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
+                  {show('publisher') && (
+                    <div>
+                      <label className={labelClass}>Publisher (English)</label>
+                      <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
+                    </div>
+                  )}
+                  {show('publisher') && (
+                    <div>
+                      <label className={labelClass}>Publisher (Arabic)</label>
+                      <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
+                    </div>
+                  )}
+                  {show('isbn') && (
+                    <div>
+                      <label className={labelClass}>ISBN</label>
+                      <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
+                    </div>
+                  )}
+                  {show('pages') && (
+                    <div>
+                      <label className={labelClass}>Pages</label>
+                      <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
+                    </div>
+                  )}
+                  {show('language') && (
+                    <div>
+                      <label className={labelClass}>Language</label>
+                      <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
+                        <option value="en">English</option>
+                        <option value="ar">Arabic</option>
+                      </select>
+                    </div>
+                  )}
+                  {show('publishedDate') && (
+                    <div>
+                      <label className={labelClass}>Published Date</label>
+                      <input name="publishedDate" type="date" value={form.publishedDate} onChange={handleChange} className={inputClass} />
+                    </div>
+                  )}
+                  {show('brand') && (
+                    <div>
+                      <label className={labelClass}>Brand</label>
+                      <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
+                    </div>
+                  )}
+                  {show('color') && (
+                    <div>
+                      <label className={labelClass}>Color</label>
+                      <input name="color" value={form.color} onChange={handleChange} className={inputClass} />
+                    </div>
+                  )}
+                  {show('material') && (
+                    <div>
+                      <label className={labelClass}>Material</label>
+                      <input name="material" value={form.material} onChange={handleChange} className={inputClass} />
+                    </div>
+                  )}
+                  {show('dimensions') && (
+                    <div>
+                      <label className={labelClass}>Dimensions</label>
+                      <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
+                    </div>
+                  )}
+                  {show('ageRange') && (
+                    <div>
+                      <label className={labelClass}>Age Range</label>
+                      <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder="e.g. 3-6 years" className={inputClass} />
+                    </div>
+                  )}
+                </div>
+                {/* Author fields — always shown */}
+                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6 pt-2">
                   <div>
                     <label className={labelClass}>Author (English)</label>
                     <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
@@ -411,70 +492,6 @@ export default function BookEdit() {
                     <label className={labelClass}>Author (Arabic)</label>
                     <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
                   </div>
-                  <div>
-                    <label className={labelClass}>ISBN</label>
-                    <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Pages</label>
-                    <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
-                  </div>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
-                  <div>
-                    <label className={labelClass}>Publisher (English)</label>
-                    <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Publisher (Arabic)</label>
-                    <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                  </div>
-                </div>
-                <div>
-                  <label className={labelClass}>Language</label>
-                  <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
-                    <option value="en">English</option>
-                    <option value="ar">Arabic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Published Date</label>
-                  <input name="publishedDate" type="date" value={form.publishedDate} onChange={handleChange} className={inputClass} />
-                </div>
-              </div>
-            )}
-
-            {/* Non-book fields */}
-            {!isBooks && form.parentCategoryId && (
-              <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Specifications</h3>
-                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
-                  <div>
-                    <label className={labelClass}>Brand</label>
-                    <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Material</label>
-                    <input name="material" value={form.material} onChange={handleChange} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Color</label>
-                    <input name="color" value={form.color} onChange={handleChange} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Dimensions</label>
-                    <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Weight (g)</label>
-                    <input name="weight" type="number" step="0.01" min="0" value={form.weight} onChange={handleChange} placeholder="e.g. 500" className={inputClass} />
-                  </div>
-                  {(cornerSlug === 'toys' || cornerSlug === 'school-project') && (
-                    <div>
-                      <label className={labelClass}>Age Range</label>
-                      <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder="e.g. 3-6 years" className={inputClass} />
-                    </div>
-                  )}
                 </div>
               </div>
             )}

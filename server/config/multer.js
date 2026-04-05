@@ -36,4 +36,10 @@ const uploadCategoryImage = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-module.exports = { uploadCover, uploadCategoryImage };
+const uploadBanner = multer({
+  storage: createStorage('banners'),
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+module.exports = { uploadCover, uploadCategoryImage, uploadBanner };

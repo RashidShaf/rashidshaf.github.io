@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiHeart, FiShoppingCart, FiX } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import AccountLayout from '../components/common/AccountLayout';
@@ -13,22 +13,29 @@ import api from '../utils/api';
 const Wishlist = () => {
   const { t, language } = useLanguageStore();
   const addToCart = useCartStore((s) => s.addItem);
-  const { items: wishlistIds, removeItem } = useWishlistStore();
-  const [books, setBooks] = useState([]);
+  const { items: wishlistIds, books, removeItem, fetchWishlist } = useWishlistStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      if (wishlistIds.length === 0) { setBooks([]); setLoading(false); return; }
+    const loadWishlist = async () => {
+      await fetchWishlist();
+      // If server returned books, we're done
+      const { books: serverBooks, items: ids } = useWishlistStore.getState();
+      if (serverBooks.length > 0 || ids.length === 0) {
+        setLoading(false);
+        return;
+      }
+      // Fallback: fetch books by IDs if server wishlist was empty (e.g. items not yet synced)
       try {
         const res = await api.get('/books?limit=100');
         const allBooks = res.data.data || res.data;
-        setBooks(allBooks.filter((b) => wishlistIds.includes(b.id)));
-      } catch { setBooks([]); }
-      finally { setLoading(false); }
+        const filtered = allBooks.filter((b) => ids.includes(b.id));
+        useWishlistStore.setState({ books: filtered });
+      } catch {}
+      setLoading(false);
     };
-    fetchBooks();
-  }, [wishlistIds]);
+    loadWishlist();
+  }, []);
 
   const handleRemove = (bookId) => {
     removeItem(bookId);

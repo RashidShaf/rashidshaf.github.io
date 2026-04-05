@@ -83,6 +83,7 @@ model Category {
   descriptionAr String?   @map("description_ar")
   image         String?
   parentId      String?   @map("parent_id")
+  detailFields  String?   @map("detail_fields") @db.Text
   displayOrder  Int       @default(0) @map("display_order")
   isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -359,4 +360,23 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
   @@map("notifications")
+}
+
+// ==================== BANNERS ====================
+
+model Banner {
+  id            String   @id @default(uuid())
+  title         String?
+  titleAr       String?  @map("title_ar")
+  desktopImage  String   @map("desktop_image")
+  mobileImage   String?  @map("mobile_image")
+  link          String?
+  showLogo      Boolean  @default(true) @map("show_logo")
+  logoPosition  String   @default("center-left") @map("logo_position")
+  sortOrder     Int      @default(0) @map("sort_order")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("banners")
 }

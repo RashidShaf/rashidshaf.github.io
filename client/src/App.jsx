@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import useLanguageStore from './stores/useLanguageStore';
+import useAuthStore from './stores/useAuthStore';
 
 import MainLayout from './components/layout/MainLayout';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -96,10 +97,17 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   const initLanguage = useLanguageStore((s) => s.initLanguage);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const fetchUser = useAuthStore((s) => s.fetchUser);
 
   useEffect(() => {
     initLanguage();
   }, [initLanguage]);
+
+  // Validate session on app load — catches blocked users
+  useEffect(() => {
+    if (accessToken) fetchUser();
+  }, []);
 
   return (
     <BrowserRouter>

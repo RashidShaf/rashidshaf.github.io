@@ -77,6 +77,19 @@ exports.adjust = async (req, res, next) => {
       }),
     ]);
 
+    // Check for low stock after adjustment
+    if (newStock <= book.lowStockThreshold) {
+      try {
+        const { createNotification } = require('./notificationController');
+        await createNotification({
+          type: 'LOW_STOCK',
+          title: 'Low Stock Alert',
+          message: `"${book.title}" is low on stock (${newStock} remaining)`,
+          metadata: { bookId: book.id, currentStock: newStock, threshold: book.lowStockThreshold },
+        });
+      } catch {}
+    }
+
     res.json({ message: 'Stock adjusted.', newStock });
   } catch (error) {
     next(error);

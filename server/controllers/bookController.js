@@ -169,8 +169,10 @@ exports.getBySlug = async (req, res, next) => {
       include: {
         category: {
           select: {
-            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true,
-            parent: { select: { id: true, name: true, nameAr: true, slug: true } },
+            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true,
+            parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, parentId: true,
+              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true } },
+            } },
           },
         },
         bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } } },

@@ -324,16 +324,12 @@ export default function Categories() {
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}
-                          {isTopLevel && !isChild && (
-                            <>
-                              <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
-                                <FiArrowUp size={15} />
-                              </button>
-                              <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
-                                <FiArrowDown size={15} />
-                              </button>
-                            </>
-                          )}
+                          <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
+                            <FiArrowUp size={15} />
+                          </button>
+                          <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
+                            <FiArrowDown size={15} />
+                          </button>
                           <Link to={`/categories/${rowCat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                             <FiEdit2 size={15} />
                           </Link>

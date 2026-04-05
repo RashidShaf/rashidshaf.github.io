@@ -9,7 +9,7 @@ exports.list = async (req, res, next) => {
         book: {
           select: {
             id: true, title: true, titleAr: true, slug: true, author: true, authorAr: true,
-            price: true, compareAtPrice: true, coverImage: true, format: true, averageRating: true,
+            price: true, compareAtPrice: true, coverImage: true, averageRating: true,
             reviewCount: true, stock: true, isActive: true,
             category: { select: { id: true, name: true, nameAr: true, slug: true } },
           },

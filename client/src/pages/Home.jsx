@@ -2,45 +2,117 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowRight, FiArrowLeft, FiBookOpen } from 'react-icons/fi';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
+
+const positionClasses = {
+  'top-left': 'top-[15%] left-3 sm:left-14 lg:left-24',
+  'top-center': 'top-[15%] left-1/2 -translate-x-1/2',
+  'top-right': 'top-[15%] right-3 sm:right-14 lg:right-24',
+  'center-left': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
+  'center': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-1/2 -translate-x-1/2',
+  'center-right': 'top-[42%] sm:top-[38%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
+  'bottom-left': 'bottom-[10%] left-3 sm:left-14 lg:left-24',
+  'bottom-center': 'bottom-[10%] left-1/2 -translate-x-1/2',
+  'bottom-right': 'bottom-[10%] right-3 sm:right-14 lg:right-24',
+};
+
+const LogoOverlay = ({ position = 'center-left' }) => (
+  <div className={`absolute z-10 hidden sm:flex flex-col items-center pointer-events-none ${positionClasses[position] || positionClasses['center-left']}`}>
+    <div className="relative flex items-center justify-center">
+      <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+      <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+      <motion.img
+        src="/logo.jpg"
+        alt="Arkaan"
+        className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
+        style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
+        animate={{ rotate: [0, 360] }}
+        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+      />
+    </div>
+    <div className="-mt-2 sm:-mt-4">
+      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 3xl:w-64 drop-shadow-lg" />
+    </div>
+  </div>
+);
+
+const BannerSlide = ({ desktop, mobile, alt, link }) => {
+  const content = (
+    <>
+      <img src={desktop} alt={alt} className="hidden sm:block w-full h-auto object-cover" />
+      <img src={mobile || desktop} alt={alt} className="block sm:hidden w-full h-auto object-cover" />
+    </>
+  );
+  if (link) {
+    return <a href={link} target="_blank" rel="noopener noreferrer">{content}</a>;
+  }
+  return content;
+};
+
 const HeroBanner = () => {
+  const [banners, setBanners] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    api.get('/banners').then((res) => setBanners(res.data || [])).catch(() => {});
+  }, []);
+
+  // Get logo settings from the current banner
+  const currentBanner = banners[activeIndex] || banners[0];
+  const logo = currentBanner?.showLogo !== false
+    ? <LogoOverlay position={currentBanner?.logoPosition || 'center-left'} />
+    : null;
+
+  // No banners from API — static fallback
+  if (banners.length === 0) {
+    return (
+      <section className="relative overflow-hidden">
+        <img src="/hero-banner.jpg" alt="Arkaan Bookstore" className="hidden sm:block w-full h-auto object-cover" />
+        <img src="/hero-banner-mobile.jpg" alt="Arkaan Bookstore" className="block sm:hidden w-full h-auto object-cover" />
+        <LogoOverlay position="center-left" />
+      </section>
+    );
+  }
+
+  // Single banner — no carousel needed
+  if (banners.length === 1) {
+    const b = banners[0];
+    return (
+      <section className="relative overflow-hidden">
+        <BannerSlide desktop={`${API_BASE}/${b.desktopImage}`} mobile={b.mobileImage ? `${API_BASE}/${b.mobileImage}` : null} alt={b.title || 'Arkaan Bookstore'} link={b.link} />
+        {b.showLogo !== false && <LogoOverlay position={b.logoPosition || 'center-left'} />}
+      </section>
+    );
+  }
+
+  // Multiple banners — Swiper carousel
   return (
     <section className="relative overflow-hidden">
-      {/* Desktop Banner */}
-      <img
-        src="/hero-banner.jpg"
-        alt="Arkaan Bookstore"
-        className="hidden sm:block w-full h-auto object-cover"
-      />
-      {/* Mobile Banner */}
-      <img
-        src="/hero-banner-mobile.jpg"
-        alt="Arkaan Bookstore"
-        className="block sm:hidden w-full h-auto object-cover"
-      />
-      {/* Animated Logo — left side */}
-      <div className="absolute top-[42%] sm:top-[38%] left-3 sm:left-14 lg:left-24 -translate-y-1/2 z-10 flex flex-col items-center">
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
-          <motion.img
-            src="/logo.jpg"
-            alt="Arkaan"
-            className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
-            style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-          />
-        </div>
-        <div className="-mt-2 sm:-mt-4">
-          <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 3xl:w-64 drop-shadow-lg" />
-        </div>
-      </div>
+      <Swiper
+        modules={[Autoplay, Pagination]}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        pagination={{ clickable: true }}
+        loop
+        className="w-full arkaan-banner-swiper"
+        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+      >
+        {banners.map((b) => (
+          <SwiperSlide key={b.id}>
+            <BannerSlide desktop={`${API_BASE}/${b.desktopImage}`} mobile={b.mobileImage ? `${API_BASE}/${b.mobileImage}` : null} alt={b.title || 'Arkaan Bookstore'} link={b.link} />
+          </SwiperSlide>
+        ))}
+      </Swiper>
+      {logo}
     </section>
   );
 };

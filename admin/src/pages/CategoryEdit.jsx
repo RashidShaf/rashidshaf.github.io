@@ -22,7 +22,20 @@ export default function CategoryEdit() {
   const [loading, setLoading] = useState(true);
   const [isTopLevel, setIsTopLevel] = useState(false);
   const [backUrl, setBackUrl] = useState('/categories?tab=top');
+  const ALL_DETAIL_FIELDS = [
+    { key: 'publisher', label: 'Publisher' },
+    { key: 'pages', label: 'Pages' },
+    { key: 'isbn', label: 'ISBN' },
+    { key: 'language', label: 'Language' },
+    { key: 'publishedDate', label: 'Published Date' },
+    { key: 'brand', label: 'Brand' },
+    { key: 'color', label: 'Color' },
+    { key: 'material', label: 'Material' },
+    { key: 'dimensions', label: 'Dimensions' },
+    { key: 'ageRange', label: 'Age Range' },
+  ];
   const [form, setForm] = useState({ name: '', nameAr: '', parentId: '' });
+  const [detailFields, setDetailFields] = useState(ALL_DETAIL_FIELDS.map((f) => f.key));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +53,9 @@ export default function CategoryEdit() {
             parentId: cat.parentId || '',
           });
           if (cat.image) setImagePreview(`${API_BASE}/${cat.image}`);
+          if (!cat.parentId && cat.detailFields) {
+            try { setDetailFields(JSON.parse(cat.detailFields)); } catch {}
+          }
           // Compute back URL based on hierarchy
           if (!cat.parentId) {
             setBackUrl('/categories?tab=top');
@@ -83,6 +99,7 @@ export default function CategoryEdit() {
       fd.append('name', form.name);
       if (form.nameAr) fd.append('nameAr', form.nameAr);
       if (!isTopLevel) fd.append('parentId', form.parentId || '');
+      if (isTopLevel) fd.append('detailFields', JSON.stringify(detailFields));
       if (imageFile) fd.append('image', imageFile);
 
       await api.put(`/admin/categories/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -162,6 +179,33 @@ export default function CategoryEdit() {
                 </div>
               </div>
             </div>
+
+            {/* Detail Fields — only for top-level categories */}
+            {isTopLevel && (
+              <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Detail Fields</h3>
+                <p className="text-xs text-admin-muted">Select which fields to show on the product detail page for items in this category.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {ALL_DETAIL_FIELDS.map((field) => (
+                    <label key={field.key} className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={detailFields.includes(field.key)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setDetailFields([...detailFields, field.key]);
+                          } else {
+                            setDetailFields(detailFields.filter((f) => f !== field.key));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent"
+                      />
+                      <span className="text-sm 3xl:text-base text-admin-text group-hover:text-admin-accent transition-colors">{field.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6 3xl:space-y-8">

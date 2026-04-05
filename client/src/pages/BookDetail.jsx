@@ -301,41 +301,51 @@ const BookDetail = () => {
               </p>
             )}
 
-            {/* Details — inline after buttons */}
-            <div className="mt-6 pt-5 border-t border-gray-300/70">
-              <div className="flex flex-wrap gap-x-4 sm:gap-x-8 gap-y-3 text-sm">
-                {publisher && (
-                  <div><span className="text-foreground/50">{t('book.publisher')}: </span><span className="text-foreground font-medium">{publisher}</span></div>
-                )}
-                {book.pages && (
-                  <div><span className="text-foreground/50">{t('book.pages')}: </span><span className="text-foreground font-medium">{book.pages}</span></div>
-                )}
-                {book.isbn && (
-                  <div><span className="text-foreground/50">{t('book.isbn')}: </span><span className="text-foreground font-medium">{book.isbn}</span></div>
-                )}
-                {book.language && (
-                  <div><span className="text-foreground/50">{t('books.language')}: </span><span className="text-foreground font-medium capitalize">{book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish')}</span></div>
-                )}
-                {book.publishedDate && (
-                  <div><span className="text-foreground/50">{t('book.published')}: </span><span className="text-foreground font-medium">{language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate)}</span></div>
-                )}
-                {book.brand && (
-                  <div><span className="text-foreground/50">{t('books.brand')}: </span><span className="text-foreground font-medium">{book.brand}</span></div>
-                )}
-                {book.color && (
-                  <div><span className="text-foreground/50">{t('books.color')}: </span><span className="text-foreground font-medium">{book.color}</span></div>
-                )}
-                {book.material && (
-                  <div><span className="text-foreground/50">{t('books.material')}: </span><span className="text-foreground font-medium">{book.material}</span></div>
-                )}
-                {book.dimensions && (
-                  <div><span className="text-foreground/50">{t('books.dimensions')}: </span><span className="text-foreground font-medium">{book.dimensions}</span></div>
-                )}
-                {book.ageRange && (
-                  <div><span className="text-foreground/50">{t('books.ageRange')}: </span><span className="text-foreground font-medium">{book.ageRange}</span></div>
-                )}
-              </div>
-            </div>
+            {/* Details — inline after buttons, filtered by category config */}
+            {(() => {
+              // Get detailFields from the top-level category (grandparent → parent → category)
+              const rawFields = book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
+              let allowed = null;
+              if (rawFields) { try { allowed = JSON.parse(rawFields); } catch {} }
+              const show = (key) => !allowed || allowed.includes(key);
+
+              return (
+                <div className="mt-6 pt-5 border-t border-gray-300/70">
+                  <div className="flex flex-wrap gap-x-4 sm:gap-x-8 gap-y-3 text-sm">
+                    {show('publisher') && publisher && (
+                      <div><span className="text-foreground/50">{t('book.publisher')}: </span><span className="text-foreground font-medium">{publisher}</span></div>
+                    )}
+                    {show('pages') && book.pages && (
+                      <div><span className="text-foreground/50">{t('book.pages')}: </span><span className="text-foreground font-medium">{book.pages}</span></div>
+                    )}
+                    {show('isbn') && book.isbn && (
+                      <div><span className="text-foreground/50">{t('book.isbn')}: </span><span className="text-foreground font-medium">{book.isbn}</span></div>
+                    )}
+                    {show('language') && book.language && (
+                      <div><span className="text-foreground/50">{t('books.language')}: </span><span className="text-foreground font-medium capitalize">{book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish')}</span></div>
+                    )}
+                    {show('publishedDate') && book.publishedDate && (
+                      <div><span className="text-foreground/50">{t('book.published')}: </span><span className="text-foreground font-medium">{language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate)}</span></div>
+                    )}
+                    {show('brand') && book.brand && (
+                      <div><span className="text-foreground/50">{t('books.brand')}: </span><span className="text-foreground font-medium">{book.brand}</span></div>
+                    )}
+                    {show('color') && book.color && (
+                      <div><span className="text-foreground/50">{t('books.color')}: </span><span className="text-foreground font-medium">{book.color}</span></div>
+                    )}
+                    {show('material') && book.material && (
+                      <div><span className="text-foreground/50">{t('books.material')}: </span><span className="text-foreground font-medium">{book.material}</span></div>
+                    )}
+                    {show('dimensions') && book.dimensions && (
+                      <div><span className="text-foreground/50">{t('books.dimensions')}: </span><span className="text-foreground font-medium">{book.dimensions}</span></div>
+                    )}
+                    {show('ageRange') && book.ageRange && (
+                      <div><span className="text-foreground/50">{t('books.ageRange')}: </span><span className="text-foreground font-medium">{book.ageRange}</span></div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
           </motion.div>
         </div>

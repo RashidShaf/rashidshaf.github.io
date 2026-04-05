@@ -166,6 +166,7 @@
     "confirmPassword": "تأكيد كلمة المرور",
     "firstName": "الاسم الأول",
     "lastName": "اسم العائلة",
+    "phone": "رقم الهاتف",
     "forgotPassword": "نسيت كلمة المرور؟",
     "resetPassword": "إعادة تعيين كلمة المرور",
     "noAccount": "ليس لديك حساب؟",

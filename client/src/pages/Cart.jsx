@@ -5,13 +5,19 @@ import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag,
 import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
+import useAuthStore from '../stores/useAuthStore';
 import { formatPrice } from '../utils/formatters';
 import api from '../utils/api';
 
 const Cart = () => {
   const { t, language } = useLanguageStore();
-  const { items, updateQuantity, removeItem, getTotal, clearCart, paymentMethod, setPaymentMethod } = useCartStore();
+  const { items, updateQuantity, removeItem, getTotal, clearCart, paymentMethod, setPaymentMethod, fetchCart } = useCartStore();
+  const user = useAuthStore((s) => s.user);
   const [shippingConfig, setShippingConfig] = useState({ threshold: 100, cost: 15 });
+
+  useEffect(() => {
+    if (user) fetchCart();
+  }, []);
 
   useEffect(() => {
     api.get('/settings/public').then((res) => {

@@ -36,6 +36,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 403 - blocked account (skip if on login/register page — let the form show the error)
+    if (error.response?.status === 403 && error.response?.data?.message?.includes('blocked')) {
+      const onAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+      if (!onAuthPage) {
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('cart-storage');
+        localStorage.removeItem('wishlist-storage');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       // If not a token issue or no refresh token, reject immediately
       const authState = JSON.parse(localStorage.getItem('auth-storage') || '{}');

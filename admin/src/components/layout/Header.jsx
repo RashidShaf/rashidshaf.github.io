@@ -15,6 +15,7 @@ const pageTitles = {
   '/categories': 'nav.categories',
   '/inventory': 'nav.inventory',
   '/reports': 'nav.reports',
+  '/banners': 'nav.banners',
   '/settings': 'nav.settings',
 };
 

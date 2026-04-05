@@ -7,6 +7,8 @@ import PageTransition from '../animations/PageTransition';
 import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
+import useCartStore from '../stores/useCartStore';
+import useWishlistStore from '../stores/useWishlistStore';
 
 const Register = () => {
   const { t } = useLanguageStore();
@@ -27,6 +29,10 @@ const Register = () => {
     setLoading(true);
     try {
       await register({ firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone, password: form.password });
+      await Promise.all([
+        useCartStore.getState().mergeCartToServer(),
+        useWishlistStore.getState().mergeWishlistToServer(),
+      ]);
       toast.success(t('auth.registerSuccess'));
       navigate('/');
     } catch (err) {

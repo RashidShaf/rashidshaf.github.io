@@ -20,6 +20,7 @@ import Inventory from './pages/Inventory';
 import Reports from './pages/Reports';
 import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
+import Banners from './pages/Banners';
 
 const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
@@ -54,6 +55,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="banners" element={<Banners />} />
         </Route>
       </Routes>
     </BrowserRouter>

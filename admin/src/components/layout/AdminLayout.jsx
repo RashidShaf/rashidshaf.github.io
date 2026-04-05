@@ -15,6 +15,7 @@ import {
   FiLogOut,
   FiMenu,
   FiX,
+  FiImage,
 } from 'react-icons/fi';
 import useAuthStore from '../../stores/useAuthStore';
 import useLanguageStore from '../../stores/useLanguageStore';
@@ -29,6 +30,7 @@ const navItems = [
   { path: '/categories', icon: FiLayers, labelKey: 'nav.categories' },
   { path: '/inventory', icon: FiPackage, labelKey: 'nav.inventory' },
   { path: '/reports', icon: FiBarChart2, labelKey: 'nav.reports' },
+  { path: '/banners', icon: FiImage, labelKey: 'nav.banners' },
   { path: '/settings', icon: FiSettings, labelKey: 'nav.settings' },
 ];
 

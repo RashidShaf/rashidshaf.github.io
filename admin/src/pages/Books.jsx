@@ -18,12 +18,16 @@ export default function Books() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, featured: 0, lowStock: 0 });
   const [deleteId, setDeleteId] = useState(null);
+  const [allCategories, setAllCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
+  const [selectedSub, setSelectedSub] = useState('');
+  const [selectedL3, setSelectedL3] = useState('');
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const all = res.data.data || res.data;
+      setAllCategories(all);
       setCategories(all.filter((c) => !c.parentId));
     }).catch(() => {});
   }, []);
@@ -46,7 +50,9 @@ export default function Books() {
     try {
       const params = new URLSearchParams({ page, limit });
       if (search) params.set('search', search);
-      if (selectedTab) params.set('category', selectedTab);
+      if (selectedL3) params.set('category', selectedL3);
+      else if (selectedSub) params.set('category', selectedSub);
+      else if (selectedTab) params.set('category', selectedTab);
       const res = await api.get(`/admin/books?${params}`);
       setBooks(res.data.data);
       setPagination(res.data.pagination);
@@ -57,7 +63,7 @@ export default function Books() {
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab]);
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setPage(1); fetchBooks(); }, 300);
@@ -66,8 +72,26 @@ export default function Books() {
 
   const handleTabChange = (tabId) => {
     setSelectedTab(tabId);
+    setSelectedSub('');
+    setSelectedL3('');
     setPage(1);
   };
+
+  const handleSubChange = (subId) => {
+    setSelectedSub(subId);
+    setSelectedL3('');
+    setPage(1);
+  };
+
+  const handleL3Change = (l3Id) => {
+    setSelectedL3(l3Id);
+    setPage(1);
+  };
+
+  // Get sub-categories for selected parent tab
+  const subCategories = selectedTab ? allCategories.filter((c) => c.parentId === selectedTab) : [];
+  // Get L3 categories for selected L2
+  const l3Categories = selectedSub ? allCategories.filter((c) => c.parentId === selectedSub) : [];
 
   const getTabName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
@@ -124,7 +148,7 @@ export default function Books() {
       </div>
 
       {/* Category Tabs */}
-      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <button
           onClick={() => handleTabChange('')}
           className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
@@ -145,6 +169,58 @@ export default function Books() {
           </button>
         ))}
       </div>
+
+      {/* Sub-category Filters (L2 + L3) */}
+      {subCategories.length > 0 && (
+        <div className="mb-4 bg-admin-card border border-admin-border rounded-xl px-4 py-3 3xl:px-5 3xl:py-4">
+          {/* Level 2 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => handleSubChange('')}
+              className={`px-3.5 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${
+                selectedSub === '' ? 'bg-admin-accent text-white shadow-sm' : 'bg-gray-100 text-admin-muted hover:text-admin-text hover:bg-gray-200'
+              }`}
+            >
+              All {getTabName(categories.find((c) => c.id === selectedTab) || {})}
+            </button>
+            {subCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleSubChange(cat.id)}
+                className={`px-3.5 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${
+                  selectedSub === cat.id ? 'bg-admin-accent text-white shadow-sm' : 'bg-gray-100 text-admin-muted hover:text-admin-text hover:bg-gray-200'
+                }`}
+              >
+                {getTabName(cat)}
+              </button>
+            ))}
+          </div>
+          {/* Level 3 */}
+          {l3Categories.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-admin-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => handleL3Change('')}
+                className={`px-3 py-1 3xl:px-3.5 3xl:py-1.5 rounded-md text-[11px] 3xl:text-xs font-medium whitespace-nowrap transition-all ${
+                  selectedL3 === '' ? 'bg-admin-accent/15 text-admin-accent font-semibold' : 'text-admin-muted hover:text-admin-text hover:bg-gray-100'
+                }`}
+              >
+                All {getTabName(subCategories.find((c) => c.id === selectedSub) || {})}
+              </button>
+              {l3Categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleL3Change(cat.id)}
+                  className={`px-3 py-1 3xl:px-3.5 3xl:py-1.5 rounded-md text-[11px] 3xl:text-xs font-medium whitespace-nowrap transition-all ${
+                    selectedL3 === cat.id ? 'bg-admin-accent/15 text-admin-accent font-semibold' : 'text-admin-muted hover:text-admin-text hover:bg-gray-100'
+                  }`}
+                >
+                  {getTabName(cat)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search + Refresh + Add Product */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">

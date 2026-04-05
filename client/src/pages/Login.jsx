@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
+import useCartStore from '../stores/useCartStore';
+import useWishlistStore from '../stores/useWishlistStore';
 
 const Login = () => {
   const { t } = useLanguageStore();
@@ -16,16 +18,26 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [blockedModal, setBlockedModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
+      await Promise.all([
+        useCartStore.getState().mergeCartToServer(),
+        useWishlistStore.getState().mergeWishlistToServer(),
+      ]);
       toast.success(t('auth.loginSuccess'));
       navigate('/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      const msg = err.response?.data?.message || '';
+      if (err.response?.status === 403 && msg.toLowerCase().includes('blocked')) {
+        setBlockedModal(true);
+      } else {
+        toast.error(msg || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -103,6 +115,37 @@ const Login = () => {
           </form>
         </motion.div>
       </div>
+
+      {/* Blocked Account Modal */}
+      {blockedModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center relative"
+          >
+            <button
+              onClick={() => setBlockedModal(false)}
+              className="absolute top-3 right-3 rtl:right-auto rtl:left-3 text-gray-400 hover:text-gray-600"
+            >
+              <FiX size={18} />
+            </button>
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <FiAlertCircle className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">Account Blocked</h3>
+            <p className="text-sm text-foreground/60 mb-6">
+              Your account has been blocked. Please contact support for assistance.
+            </p>
+            <button
+              onClick={() => setBlockedModal(false)}
+              className="w-full py-2.5 bg-accent text-white font-semibold rounded-xl hover:bg-accent-light transition-colors"
+            >
+              OK
+            </button>
+          </motion.div>
+        </div>
+      )}
     </PageTransition>
   );
 };

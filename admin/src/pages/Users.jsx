@@ -165,27 +165,33 @@ export default function Users() {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
-                      <button
-                        onClick={() => handleToggleBlock(user)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          user.isBlocked
-                            ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                            : 'bg-red-50 text-red-700 hover:bg-red-100'
-                        }`}
-                        title={user.isBlocked ? t('users.unblock') : t('users.block')}
-                      >
-                        {user.isBlocked ? (
-                          <>
-                            <FiShield size={13} />
-                            {t('users.unblock')}
-                          </>
-                        ) : (
-                          <>
-                            <FiSlash size={13} />
-                            {t('users.block')}
-                          </>
-                        )}
-                      </button>
+                      {user.role === 'ADMIN' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700">
+                          <FiShield size={13} /> Admin
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleBlock(user)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            user.isBlocked
+                              ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                              : 'bg-red-50 text-red-700 hover:bg-red-100'
+                          }`}
+                          title={user.isBlocked ? t('users.unblock') : t('users.block')}
+                        >
+                          {user.isBlocked ? (
+                            <>
+                              <FiShield size={13} />
+                              {t('users.unblock')}
+                            </>
+                          ) : (
+                            <>
+                              <FiSlash size={13} />
+                              {t('users.block')}
+                            </>
+                          )}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

@@ -65,7 +65,7 @@ exports.reorder = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { name, nameAr, description, descriptionAr, parentId, displayOrder, isActive } = req.body;
+    const { name, nameAr, description, descriptionAr, parentId, displayOrder, isActive, detailFields } = req.body;
     const current = await prisma.category.findUnique({ where: { id: req.params.id }, select: { name: true, parentId: true } });
     if (!current) return res.status(404).json({ message: 'Category not found' });
 
@@ -93,6 +93,7 @@ exports.update = async (req, res, next) => {
       }
       data.slug = slug;
     }
+    if (detailFields !== undefined) data.detailFields = detailFields || null;
     if (req.file) { data.image = `uploads/categories/${req.file.filename}`; }
 
     const category = await prisma.category.update({ where: { id: req.params.id }, data });

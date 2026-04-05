@@ -131,6 +131,19 @@ exports.create = async (req, res, next) => {
         message: `Order ${order.orderNumber} placed for QAR ${parseFloat(order.total).toFixed(2)}`,
         metadata: { orderId: order.id, orderNumber: order.orderNumber },
       });
+
+      // Check for low stock after order
+      for (const item of validItems) {
+        const newStock = item.book.stock - item.quantity;
+        if (newStock >= 0 && newStock <= item.book.lowStockThreshold) {
+          await createNotification({
+            type: 'LOW_STOCK',
+            title: 'Low Stock Alert',
+            message: `"${item.book.title}" is low on stock (${newStock} remaining)`,
+            metadata: { bookId: item.book.id, currentStock: newStock, threshold: item.book.lowStockThreshold },
+          });
+        }
+      }
     } catch {}
 
     res.status(201).json({ message: 'Order placed successfully.', order });

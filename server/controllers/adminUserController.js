@@ -38,6 +38,7 @@ exports.block = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (user.role === 'ADMIN') return res.status(403).json({ message: 'Admin accounts cannot be blocked.' });
 
     const updated = await prisma.user.update({
       where: { id: req.params.id },

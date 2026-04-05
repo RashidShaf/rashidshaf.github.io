@@ -97,6 +97,20 @@
   }
 }
 
+/* Banner Swiper pagination */
+.arkaan-banner-swiper .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  width: 10px;
+  height: 10px;
+}
+
+.arkaan-banner-swiper .swiper-pagination-bullet-active {
+  background: #A39666;
+  width: 28px;
+  border-radius: 5px;
+}
+
 /* Hide toasts on mobile */
 @media (max-width: 639px) {
   .Toastify__toast-container {

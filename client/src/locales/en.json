@@ -166,6 +166,7 @@
     "confirmPassword": "Confirm Password",
     "firstName": "First Name",
     "lastName": "Last Name",
+    "phone": "Phone Number",
     "forgotPassword": "Forgot Password?",
     "resetPassword": "Reset Password",
     "noAccount": "Don't have an account?",
