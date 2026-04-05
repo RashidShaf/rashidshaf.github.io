@@ -36,7 +36,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.VITE_ADMIN_BASE || ''}>
       <ToastContainer position="top-right" autoClose={1500} />
       <Routes>
         <Route path="/login" element={<Login />} />
