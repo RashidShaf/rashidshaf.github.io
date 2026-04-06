@@ -4,10 +4,12 @@ const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { status, search } = req.query;
+    const { status, search, customerType } = req.query;
 
     const where = {};
     if (status) where.status = status;
+    if (customerType === 'guest') where.userId = null;
+    if (customerType === 'customer') where.userId = { not: null };
     if (search) {
       where.OR = [
         { orderNumber: { contains: search, mode: 'insensitive' } },

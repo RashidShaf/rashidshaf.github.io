@@ -25,6 +25,7 @@ const adminReviewRoutes = require('./routes/admin/reviews');
 const adminSettingsRoutes = require('./routes/admin/settings');
 const adminNotificationRoutes = require('./routes/admin/notifications');
 const adminBannerRoutes = require('./routes/admin/banners');
+const adminDataRoutes = require('./routes/admin/data');
 const bannerRoutes = require('./routes/banners');
 const settingsRoutes = require('./routes/settings');
 
@@ -77,6 +78,7 @@ app.use('/api/admin/reviews', adminReviewRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/admin/banners', adminBannerRoutes);
+app.use('/api/admin/data', adminDataRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Health check

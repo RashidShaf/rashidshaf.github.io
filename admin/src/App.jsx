@@ -21,6 +21,7 @@ import Reports from './pages/Reports';
 import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import Banners from './pages/Banners';
+import DataManagement from './pages/DataManagement';
 
 const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
@@ -56,6 +57,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="banners" element={<Banners />} />
+          <Route path="data" element={<DataManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

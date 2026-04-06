@@ -23,7 +23,7 @@ export default function BookCreate() {
   const [expandedSubs, setExpandedSubs] = useState({});
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    title: '', titleAr: '', author: '', authorAr: '', isbn: '',
+    title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
@@ -154,6 +154,7 @@ export default function BookCreate() {
       if (!payload.categoryId) delete payload.categoryId;
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
+      if (!payload.sku) delete payload.sku;
       // Clean empty optional fields
       ['brand', 'material', 'color', 'dimensions', 'ageRange', 'weight'].forEach((f) => {
         if (!payload[f]) delete payload[f];
@@ -326,6 +327,10 @@ export default function BookCreate() {
                       <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
+                  <div>
+                    <label className={labelClass}>Barcode</label>
+                    <input name="sku" value={form.sku} onChange={handleChange} placeholder="e.g. 978316148410" className={inputClass} />
+                  </div>
                   {show('pages') && (
                     <div>
                       <label className={labelClass}>Pages</label>

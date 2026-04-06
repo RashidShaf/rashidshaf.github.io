@@ -177,8 +177,8 @@ export default function Books() {
           <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => handleSubChange('')}
-              className={`px-3.5 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${
-                selectedSub === '' ? 'bg-admin-accent text-white shadow-sm' : 'bg-gray-100 text-admin-muted hover:text-admin-text hover:bg-gray-200'
+              className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                selectedSub === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
               }`}
             >
               All {getTabName(categories.find((c) => c.id === selectedTab) || {})}
@@ -187,8 +187,8 @@ export default function Books() {
               <button
                 key={cat.id}
                 onClick={() => handleSubChange(cat.id)}
-                className={`px-3.5 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedSub === cat.id ? 'bg-admin-accent text-white shadow-sm' : 'bg-gray-100 text-admin-muted hover:text-admin-text hover:bg-gray-200'
+                className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                  selectedSub === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
                 }`}
               >
                 {getTabName(cat)}
@@ -200,8 +200,8 @@ export default function Books() {
             <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-admin-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               <button
                 onClick={() => handleL3Change('')}
-                className={`px-3 py-1 3xl:px-3.5 3xl:py-1.5 rounded-md text-[11px] 3xl:text-xs font-medium whitespace-nowrap transition-all ${
-                  selectedL3 === '' ? 'bg-admin-accent/15 text-admin-accent font-semibold' : 'text-admin-muted hover:text-admin-text hover:bg-gray-100'
+                className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                  selectedL3 === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
                 }`}
               >
                 All {getTabName(subCategories.find((c) => c.id === selectedSub) || {})}
@@ -210,8 +210,8 @@ export default function Books() {
                 <button
                   key={cat.id}
                   onClick={() => handleL3Change(cat.id)}
-                  className={`px-3 py-1 3xl:px-3.5 3xl:py-1.5 rounded-md text-[11px] 3xl:text-xs font-medium whitespace-nowrap transition-all ${
-                    selectedL3 === cat.id ? 'bg-admin-accent/15 text-admin-accent font-semibold' : 'text-admin-muted hover:text-admin-text hover:bg-gray-100'
+                  className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                    selectedL3 === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
                   }`}
                 >
                   {getTabName(cat)}

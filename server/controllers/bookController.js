@@ -25,6 +25,7 @@ exports.list = async (req, res, next) => {
           { publisher: { contains: search, mode: 'insensitive' } },
           { publisherAr: { contains: search, mode: 'insensitive' } },
           { isbn: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
         ],
       });
     }

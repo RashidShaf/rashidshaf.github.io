@@ -30,7 +30,7 @@ export default function BookEdit() {
   const [suggestedPublishers, setSuggestedPublishers] = useState([]);
   const [suggestedBrands, setSuggestedBrands] = useState([]);
   const [form, setForm] = useState({
-    title: '', titleAr: '', author: '', authorAr: '', isbn: '',
+    title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
     description: '', descriptionAr: '', price: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
@@ -86,6 +86,7 @@ export default function BookEdit() {
           author: book.author || '',
           authorAr: book.authorAr || '',
           isbn: book.isbn || '',
+          sku: book.sku || '',
           description: book.description || '',
           descriptionAr: book.descriptionAr || '',
           price: book.price ? parseFloat(book.price).toString() : '',
@@ -247,6 +248,7 @@ export default function BookEdit() {
       if (!payload.categoryId) delete payload.categoryId;
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
+      if (!payload.sku) delete payload.sku;
       ['brand', 'material', 'color', 'dimensions', 'ageRange'].forEach((f) => {
         if (!payload[f]) payload[f] = null;
       });
@@ -430,6 +432,10 @@ export default function BookEdit() {
                       <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
+                  <div>
+                    <label className={labelClass}>Barcode</label>
+                    <input name="sku" value={form.sku} onChange={handleChange} placeholder="e.g. 978316148410" className={inputClass} />
+                  </div>
                   {show('pages') && (
                     <div>
                       <label className={labelClass}>Pages</label>

@@ -24,6 +24,7 @@ export default function Orders() {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [customerFilter, setCustomerFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pending: 0, delivered: 0 });
@@ -50,6 +51,7 @@ export default function Orders() {
     try {
       const params = new URLSearchParams({ page, limit: 10 });
       if (statusFilter !== 'ALL') params.set('status', statusFilter);
+      if (customerFilter !== 'ALL') params.set('customerType', customerFilter);
       if (search) params.set('search', search);
       const res = await api.get(`/admin/orders?${params}`);
       setOrders(res.data.data || res.data);
@@ -62,7 +64,7 @@ export default function Orders() {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, [page, statusFilter]);
+  useEffect(() => { fetchOrders(); }, [page, statusFilter, customerFilter]);
 
   // Live search with debounce
   useEffect(() => {
@@ -112,6 +114,15 @@ export default function Orders() {
         <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
         </button>
+        <select
+          value={customerFilter}
+          onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[130px]"
+        >
+          <option value="ALL">All Customers</option>
+          <option value="customer">Registered</option>
+          <option value="guest">Guests</option>
+        </select>
         <div className="relative">
           <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <select
