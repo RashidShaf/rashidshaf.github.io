@@ -120,7 +120,7 @@ const HeroBanner = () => {
 const Home = () => {
   const { t, language } = useLanguageStore();
   const [searchParams] = useSearchParams();
-  const corner = searchParams.get('corner') || 'books';
+  const cornerParam = searchParams.get('corner') || '';
 
   const [featured, setFeatured] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
@@ -129,26 +129,30 @@ const Home = () => {
   const [comingSoon, setComingSoon] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cornerData, setCornerData] = useState(null);
+  const [cornerSlug, setCornerSlug] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch categories first to resolve the corner slug
+        const catRes = await api.get('/categories').catch(() => ({ data: [] }));
+        const allCats = catRes.data;
+        setCategories(allCats);
+        const corner = cornerParam || allCats[0]?.slug || '';
+        setCornerSlug(corner);
+        const selectedCorner = allCats.find((c) => c.slug === corner);
+        setCornerData(selectedCorner);
+
         const q = `?corner=${corner}`;
-        const [catRes, featuredRes, newRes, bestRes, trendRes, soonRes] = await Promise.all([
-          api.get('/categories').catch(() => ({ data: [] })),
+        const [featuredRes, newRes, bestRes, trendRes, soonRes] = await Promise.all([
           api.get(`/books/featured${q}`).catch(() => ({ data: [] })),
           api.get(`/books/new-arrivals${q}`).catch(() => ({ data: [] })),
           api.get(`/books/bestsellers${q}`).catch(() => ({ data: [] })),
           api.get(`/books/trending${q}`).catch(() => ({ data: [] })),
           api.get(`/books/coming-soon${q}`).catch(() => ({ data: [] })),
         ]);
-        const allCats = catRes.data;
-        setCategories(allCats);
-        // Find the selected corner and its children
-        const selectedCorner = allCats.find((c) => c.slug === corner);
-        setCornerData(selectedCorner);
         setFeatured(featuredRes.data);
         setNewArrivals(newRes.data);
         setBestsellers(bestRes.data);
@@ -161,7 +165,7 @@ const Home = () => {
       }
     };
     fetchData();
-  }, [corner]);
+  }, [cornerParam]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
 
@@ -177,7 +181,7 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.featured')}
             </h2>
-            <Link to={`/books?category=${corner}&section=featured`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${cornerSlug}&section=featured`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -236,7 +240,7 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.newArrivals')}
             </h2>
-            <Link to={`/books?category=${corner}&section=new`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${cornerSlug}&section=new`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
@@ -253,7 +257,7 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
               {t('home.bestsellers')}
             </h2>
-            <Link to={`/books?category=${corner}&section=bestseller`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
+            <Link to={`/books?category=${cornerSlug}&section=bestseller`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
               {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
             </Link>
           </div>
