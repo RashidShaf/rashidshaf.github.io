@@ -36,7 +36,7 @@ exports.getById = async (req, res, next) => {
             book: {
               select: {
                 id: true, title: true, titleAr: true, slug: true, author: true, authorAr: true,
-                price: true, coverImage: true, format: true, averageRating: true,
+                price: true, coverImage: true, averageRating: true,
                 category: { select: { name: true, nameAr: true, slug: true } },
               },
             },

@@ -1,5 +1,7 @@
 const prisma = require('../config/database');
 const { generateSlug } = require('../utils/helpers');
+const fs = require('fs');
+const path = require('path');
 
 exports.list = async (req, res, next) => {
   try {
@@ -105,7 +107,14 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
+    const category = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!category) return res.status(404).json({ message: 'Category not found.' });
     await prisma.category.delete({ where: { id: req.params.id } });
+    // Clean up image file
+    if (category.image) {
+      const filePath = path.join(__dirname, '..', category.image);
+      fs.unlink(filePath, () => {});
+    }
     res.json({ message: 'Category deleted.' });
   } catch (error) {
     next(error);

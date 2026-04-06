@@ -1,4 +1,6 @@
 const prisma = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 
 // Public: Get active banners
 exports.listPublic = async (req, res, next) => {
@@ -92,7 +94,16 @@ exports.update = async (req, res, next) => {
 // Admin: Delete banner
 exports.remove = async (req, res, next) => {
   try {
+    const banner = await prisma.banner.findUnique({ where: { id: req.params.id } });
+    if (!banner) return res.status(404).json({ message: 'Banner not found.' });
     await prisma.banner.delete({ where: { id: req.params.id } });
+    // Clean up image files
+    [banner.desktopImage, banner.mobileImage].forEach((img) => {
+      if (img) {
+        const filePath = path.join(__dirname, '..', img);
+        fs.unlink(filePath, () => {});
+      }
+    });
     res.json({ message: 'Banner deleted.' });
   } catch (error) {
     next(error);

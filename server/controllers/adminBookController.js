@@ -1,6 +1,8 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateSlug } = require('../utils/helpers');
+const fs = require('fs');
+const path = require('path');
 
 exports.list = async (req, res, next) => {
   try {
@@ -181,7 +183,17 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
+    const book = await prisma.book.findUnique({ where: { id: req.params.id } });
+    if (!book) return res.status(404).json({ message: 'Book not found.' });
     await prisma.book.delete({ where: { id: req.params.id } });
+    // Clean up image files
+    const filesToDelete = [book.coverImage, ...(book.images || [])];
+    filesToDelete.forEach((img) => {
+      if (img) {
+        const filePath = path.join(__dirname, '..', img);
+        fs.unlink(filePath, () => {});
+      }
+    });
     res.json({ message: 'Book deleted.' });
   } catch (error) {
     next(error);

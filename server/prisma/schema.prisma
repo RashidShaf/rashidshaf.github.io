@@ -156,6 +156,7 @@ model Book {
   orderItems      OrderItem[]
   wishlistItems   WishlistItem[]
   readingListItems ReadingListItem[]
+  inventoryLogs    InventoryLog[]
 
   @@index([categoryId])
   @@index([author])
@@ -334,6 +335,8 @@ model InventoryLog {
   note          String?
   performedBy   String?         @map("performed_by")
   createdAt     DateTime        @default(now()) @map("created_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@index([action])
