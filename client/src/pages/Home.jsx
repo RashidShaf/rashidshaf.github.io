@@ -29,19 +29,19 @@ const positionClasses = {
 const LogoOverlay = ({ position = 'center-left' }) => (
   <div className={`absolute z-10 hidden sm:flex flex-col items-center pointer-events-none ${positionClasses[position] || positionClasses['center-left']}`}>
     <div className="relative flex items-center justify-center">
-      <div className="absolute w-[70px] h-[70px] sm:w-[220px] sm:h-[220px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-      <div className="absolute w-[90px] h-[90px] sm:w-[270px] sm:h-[270px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+      <div className="absolute w-[70px] h-[70px] sm:w-[180px] sm:h-[180px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+      <div className="absolute w-[90px] h-[90px] sm:w-[220px] sm:h-[220px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
       <motion.img
         src="/logo.jpg"
         alt="Arkaan"
-        className="w-14 h-14 sm:w-44 sm:h-44 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
+        className="w-14 h-14 sm:w-36 sm:h-36 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
         style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
       />
     </div>
     <div className="-mt-2 sm:-mt-4">
-      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-36 lg:w-52 3xl:w-64 drop-shadow-lg" />
+      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-28 lg:w-52 3xl:w-64 drop-shadow-lg" />
     </div>
   </div>
 );

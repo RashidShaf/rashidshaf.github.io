@@ -224,16 +224,18 @@ const Navbar = () => {
 
       {/* Mobile Category Pills — scrollable strip */}
       {categories.length > 0 && (
-        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 bg-primary flex gap-2 justify-center">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/books?category=${cat.slug}`}
-              className="px-3 py-1.5 text-sm whitespace-nowrap text-white/70 hover:text-white transition-colors"
-            >
-              {getName(cat)}
-            </Link>
-          ))}
+        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 bg-primary mb-0.5">
+          <div className="flex gap-2 justify-center min-w-fit">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={`/books?category=${cat.slug}`}
+                className="px-3 py-1.5 text-sm whitespace-nowrap text-white/70 hover:text-white transition-colors"
+              >
+                {getName(cat)}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 
