@@ -123,8 +123,16 @@ export default function OrderDetail() {
                 <p className="font-medium text-admin-text mt-1">{order.user?.email || '—'}</p>
               </div>
               <div>
+                <span className="text-admin-muted">Subtotal</span>
+                <p className="font-medium text-admin-text mt-1">QAR {parseFloat(order.subtotal || 0).toFixed(2)}</p>
+              </div>
+              <div>
+                <span className="text-admin-muted">Shipping</span>
+                <p className="font-medium text-admin-text mt-1">{parseFloat(order.shippingCost) === 0 ? 'Free' : `QAR ${parseFloat(order.shippingCost || 0).toFixed(2)}`}</p>
+              </div>
+              <div>
                 <span className="text-admin-muted">{t('common.total')}</span>
-                <p className="font-medium text-admin-text mt-1">QAR {parseFloat(order.total || 0).toFixed(2)}</p>
+                <p className="font-bold text-admin-text mt-1">QAR {parseFloat(order.total || 0).toFixed(2)}</p>
               </div>
               <div>
                 <span className="text-admin-muted">Payment</span>
