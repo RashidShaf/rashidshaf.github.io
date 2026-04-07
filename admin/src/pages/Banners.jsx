@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiImage, FiCheckCircle, FiTrash2, FiEdit2, FiPlus, FiX, FiArrowUp, FiArrowDown, FiRefreshCw, FiUpload } from 'react-icons/fi';
+import { FiImage, FiCheckCircle, FiTrash2, FiEdit2, FiPlus, FiX, FiArrowUp, FiArrowDown, FiRefreshCw, FiUpload, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -8,7 +8,7 @@ import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
-const emptyForm = { title: '', titleAr: '', link: '', sortOrder: 0, isActive: true, showLogo: true, logoPosition: 'center-left' };
+const emptyForm = { title: '', titleAr: '', link: '', sortOrder: 0, isActive: true, showLogo: true, logoPosition: 'center-left', categoryId: '' };
 
 const LOGO_POSITIONS = [
   { value: 'top-left', label: 'TL' },
@@ -35,6 +35,12 @@ export default function Banners() {
   const [desktopPreview, setDesktopPreview] = useState(null);
   const [mobilePreview, setMobilePreview] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [filterDropOpen, setFilterDropOpen] = useState(false);
+  const [formCatDropOpen, setFormCatDropOpen] = useState(false);
+  const filterDropRef = useRef(null);
+  const formCatDropRef = useRef(null);
   const desktopRef = useRef(null);
   const mobileRef = useRef(null);
 
@@ -50,7 +56,23 @@ export default function Banners() {
     }
   };
 
-  useEffect(() => { fetchBanners(); }, []);
+  useEffect(() => {
+    fetchBanners();
+    api.get('/admin/categories').then((res) => {
+      const all = res.data.data || res.data;
+      setCategories(all.filter((c) => !c.parentId));
+    }).catch(() => {});
+  }, []);
+
+  // Close custom dropdowns on click outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (filterDropRef.current && !filterDropRef.current.contains(e.target)) setFilterDropOpen(false);
+      if (formCatDropRef.current && !formCatDropRef.current.contains(e.target)) setFormCatDropOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const openCreate = () => {
     setEditingId(null);
@@ -72,6 +94,7 @@ export default function Banners() {
       isActive: banner.isActive,
       showLogo: banner.showLogo !== false,
       logoPosition: banner.logoPosition || 'center-left',
+      categoryId: banner.categoryId || '',
     });
     setDesktopFile(null);
     setMobileFile(null);
@@ -110,6 +133,7 @@ export default function Banners() {
       fd.append('isActive', form.isActive);
       fd.append('showLogo', form.showLogo);
       fd.append('logoPosition', form.logoPosition);
+      fd.append('categoryId', form.categoryId || '');
       if (desktopFile) fd.append('desktopImage', desktopFile);
       if (mobileFile) fd.append('mobileImage', mobileFile);
 
@@ -166,6 +190,12 @@ export default function Banners() {
     }
   };
 
+  const filteredBanners = banners.filter((b) => {
+    if (categoryFilter === 'all') return true;
+    if (categoryFilter === 'home') return !b.categoryId;
+    return b.categoryId === categoryFilter;
+  });
+
   const totalBanners = banners.length;
   const activeBanners = banners.filter((b) => b.isActive).length;
 
@@ -189,6 +219,32 @@ export default function Banners() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative" ref={filterDropRef}>
+          <button
+            type="button"
+            onClick={() => setFilterDropOpen(!filterDropOpen)}
+            className="flex items-center gap-2 px-3 py-2 3xl:px-4 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent min-w-[160px]"
+          >
+            <span className="flex-1 text-start">
+              {categoryFilter === 'all' ? 'All Banners' : categoryFilter === 'home' ? 'Home Page' : categories.find((c) => c.id === categoryFilter)?.name || 'Select'}
+            </span>
+            <FiChevronDown size={14} className={`transition-transform ${filterDropOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {filterDropOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-admin-border rounded-lg shadow-lg z-50 min-w-[160px] py-1 max-h-60 overflow-y-auto">
+              {[{ value: 'all', label: 'All Banners' }, { value: 'home', label: 'Home Page' }, ...categories.map((c) => ({ value: c.id, label: c.name }))].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { setCategoryFilter(opt.value); setFilterDropOpen(false); }}
+                  className={`w-full text-start px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${categoryFilter === opt.value ? 'text-admin-accent font-medium' : 'text-admin-text'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex-1" />
         <button onClick={fetchBanners} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> Refresh
@@ -207,6 +263,7 @@ export default function Banners() {
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Preview</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Title (EN)</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Title (AR)</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Category</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Link</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Logo</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Order</th>
@@ -217,12 +274,12 @@ export default function Banners() {
             <tbody>
               {loading ? (
                 [...Array(3)].map((_, i) => (
-                  <tr key={i}><td colSpan={8} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
+                  <tr key={i}><td colSpan={9} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
-              ) : banners.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-admin-muted">No banners yet. Click "Add Banner" to create one.</td></tr>
+              ) : filteredBanners.length === 0 ? (
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-admin-muted">{banners.length === 0 ? 'No banners yet. Click "Add Banner" to create one.' : 'No banners match the selected filter.'}</td></tr>
               ) : (
-                banners.map((banner) => (
+                filteredBanners.map((banner) => (
                   <tr key={banner.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <div className="w-24 h-14 3xl:w-32 3xl:h-18 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -235,6 +292,11 @@ export default function Banners() {
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">{banner.title || '-'}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted" dir="rtl">{banner.titleAr || '-'}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
+                      <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${banner.categoryId ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                        {banner.category?.name || 'Home Page'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs max-w-[200px] truncate">{banner.link || '-'}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       {banner.showLogo !== false ? (
@@ -297,6 +359,45 @@ export default function Banners() {
                 </div>
               </div>
 
+              {/* Category */}
+              <div>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Category</label>
+                <div className="relative" ref={formCatDropRef}>
+                  <button
+                    type="button"
+                    onClick={() => setFormCatDropOpen(!formCatDropOpen)}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent"
+                  >
+                    <span className="flex-1 text-start">
+                      {form.categoryId ? categories.find((c) => c.id === form.categoryId)?.name || 'Select' : 'Home Page'}
+                    </span>
+                    <FiChevronDown size={14} className={`transition-transform ${formCatDropOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {formCatDropOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-admin-border rounded-lg shadow-lg z-50 w-full py-1 max-h-48 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => { setForm((f) => ({ ...f, categoryId: '' })); setFormCatDropOpen(false); }}
+                        className={`w-full text-start px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${!form.categoryId ? 'text-admin-accent font-medium' : 'text-admin-text'}`}
+                      >
+                        Home Page
+                      </button>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => { setForm((f) => ({ ...f, categoryId: cat.id })); setFormCatDropOpen(false); }}
+                          className={`w-full text-start px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${form.categoryId === cat.id ? 'text-admin-accent font-medium' : 'text-admin-text'}`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-admin-muted mt-1">Leave as "Home Page" for the main homepage banner</p>
+              </div>
+
               {/* Link */}
               <div>
                 <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Link URL</label>
@@ -308,7 +409,7 @@ export default function Banners() {
                 <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">
                   Desktop Image {!editingId && <span className="text-red-500">*</span>}
                 </label>
-                <p className="text-xs text-admin-muted mb-2">Recommended: 1920 x 500px</p>
+                <p className="text-xs text-admin-muted mb-2">Recommended: {form.categoryId ? '1200 x 300px (browse page)' : '1920 x 500px (home page)'}</p>
                 <input ref={desktopRef} type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'desktop')} className="hidden" />
                 {desktopPreview ? (
                   <div className="relative group">
@@ -328,7 +429,7 @@ export default function Banners() {
               {/* Mobile Image */}
               <div>
                 <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Mobile Image</label>
-                <p className="text-xs text-admin-muted mb-2">Recommended: 750 x 500px (optional, falls back to desktop)</p>
+                <p className="text-xs text-admin-muted mb-2">Recommended: {form.categoryId ? '750 x 300px (browse page)' : '750 x 500px (home page)'} (optional, falls back to desktop)</p>
                 <input ref={mobileRef} type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'mobile')} className="hidden" />
                 {mobilePreview ? (
                   <div className="relative group">
@@ -347,8 +448,8 @@ export default function Banners() {
                 )}
               </div>
 
-              {/* Animated Logo */}
-              <div className="bg-admin-bg border border-admin-border rounded-xl p-4">
+              {/* Animated Logo — only for Home Page banners */}
+              {!form.categoryId && <div className="bg-admin-bg border border-admin-border rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm 3xl:text-base font-medium text-admin-text">Animated Logo</p>
@@ -382,7 +483,7 @@ export default function Banners() {
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* Sort Order + Active */}
               <div className="grid grid-cols-2 gap-4">

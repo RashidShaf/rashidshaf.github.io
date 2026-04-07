@@ -5,8 +5,21 @@ const path = require('path');
 // Public: Get active banners
 exports.listPublic = async (req, res, next) => {
   try {
+    const where = { isActive: true };
+
+    if (req.query.category) {
+      const category = await prisma.category.findUnique({
+        where: { slug: req.query.category },
+        select: { id: true },
+      });
+      if (!category) return res.json([]);
+      where.categoryId = category.id;
+    } else {
+      where.categoryId = null;
+    }
+
     const banners = await prisma.banner.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { sortOrder: 'asc' },
     });
     res.json(banners);
@@ -20,6 +33,7 @@ exports.list = async (req, res, next) => {
   try {
     const banners = await prisma.banner.findMany({
       orderBy: { sortOrder: 'asc' },
+      include: { category: { select: { id: true, name: true, nameAr: true } } },
     });
     res.json(banners);
   } catch (error) {
@@ -30,7 +44,7 @@ exports.list = async (req, res, next) => {
 // Admin: Create banner
 exports.create = async (req, res, next) => {
   try {
-    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition } = req.body;
+    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition, categoryId } = req.body;
     const desktopImage = req.files?.desktopImage?.[0]
       ? `uploads/banners/${req.files.desktopImage[0].filename}`
       : null;
@@ -51,6 +65,7 @@ exports.create = async (req, res, next) => {
         link: link || null,
         showLogo: showLogo === 'false' ? false : true,
         logoPosition: logoPosition || 'center-left',
+        categoryId: categoryId || null,
         sortOrder: parseInt(sortOrder) || 0,
         isActive: isActive === 'true' || isActive === true,
       },
@@ -68,7 +83,7 @@ exports.update = async (req, res, next) => {
     if (!existing) return res.status(404).json({ message: 'Banner not found.' });
 
     const data = {};
-    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition } = req.body;
+    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition, categoryId } = req.body;
     if (title !== undefined) data.title = title || null;
     if (titleAr !== undefined) data.titleAr = titleAr || null;
     if (link !== undefined) data.link = link || null;
@@ -76,11 +91,14 @@ exports.update = async (req, res, next) => {
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;
     if (showLogo !== undefined) data.showLogo = showLogo === 'false' ? false : true;
     if (logoPosition !== undefined) data.logoPosition = logoPosition || 'center-left';
+    if (categoryId !== undefined) data.categoryId = categoryId || null;
 
     if (req.files?.desktopImage?.[0]) {
+      if (existing.desktopImage) fs.unlink(path.join(__dirname, '..', existing.desktopImage), () => {});
       data.desktopImage = `uploads/banners/${req.files.desktopImage[0].filename}`;
     }
     if (req.files?.mobileImage?.[0]) {
+      if (existing.mobileImage) fs.unlink(path.join(__dirname, '..', existing.mobileImage), () => {});
       data.mobileImage = `uploads/banners/${req.files.mobileImage[0].filename}`;
     }
 

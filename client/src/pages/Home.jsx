@@ -73,16 +73,8 @@ const HeroBanner = () => {
     ? <LogoOverlay position={currentBanner?.logoPosition || 'center-left'} />
     : null;
 
-  // No banners from API — static fallback
-  if (banners.length === 0) {
-    return (
-      <section className="relative overflow-hidden">
-        <img src="/hero-banner.jpg" alt="Arkaan Bookstore" className="hidden sm:block w-full h-auto object-cover" />
-        <img src="/hero-banner-mobile.jpg" alt="Arkaan Bookstore" className="block sm:hidden w-full h-auto object-cover" />
-        <LogoOverlay position="center-left" />
-      </section>
-    );
-  }
+  // No active banners — show nothing
+  if (banners.length === 0) return null;
 
   // Single banner — no carousel needed
   if (banners.length === 1) {

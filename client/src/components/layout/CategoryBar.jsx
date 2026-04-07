@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import useLanguageStore from '../../stores/useLanguageStore';
 
-const SubcategoryColumn = ({ sub, getName, language }) => (
+const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => (
   <div className="min-w-[150px]">
     <Link
       to={`/books?category=${sub.slug}`}
+      onClick={onLinkClick}
       className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
     >
       {getName(sub)}
@@ -16,6 +17,7 @@ const SubcategoryColumn = ({ sub, getName, language }) => (
           <Link
             key={l3.id}
             to={`/books?category=${l3.slug}`}
+            onClick={onLinkClick}
             className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
           >
             {getName(l3)}
@@ -25,6 +27,7 @@ const SubcategoryColumn = ({ sub, getName, language }) => (
     )}
     <Link
       to={`/books?category=${sub.slug}`}
+      onClick={onLinkClick}
       className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
     >
       {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
@@ -51,6 +54,11 @@ const CategoryBar = ({ categories = [] }) => {
 
   const handleLeave = () => {
     closeTimeout.current = setTimeout(() => setHoveredId(null), 200);
+  };
+
+  const handleClick = () => {
+    clearTimeout(closeTimeout.current);
+    setHoveredId(null);
   };
 
   const hoveredCat = categories.find((c) => c.id === hoveredId);
@@ -105,6 +113,7 @@ const CategoryBar = ({ categories = [] }) => {
               >
                 <Link
                   to={`/books?category=${cat.slug}`}
+                  onClick={handleClick}
                   className={`block text-center px-2 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider transition-all duration-200 border-b-2 ${
                     isActive
                       ? 'text-white border-white'
@@ -132,7 +141,7 @@ const CategoryBar = ({ categories = [] }) => {
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="flex gap-8">
                 {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} />
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} />
                 ))}
               </div>
             </div>
@@ -147,7 +156,7 @@ const CategoryBar = ({ categories = [] }) => {
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
                 {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} />
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} />
                 ))}
               </div>
             </div>

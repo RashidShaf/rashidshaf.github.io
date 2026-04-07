@@ -55,3 +55,25 @@ exports.getBySlug = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getFilters = async (req, res, next) => {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug: req.params.slug },
+      select: { id: true },
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+
+    const filters = await prisma.categoryFilter.findMany({
+      where: { categoryId: category.id, isActive: true },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    res.json(filters);
+  } catch (error) {
+    next(error);
+  }
+};

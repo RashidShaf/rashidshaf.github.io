@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiFilter, FiX, FiChevronDown, FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
+import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
+
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
 const sortOptions = [
   { value: 'newest', labelKey: 'books.sortOptions.newest' },
@@ -30,6 +32,8 @@ const Books = () => {
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortOpen, setSortOpen] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
@@ -44,6 +48,8 @@ const Books = () => {
   const [brandsOpen, setBrandsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [categoryBanners, setCategoryBanners] = useState([]);
+  const [filterConfig, setFilterConfig] = useState(null);
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
 
@@ -78,7 +84,6 @@ const Books = () => {
   const selectedColors = colorFilter ? colorFilter.split(',').filter(Boolean) : [];
   const materialFilter = searchParams.get('material') || '';
   const selectedMaterials = materialFilter ? materialFilter.split(',').filter(Boolean) : [];
-  const page = parseInt(searchParams.get('page') || '1');
 
   const updateParam = (key, value) => {
     const params = new URLSearchParams(searchParams);
@@ -204,12 +209,16 @@ const Books = () => {
     }).catch(() => {});
   }, [category]);
 
+  // Reset and fetch page 1 when filters change
   useEffect(() => {
+    setCurrentPage(1);
+    setBooks([]);
+    setPagination(null);
     const fetchBooks = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        params.set('page', page);
+        params.set('page', '1');
         params.set('limit', '20');
         if (search) params.set('search', search);
         if (category) params.set('category', category);
@@ -232,7 +241,51 @@ const Books = () => {
       }
     };
     fetchBooks();
-  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter, page]);
+  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter]);
+
+  // Load more books (next page)
+  const loadMore = async () => {
+    if (loadingMore || !pagination || currentPage >= pagination.totalPages) return;
+    const nextPage = currentPage + 1;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', nextPage.toString());
+      params.set('limit', '20');
+      if (search) params.set('search', search);
+      if (category) params.set('category', category);
+      if (bookLang) params.set('language', bookLang);
+      if (section) params.set('section', section);
+      if (sort) params.set('sort', sort);
+      if (authorFilter) params.set('author', authorFilter);
+      if (publisherFilter) params.set('publisher', publisherFilter);
+      if (brandFilter) params.set('brand', brandFilter);
+      if (colorFilter) params.set('color', colorFilter);
+      if (materialFilter) params.set('material', materialFilter);
+
+      const res = await api.get(`/books?${params}`);
+      setBooks((prev) => [...prev, ...(res.data.data || res.data)]);
+      setPagination(res.data.pagination || null);
+      setCurrentPage(nextPage);
+    } catch (err) {
+      console.error('Failed to load more books:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Infinite scroll — trigger loadMore when near bottom
+  const loadTriggerRef = useRef(null);
+  useEffect(() => {
+    const el = loadTriggerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
   const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter || brandFilter || colorFilter || materialFilter;
@@ -261,8 +314,32 @@ const Books = () => {
     if (selectedCategories.length > 0 && categories.length > 0) {
       const parent = findTopParent(selectedCategories);
       if (parent) setScopedParentSlug(parent.slug);
+    } else {
+      setScopedParentSlug('');
     }
   }, [category, categories]);
+
+  // Fetch category-specific banners when top-level category changes
+  useEffect(() => {
+    if (scopedParentSlug) {
+      api.get('/banners?category=' + scopedParentSlug).then((res) => {
+        setCategoryBanners(res.data || []);
+      }).catch(() => setCategoryBanners([]));
+    } else {
+      setCategoryBanners([]);
+    }
+  }, [scopedParentSlug]);
+
+  // Fetch dynamic filter config when top-level category changes
+  useEffect(() => {
+    if (scopedParentSlug) {
+      api.get('/categories/' + scopedParentSlug + '/filters').then((res) => {
+        setFilterConfig(res.data || []);
+      }).catch(() => setFilterConfig(null));
+    } else {
+      setFilterConfig(null);
+    }
+  }, [scopedParentSlug]);
 
   // Scope sidebar categories: show only the active department's children
   const getScopedCategories = () => {
@@ -412,216 +489,258 @@ const Books = () => {
                 </div>
               </div>
 
-              {/* Book-specific filters: Language */}
-              {(isBooksDept || !scopedParentSlug) && (
-                <div className="mb-6">
-                  <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
-                    {t('books.language')}
-                  </label>
-                  <div className="space-y-0.5">
-                    {[
-                      { value: '', label: language === 'ar' ? 'الكل' : 'All' },
-                      { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
-                      { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => updateParam('language', opt.value)}
-                        className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
-                          bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Dynamic filter sections — driven by filterConfig or hardcoded fallback */}
+              {(() => {
+                // Render a filter section by fieldKey, with a custom title
+                const renderFilterSection = (fieldKey, title) => {
+                  if (fieldKey === 'language') {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                          {title}
+                        </label>
+                        <div className="space-y-0.5">
+                          {[
+                            { value: '', label: language === 'ar' ? 'الكل' : 'All' },
+                            { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
+                            { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => updateParam('language', opt.value)}
+                              className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
+                                bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
 
-              {/* Author (books only) */}
-              {(isBooksDept || !scopedParentSlug) && availableAuthors.length > 0 && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setAuthorsOpen(!authorsOpen)}
-                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                  >
-                    {t('books.author')}
-                    <FiChevronDown size={14} className={`transition-transform ${authorsOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {authorsOpen && (
-                    <div className="space-y-0.5">
-                      {availableAuthors.map((author) => {
-                        const isSelected = selectedAuthors.includes(author);
-                        return (
-                          <button
-                            key={author}
-                            onClick={() => {
-                              const next = isSelected ? selectedAuthors.filter((a) => a !== author) : [...selectedAuthors, author];
-                              updateParam('author', next.join(','));
-                            }}
-                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                            }`}
-                          >
-                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-[7px]">✓</span>}
-                            </span>
-                            {author}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                  if (fieldKey === 'author' && availableAuthors.length > 0) {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <button
+                          onClick={() => setAuthorsOpen(!authorsOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
+                          {title}
+                          <FiChevronDown size={14} className={`transition-transform ${authorsOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {authorsOpen && (
+                          <div className="space-y-0.5">
+                            {availableAuthors.map((author) => {
+                              const isSelected = selectedAuthors.includes(author);
+                              return (
+                                <button
+                                  key={author}
+                                  onClick={() => {
+                                    const next = isSelected ? selectedAuthors.filter((a) => a !== author) : [...selectedAuthors, author];
+                                    updateParam('author', next.join(','));
+                                  }}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {author}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
-              {/* Publisher (books only) */}
-              {(isBooksDept || !scopedParentSlug) && availablePublishers.length > 0 && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setPublishersOpen(!publishersOpen)}
-                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                  >
-                    {t('books.publisher')}
-                    <FiChevronDown size={14} className={`transition-transform ${publishersOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {publishersOpen && (
-                    <div className="space-y-0.5">
-                      {availablePublishers.map((publisher) => {
-                        const isSelected = selectedPublishers.includes(publisher);
-                        return (
-                          <button
-                            key={publisher}
-                            onClick={() => {
-                              const next = isSelected ? selectedPublishers.filter((p) => p !== publisher) : [...selectedPublishers, publisher];
-                              updateParam('publisher', next.join(','));
-                            }}
-                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                            }`}
-                          >
-                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-[7px]">✓</span>}
-                            </span>
-                            {publisher}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                  if (fieldKey === 'publisher' && availablePublishers.length > 0) {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <button
+                          onClick={() => setPublishersOpen(!publishersOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
+                          {title}
+                          <FiChevronDown size={14} className={`transition-transform ${publishersOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {publishersOpen && (
+                          <div className="space-y-0.5">
+                            {availablePublishers.map((publisher) => {
+                              const isSelected = selectedPublishers.includes(publisher);
+                              return (
+                                <button
+                                  key={publisher}
+                                  onClick={() => {
+                                    const next = isSelected ? selectedPublishers.filter((p) => p !== publisher) : [...selectedPublishers, publisher];
+                                    updateParam('publisher', next.join(','));
+                                  }}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {publisher}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
-              {/* Brand (non-books only) */}
-              {(!isBooksDept || !scopedParentSlug) && availableBrands.length > 0 && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setBrandsOpen(!brandsOpen)}
-                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                  >
-                    {t('books.brand')}
-                    <FiChevronDown size={14} className={`transition-transform ${brandsOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {brandsOpen && (
-                    <div className="space-y-0.5">
-                      {availableBrands.map((brand) => {
-                        const isSelected = selectedBrands.includes(brand);
-                        return (
-                          <button
-                            key={brand}
-                            onClick={() => {
-                              const next = isSelected ? selectedBrands.filter((b) => b !== brand) : [...selectedBrands, brand];
-                              updateParam('brand', next.join(','));
-                            }}
-                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                            }`}
-                          >
-                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-[7px]">✓</span>}
-                            </span>
-                            {brand}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                  if (fieldKey === 'brand' && availableBrands.length > 0) {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <button
+                          onClick={() => setBrandsOpen(!brandsOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
+                          {title}
+                          <FiChevronDown size={14} className={`transition-transform ${brandsOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {brandsOpen && (
+                          <div className="space-y-0.5">
+                            {availableBrands.map((brand) => {
+                              const isSelected = selectedBrands.includes(brand);
+                              return (
+                                <button
+                                  key={brand}
+                                  onClick={() => {
+                                    const next = isSelected ? selectedBrands.filter((b) => b !== brand) : [...selectedBrands, brand];
+                                    updateParam('brand', next.join(','));
+                                  }}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {brand}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
-              {/* Color (non-books only) */}
-              {(!isBooksDept || !scopedParentSlug) && availableColors.length > 0 && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setColorsOpen(!colorsOpen)}
-                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                  >
-                    {t('books.color')}
-                    <FiChevronDown size={14} className={`transition-transform ${colorsOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {colorsOpen && (
-                    <div className="space-y-0.5">
-                      {availableColors.map((color) => {
-                        const isSelected = selectedColors.includes(color);
-                        return (
-                          <button
-                            key={color}
-                            onClick={() => {
-                              const next = isSelected ? selectedColors.filter((c) => c !== color) : [...selectedColors, color];
-                              updateParam('color', next.join(','));
-                            }}
-                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                            }`}
-                          >
-                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-[7px]">✓</span>}
-                            </span>
-                            {color}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                  if (fieldKey === 'color' && availableColors.length > 0) {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <button
+                          onClick={() => setColorsOpen(!colorsOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
+                          {title}
+                          <FiChevronDown size={14} className={`transition-transform ${colorsOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {colorsOpen && (
+                          <div className="space-y-0.5">
+                            {availableColors.map((color) => {
+                              const isSelected = selectedColors.includes(color);
+                              return (
+                                <button
+                                  key={color}
+                                  onClick={() => {
+                                    const next = isSelected ? selectedColors.filter((c) => c !== color) : [...selectedColors, color];
+                                    updateParam('color', next.join(','));
+                                  }}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {color}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
-              {/* Material (non-books only) */}
-              {(!isBooksDept || !scopedParentSlug) && availableMaterials.length > 0 && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setMaterialsOpen(!materialsOpen)}
-                    className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                  >
-                    {t('books.material')}
-                    <FiChevronDown size={14} className={`transition-transform ${materialsOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {materialsOpen && (
-                    <div className="space-y-0.5">
-                      {availableMaterials.map((mat) => {
-                        const isSelected = selectedMaterials.includes(mat);
-                        return (
-                          <button
-                            key={mat}
-                            onClick={() => {
-                              const next = isSelected ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat];
-                              updateParam('material', next.join(','));
-                            }}
-                            className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                              isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                            }`}
-                          >
-                            <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-[7px]">✓</span>}
-                            </span>
-                            {mat}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                  if (fieldKey === 'material' && availableMaterials.length > 0) {
+                    return (
+                      <div key={fieldKey} className="mb-6">
+                        <button
+                          onClick={() => setMaterialsOpen(!materialsOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
+                          {title}
+                          <FiChevronDown size={14} className={`transition-transform ${materialsOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {materialsOpen && (
+                          <div className="space-y-0.5">
+                            {availableMaterials.map((mat) => {
+                              const isSelected = selectedMaterials.includes(mat);
+                              return (
+                                <button
+                                  key={mat}
+                                  onClick={() => {
+                                    const next = isSelected ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat];
+                                    updateParam('material', next.join(','));
+                                  }}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {mat}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return null;
+                };
+
+                // If filterConfig is available and has entries, use it to control which filters appear and in what order
+                if (filterConfig && filterConfig.length > 0) {
+                  const keyToLabel = {
+                    author: t('books.author'),
+                    publisher: t('books.publisher'),
+                    language: t('books.language'),
+                    brand: t('books.brand'),
+                    color: t('books.color'),
+                    material: t('books.material'),
+                    price: t('books.price'),
+                  };
+                  return filterConfig
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .map((filter) => renderFilterSection(filter.fieldKey, keyToLabel[filter.fieldKey] || filter.fieldKey));
+                }
+
+                // Fallback: hardcoded filter behavior (backwards compatible)
+                return (
+                  <>
+                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('language', t('books.language'))}
+                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('author', t('books.author'))}
+                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('publisher', t('books.publisher'))}
+                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('brand', t('books.brand'))}
+                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('color', t('books.color'))}
+                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('material', t('books.material'))}
+                  </>
+                );
+              })()}
 
               {/* Clear Filters */}
               {hasActiveFilters && (
@@ -638,6 +757,26 @@ const Books = () => {
 
           {/* Books Grid */}
           <div className="flex-1 min-w-0">
+            {/* Category Banner */}
+            {categoryBanners.length > 0 && (() => {
+              const banner = categoryBanners[0];
+              const desktopSrc = `${API_BASE}/${banner.desktopImage}`;
+              const mobileSrc = banner.mobileImage ? `${API_BASE}/${banner.mobileImage}` : desktopSrc;
+              const content = (
+                <>
+                  <img src={desktopSrc} alt={banner.title || ''} className="hidden sm:block w-full h-auto object-cover" />
+                  <img src={mobileSrc} alt={banner.title || ''} className="block sm:hidden w-full h-auto object-cover" />
+                </>
+              );
+              return (
+                <div className="mb-4">
+                  {banner.link ? (
+                    <a href={banner.link} target="_blank" rel="noopener noreferrer">{content}</a>
+                  ) : content}
+                </div>
+              );
+            })()}
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
@@ -737,26 +876,11 @@ const Books = () => {
                   {books.map((book) => <BookCard key={book.id} book={book} />)}
                 </div>
 
-                {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-8">
-                    <button
-                      disabled={page <= 1}
-                      onClick={() => updateParam('page', (page - 1).toString())}
-                      className="p-2 rounded-lg border border-muted/20 text-foreground disabled:opacity-30 hover:bg-surface-alt transition-colors"
-                    >
-                      <FiChevronLeft size={18} />
-                    </button>
-                    <span className="text-sm text-foreground/70 px-3">
-                      {page} / {pagination.totalPages}
-                    </span>
-                    <button
-                      disabled={page >= pagination.totalPages}
-                      onClick={() => updateParam('page', (page + 1).toString())}
-                      className="p-2 rounded-lg border border-muted/20 text-foreground disabled:opacity-30 hover:bg-surface-alt transition-colors"
-                    >
-                      <FiChevronRight size={18} />
-                    </button>
+                {/* Infinite scroll trigger */}
+                <div ref={loadTriggerRef} className="h-1" />
+                {loadingMore && (
+                  <div className="flex justify-center py-6">
+                    <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
               </>
