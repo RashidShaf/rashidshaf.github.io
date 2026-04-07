@@ -224,7 +224,7 @@ const Navbar = () => {
 
       {/* Mobile Category Pills — scrollable strip */}
       {categories.length > 0 && (
-        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 bg-primary flex gap-2">
+        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 bg-primary flex gap-2 justify-center">
           {categories.map((cat) => (
             <Link
               key={cat.id}
