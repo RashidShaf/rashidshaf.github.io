@@ -89,7 +89,7 @@ const CategoryBar = ({ categories = [] }) => {
   return (
     <div ref={barRef} className="hidden lg:block bg-primary relative">
       <div className="mx-auto px-2 sm:px-4 lg:px-4 xl:px-4 3xl:px-10">
-        <div className={`flex items-center overflow-x-auto scrollbar-hide ${categories.length < 5 ? 'justify-center gap-2' : 'justify-between gap-1'}`}>
+        <div className={`flex items-center ${categories.length < 5 ? 'justify-center gap-8' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
             const selectedSlugs = currentCategory ? currentCategory.split(',').filter(Boolean) : [];
             const isActive = selectedSlugs.includes(cat.slug) ||
@@ -99,13 +99,13 @@ const CategoryBar = ({ categories = [] }) => {
               <div
                 key={cat.id}
                 ref={(el) => { itemRefs.current[cat.id] = el; }}
-                className={categories.length >= 5 ? 'flex-1 min-w-0' : ''}
+                className={categories.length >= 5 ? 'flex-1' : ''}
                 onMouseEnter={() => handleEnter(cat.id)}
                 onMouseLeave={handleLeave}
               >
                 <Link
                   to={`/books?category=${cat.slug}`}
-                  className={`block text-center px-4 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-200 border-b-2 ${
+                  className={`block text-center px-2 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider transition-all duration-200 border-b-2 ${
                     isActive
                       ? 'text-white border-white'
                       : 'text-white/70 border-transparent hover:text-white hover:border-white/50'
