@@ -112,7 +112,7 @@ const Navbar = () => {
 
               {/* My Account — hover dropdown */}
               <div
-                className="relative hidden sm:block"
+                className="relative hidden lg:block"
                 onMouseEnter={handleAccountEnter}
                 onMouseLeave={handleAccountLeave}
               >
@@ -381,9 +381,9 @@ const Navbar = () => {
                   </div>
                 )}
 
-                <div className="border-t border-muted/20 my-4" />
+                <div className="border-t border-muted/20 my-4 sm:hidden" />
 
-                <div className="flex items-center gap-3 px-4 py-2">
+                <div className="flex items-center gap-3 px-4 py-2 sm:hidden">
                   <LanguageSwitcher />
                 </div>
               </div>
