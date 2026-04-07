@@ -205,13 +205,21 @@ const TrackOrder = () => {
                       </div>
 
                       {/* Summary row */}
-                      <div className="flex items-center justify-between pt-3 border-t border-muted/10 text-sm">
+                      <div className="pt-3 border-t border-muted/10 text-sm space-y-2">
                         <div className="flex items-center gap-4 text-foreground/50">
                           <span className="flex items-center gap-1.5"><FiHash size={12} /> {order.orderNumber}</span>
                           <span className="flex items-center gap-1.5"><FiCreditCard size={12} /> {order.paymentMethod === 'ONLINE' ? t('cart.onlinePayment') : t('orders.paymentCOD')}</span>
                         </div>
-                        <div className="text-right">
-                          <span className="text-foreground/50">{t('cart.total')}: </span>
+                        <div className="flex justify-between">
+                          <span className="text-foreground/50">{t('cart.subtotal')}</span>
+                          <span className="font-medium text-foreground">{formatPrice(order.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-foreground/50">{t('cart.shipping')}</span>
+                          <span className="font-medium text-foreground">{parseFloat(order.shippingCost) === 0 ? t('cart.freeShipping') : formatPrice(order.shippingCost)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-muted/10 pt-2">
+                          <span className="font-bold text-foreground">{t('cart.total')}</span>
                           <span className="font-extrabold text-foreground">{formatPrice(order.total)}</span>
                         </div>
                       </div>

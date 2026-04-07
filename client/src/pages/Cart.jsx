@@ -7,30 +7,17 @@ import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import useAuthStore from '../stores/useAuthStore';
 import { formatPrice } from '../utils/formatters';
-import api from '../utils/api';
 
 const Cart = () => {
   const { t, language } = useLanguageStore();
   const { items, updateQuantity, removeItem, getTotal, clearCart, paymentMethod, setPaymentMethod, fetchCart } = useCartStore();
   const user = useAuthStore((s) => s.user);
-  const [shippingConfig, setShippingConfig] = useState({ threshold: 100, cost: 15 });
 
   useEffect(() => {
     if (user) fetchCart();
   }, []);
 
-  useEffect(() => {
-    api.get('/settings/public').then((res) => {
-      const data = res.data;
-      setShippingConfig({
-        threshold: parseFloat(data.shippingThreshold) || 100,
-        cost: parseFloat(data.shippingCost) || 15,
-      });
-    }).catch(() => {});
-  }, []);
-
   const total = getTotal();
-  const shipping = total >= shippingConfig.threshold ? 0 : shippingConfig.cost;
 
   if (items.length === 0) {
     return (
@@ -148,15 +135,9 @@ const Cart = () => {
                   <span className="text-foreground/70">{t('cart.subtotal')}</span>
                   <span className="font-medium text-foreground">{formatPrice(total)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-foreground/70">{t('cart.shipping')}</span>
-                  <span className="font-medium text-foreground">
-                    {shipping === 0 ? t('cart.freeShipping') : formatPrice(shipping)}
-                  </span>
-                </div>
                 <div className="border-t border-gray-300 pt-3 flex justify-between">
                   <span className="font-semibold text-foreground">{t('cart.total')}</span>
-                  <span className="font-bold text-lg text-foreground">{formatPrice(total + shipping)}</span>
+                  <span className="font-bold text-lg text-foreground">{formatPrice(total)}</span>
                 </div>
               </div>
 
@@ -223,11 +204,6 @@ const Cart = () => {
                 {t('cart.checkout')}
               </Link>
 
-              {shipping > 0 && (
-                <p className="text-xs text-foreground/60 text-center mt-3">
-                  {t('cart.freeShippingThreshold', { amount: shippingConfig.threshold })}
-                </p>
-              )}
             </div>
           </div>
         </div>

@@ -87,7 +87,7 @@ const CategoryBar = ({ categories = [] }) => {
   if (categories.length === 0) return null;
 
   return (
-    <div ref={barRef} className="hidden lg:block bg-surface/50 border-t border-muted/10 border-b border-b-gray-300 mb-0.5 relative">
+    <div ref={barRef} className="hidden lg:block bg-primary relative">
       <div className="mx-auto px-2 sm:px-4 lg:px-4 xl:px-4 3xl:px-10">
         <div className={`flex items-center overflow-x-auto scrollbar-hide ${categories.length < 5 ? 'justify-center gap-2' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
@@ -107,8 +107,8 @@ const CategoryBar = ({ categories = [] }) => {
                   to={`/books?category=${cat.slug}`}
                   className={`block text-center px-4 py-3 text-[13px] 3xl:text-[15px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-200 border-b-2 ${
                     isActive
-                      ? 'text-accent border-accent'
-                      : 'text-foreground/60 border-transparent hover:text-accent hover:border-accent'
+                      ? 'text-white border-white'
+                      : 'text-white/70 border-transparent hover:text-white hover:border-white/50'
                   }`}
                 >
                   {getName(cat)}

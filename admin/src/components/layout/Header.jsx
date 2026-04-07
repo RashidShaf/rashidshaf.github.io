@@ -177,7 +177,7 @@ export default function Header({ onMenuClick }) {
             </button>
 
             {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 3xl:w-96 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
+              <div className="absolute end-0 mt-2 w-80 3xl:w-96 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 3xl:px-5 3xl:py-4 border-b border-admin-border">
                   <h3 className="text-sm 3xl:text-base font-bold text-admin-text">Notifications</h3>
@@ -249,7 +249,7 @@ export default function Header({ onMenuClick }) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 3xl:w-56 bg-white rounded-lg shadow-lg border border-admin-border py-1 z-50">
+              <div className="absolute end-0 mt-2 w-48 3xl:w-56 bg-white rounded-lg shadow-lg border border-admin-border py-1 z-50">
                 <div className="px-4 py-2 3xl:px-5 3xl:py-3 border-b border-admin-border">
                   <p className="text-sm 3xl:text-base font-medium text-admin-text">{user?.name}</p>
                   <p className="text-xs 3xl:text-sm text-admin-muted">{user?.email}</p>
@@ -260,7 +260,7 @@ export default function Header({ onMenuClick }) {
                     await logout();
                     window.location.href = '/login';
                   }}
-                  className="w-full text-left px-4 py-2 3xl:px-5 3xl:py-3 text-sm 3xl:text-base text-admin-danger hover:bg-gray-50 transition-colors"
+                  className="w-full text-start px-4 py-2 3xl:px-5 3xl:py-3 text-sm 3xl:text-base text-admin-danger hover:bg-gray-50 transition-colors"
                 >
                   {t('nav.logout')}
                 </button>

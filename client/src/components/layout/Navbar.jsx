@@ -224,12 +224,12 @@ const Navbar = () => {
 
       {/* Mobile Category Pills — scrollable strip */}
       {categories.length > 0 && (
-        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 border-b border-muted/10 bg-background flex gap-2">
+        <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 py-2 bg-primary flex gap-2">
           {categories.map((cat) => (
             <Link
               key={cat.id}
               to={`/books?category=${cat.slug}`}
-              className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap border border-muted/20 text-foreground/70 hover:border-accent hover:text-accent transition-colors"
+              className="px-3 py-1.5 text-sm whitespace-nowrap text-white/70 hover:text-white transition-colors"
             >
               {getName(cat)}
             </Link>
