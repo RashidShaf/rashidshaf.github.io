@@ -112,6 +112,7 @@ model Book {
   description    String?    @db.Text
   descriptionAr  String?    @map("description_ar") @db.Text
   price          Decimal    @db.Decimal(10, 2)
+  purchasePrice  Decimal?   @map("purchase_price") @db.Decimal(10, 2)
   compareAtPrice Decimal?   @map("compare_at_price") @db.Decimal(10, 2)
   coverImage     String?    @map("cover_image")
   images         String[]   @default([])

@@ -16,6 +16,8 @@ router.get('/export/categories', [auth, admin], dataController.exportCategories)
 
 // Import
 router.post('/import/products', [auth, admin], upload.single('file'), dataController.importProducts);
+router.post('/import/preview', [auth, admin], upload.single('file'), dataController.importPreview);
+router.post('/import/confirm', [auth, admin], dataController.importConfirm);
 router.get('/import/template', [auth, admin], dataController.importTemplate);
 
 

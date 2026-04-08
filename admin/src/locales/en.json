@@ -127,6 +127,7 @@
     "agePlaceholder": "e.g. 3-6 years",
     "pricingInventory": "Pricing & Inventory",
     "priceQAR": "Price (QAR) *",
+    "purchasePrice": "Purchase Price (QAR)",
     "compareAtPrice": "Compare at Price",
     "stockRequired": "Stock *",
     "comingSoonNote": "Coming Soon — pricing and stock fields are optional",

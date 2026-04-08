@@ -27,6 +27,7 @@ exports.exportProducts = async (req, res, next) => {
       description: b.description || '',
       descriptionAr: b.descriptionAr || '',
       price: b.price?.toString() || '0',
+      purchasePrice: b.purchasePrice?.toString() || '',
       compareAtPrice: b.compareAtPrice?.toString() || '',
       publisher: b.publisher || '',
       publisherAr: b.publisherAr || '',
@@ -374,58 +375,180 @@ exports.importProducts = async (req, res, next) => {
   }
 };
 
-// Download import template
+// Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
-    const headers = [
-      'title', 'titleAr', 'author', 'authorAr', 'isbn', 'barcode',
-      'description', 'descriptionAr', 'price', 'compareAtPrice',
-      'publisher', 'publisherAr', 'language', 'pages', 'weight', 'dimensions',
-      'brand', 'color', 'material', 'ageRange',
-      'stock', 'lowStockThreshold', 'categorySlug', 'tags',
-      'isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon',
-      'isOutOfStock', 'isActive', 'publishedDate',
-    ];
+    const headers = ['barcode', 'nameEn', 'nameAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'];
 
     const sample = [{
-      title: 'Sample Book Title',
-      titleAr: 'عنوان الكتاب',
-      author: 'Author Name',
-      authorAr: 'اسم المؤلف',
-      isbn: '978-3-16-148410-0',
       barcode: '978316148410',
-      description: 'Book description here',
-      descriptionAr: 'وصف الكتاب',
-      price: '49.99',
-      compareAtPrice: '59.99',
-      publisher: 'Publisher Name',
-      publisherAr: 'اسم الناشر',
-      language: 'en',
-      pages: '320',
-      weight: '450',
-      dimensions: '20x15x3 cm',
-      brand: '',
-      color: '',
-      material: '',
-      ageRange: '',
-      stock: '50',
-      lowStockThreshold: '5',
-      categorySlug: 'fiction',
-      tags: 'bestseller, new',
-      isFeatured: 'no',
-      isBestseller: 'no',
-      isNewArrival: 'yes',
-      isTrending: 'no',
-      isComingSoon: 'no',
-      isOutOfStock: 'no',
-      isActive: 'yes',
-      publishedDate: '2026-01-15',
+      nameEn: 'Sample Product',
+      nameAr: 'منتج تجريبي',
+      purchasePrice: '30.00',
+      sellingPrice: '49.99',
+      mainCategory: 'Books corner',
+      subCategory: 'Fiction',
+      subSubCategory: '',
     }];
 
     const csv = stringify(sample, { header: true, columns: headers });
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=product-import-template.csv');
     res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Preview import — parse CSV, validate, detect duplicates (does NOT create anything)
+exports.importPreview = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'CSV file is required.' });
+
+    const fileContent = req.file.buffer.toString('utf-8');
+    let records;
+    try {
+      records = parse(fileContent, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+    } catch {
+      return res.status(400).json({ message: 'Invalid CSV format.' });
+    }
+
+    if (!records || records.length === 0) return res.status(400).json({ message: 'CSV file is empty.' });
+
+    // Fetch categories and existing barcodes
+    const allCategories = await prisma.category.findMany({
+      select: { id: true, name: true, slug: true, parentId: true },
+    });
+    const existingBarcodes = await prisma.book.findMany({
+      where: { sku: { not: null } },
+      select: { sku: true },
+    });
+    const barcodeSet = new Set(existingBarcodes.map((b) => b.sku));
+
+    const valid = [];
+    const duplicates = [];
+    const errors = [];
+
+    for (let i = 0; i < records.length; i++) {
+      const row = records[i];
+      const rowNum = i + 2;
+
+      // Validate required fields
+      if (!row.nameEn || !row.nameEn.trim()) { errors.push({ row: rowNum, error: 'Name (English) is required' }); continue; }
+      if (!row.sellingPrice || isNaN(parseFloat(row.sellingPrice))) { errors.push({ row: rowNum, error: 'Valid selling price is required' }); continue; }
+      if (!row.barcode || !row.barcode.trim()) { errors.push({ row: rowNum, error: 'Barcode is required' }); continue; }
+
+      // Resolve category by name (case-insensitive)
+      let categoryId = null;
+      const l1Name = (row.mainCategory || '').trim().toLowerCase();
+      const l2Name = (row.subCategory || '').trim().toLowerCase();
+      const l3Name = (row.subSubCategory || '').trim().toLowerCase();
+
+      if (l1Name) {
+        const l1 = allCategories.find((c) => c.name.toLowerCase() === l1Name && !c.parentId);
+        if (l1) {
+          categoryId = l1.id;
+          if (l2Name) {
+            const l2 = allCategories.find((c) => c.name.toLowerCase() === l2Name && c.parentId === l1.id);
+            if (l2) {
+              categoryId = l2.id;
+              if (l3Name) {
+                const l3 = allCategories.find((c) => c.name.toLowerCase() === l3Name && c.parentId === l2.id);
+                if (l3) categoryId = l3.id;
+              }
+            }
+          }
+        }
+      }
+
+      const product = {
+        row: rowNum,
+        barcode: row.barcode.trim(),
+        nameEn: row.nameEn.trim(),
+        nameAr: row.nameAr?.trim() || '',
+        purchasePrice: row.purchasePrice ? parseFloat(row.purchasePrice) : null,
+        sellingPrice: parseFloat(row.sellingPrice),
+        mainCategory: row.mainCategory?.trim() || '',
+        subCategory: row.subCategory?.trim() || '',
+        subSubCategory: row.subSubCategory?.trim() || '',
+        categoryId,
+      };
+
+      // Check for duplicate barcode
+      if (barcodeSet.has(product.barcode)) {
+        duplicates.push(product);
+      } else {
+        // Also check within the file itself for duplicate barcodes
+        if (valid.some((v) => v.barcode === product.barcode) || duplicates.some((d) => d.barcode === product.barcode)) {
+          duplicates.push(product);
+        } else {
+          valid.push(product);
+        }
+      }
+    }
+
+    res.json({ valid, duplicates, errors, total: records.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Confirm import — create products after password verification
+exports.importConfirm = async (req, res, next) => {
+  try {
+    const { products, password } = req.body;
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: 'No products to import.' });
+    }
+    if (!password) return res.status(400).json({ message: 'Password is required.' });
+
+    // Verify admin password
+    const bcrypt = require('bcryptjs');
+    const admin = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!admin) return res.status(401).json({ message: 'User not found.' });
+    const validPassword = await bcrypt.compare(password, admin.password);
+    if (!validPassword) return res.status(401).json({ message: 'Incorrect password.' });
+
+    const results = { created: 0, errors: [] };
+
+    for (const product of products) {
+      try {
+        // Re-check barcode uniqueness at creation time
+        if (product.barcode) {
+          const existing = await prisma.book.findFirst({ where: { sku: product.barcode } });
+          if (existing) { results.errors.push({ row: product.row, error: `Barcode "${product.barcode}" already exists` }); continue; }
+        }
+
+        let slug = generateSlug(product.nameEn);
+        const existingSlug = await prisma.book.findFirst({ where: { slug } });
+        if (existingSlug) slug = `${slug}-${Date.now()}`;
+
+        await prisma.book.create({
+          data: {
+            title: product.nameEn,
+            titleAr: product.nameAr || null,
+            slug,
+            author: 'Unknown',
+            sku: product.barcode || null,
+            price: product.sellingPrice,
+            purchasePrice: product.purchasePrice || null,
+            categoryId: product.categoryId || null,
+            stock: 0,
+            isActive: true,
+          },
+        });
+        results.created++;
+      } catch (err) {
+        results.errors.push({ row: product.row, error: err.message || 'Unknown error' });
+      }
+    }
+
+    res.json({
+      message: `Import complete. ${results.created} products created.`,
+      created: results.created,
+      total: products.length,
+      errors: results.errors,
+    });
   } catch (error) {
     next(error);
   }

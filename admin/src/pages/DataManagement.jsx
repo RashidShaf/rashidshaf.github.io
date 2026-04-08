@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -9,6 +9,9 @@ export default function DataManagement() {
   const { t } = useLanguageStore();
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [password, setPassword] = useState('');
   const [importResult, setImportResult] = useState(null);
 
   const exportData = async (type, format = 'csv') => {
@@ -29,30 +32,66 @@ export default function DataManagement() {
     }
   };
 
-  const handleImport = async (e) => {
+  const handlePreview = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.endsWith('.csv')) {
-      toast.error('Please upload a CSV file');
-      return;
-    }
+    if (!file.name.endsWith('.csv')) { toast.error('Please upload a CSV file'); return; }
 
     setImporting(true);
+    setPreview(null);
     setImportResult(null);
+    setPassword('');
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await api.post('/admin/data/import/products', fd, {
+      const res = await api.post('/admin/data/import/preview', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setImportResult(res.data);
-      toast.success(res.data.message);
+      setPreview(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Import failed');
+      toast.error(err.response?.data?.message || 'Failed to parse file');
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = '';
     }
+  };
+
+  const handleConfirm = async () => {
+    if (!password.trim()) { toast.error('Password is required'); return; }
+    if (!preview?.valid?.length) return;
+
+    setConfirming(true);
+    try {
+      const res = await api.post('/admin/data/import/confirm', {
+        products: preview.valid,
+        password,
+      });
+      setImportResult(res.data);
+      setPreview(null);
+      setPassword('');
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Import failed');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const exportDuplicates = () => {
+    if (!preview?.duplicates?.length) return;
+    const headers = 'barcode,nameEn,nameAr,purchasePrice,sellingPrice,mainCategory,subCategory,subSubCategory\n';
+    const rows = preview.duplicates.map((d) =>
+      `${d.barcode},"${d.nameEn}","${d.nameAr}",${d.purchasePrice || ''},${d.sellingPrice},${d.mainCategory},${d.subCategory},${d.subSubCategory || ''}`
+    ).join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'duplicate-products.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   const downloadTemplate = async () => {
@@ -96,17 +135,11 @@ export default function DataManagement() {
                 <p className="text-sm 3xl:text-base font-semibold text-admin-text">{item.label}</p>
               </div>
               <div className="flex gap-1.5">
-                <button
-                  onClick={() => exportData(item.type)}
-                  className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-white border border-admin-border text-admin-text text-xs 3xl:text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                >
+                <button onClick={() => exportData(item.type)} className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-white border border-admin-border text-admin-text text-xs 3xl:text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   {t('data.csv')}
                 </button>
                 {item.hasExcel && (
-                  <button
-                    onClick={() => exportData(item.type, 'excel')}
-                    className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-green-600 text-white text-xs 3xl:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-                  >
+                  <button onClick={() => exportData(item.type, 'excel')} className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-green-600 text-white text-xs 3xl:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
                     {t('data.excel')}
                   </button>
                 )}
@@ -122,10 +155,7 @@ export default function DataManagement() {
         <p className="text-xs 3xl:text-sm text-admin-muted mb-5">{t('data.importDesc')}</p>
 
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-5">
-          <button
-            onClick={downloadTemplate}
-            className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors"
-          >
+          <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors">
             <FiDownload size={16} /> {t('data.downloadTemplate')}
           </button>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
@@ -135,18 +165,150 @@ export default function DataManagement() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <input ref={fileRef} type="file" accept=".csv" onChange={handleImport} className="hidden" />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={importing}
-            className="flex items-center gap-2 px-6 py-3 3xl:px-8 3xl:py-3.5 bg-admin-accent text-white text-sm 3xl:text-base font-medium rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50"
-          >
-            <FiUpload size={16} /> {importing ? t('data.importing') : t('data.uploadCsv')}
-          </button>
-        </div>
+        {!preview && !importResult && (
+          <div className="flex items-center gap-4">
+            <input ref={fileRef} type="file" accept=".csv" onChange={handlePreview} className="hidden" />
+            <button onClick={() => fileRef.current?.click()} disabled={importing} className="flex items-center gap-2 px-6 py-3 3xl:px-8 3xl:py-3.5 bg-admin-accent text-white text-sm 3xl:text-base font-medium rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
+              <FiUpload size={16} /> {importing ? t('data.importing') : t('data.uploadCsv')}
+            </button>
+          </div>
+        )}
 
-        {/* Import Results */}
+        {/* Preview Results */}
+        {preview && (
+          <div className="mt-5 space-y-4">
+            {/* Valid Products */}
+            {preview.valid.length > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FiCheck className="w-5 h-5 text-green-600" />
+                  <h3 className="text-sm font-semibold text-green-800">{preview.valid.length} products ready to import</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-green-700">
+                        <th className="pb-2 pe-3">#</th>
+                        <th className="pb-2 pe-3">{t('books.barcode')}</th>
+                        <th className="pb-2 pe-3">{t('books.titleEn')}</th>
+                        <th className="pb-2 pe-3">{t('books.titleAr')}</th>
+                        <th className="pb-2 pe-3">{t('books.price')}</th>
+                        <th className="pb-2">{t('books.category')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.valid.slice(0, 20).map((p, i) => (
+                        <tr key={i} className="border-t border-green-200">
+                          <td className="py-1.5 pe-3 text-green-600">{p.row}</td>
+                          <td className="py-1.5 pe-3 font-mono">{p.barcode}</td>
+                          <td className="py-1.5 pe-3">{p.nameEn}</td>
+                          <td className="py-1.5 pe-3" dir="rtl">{p.nameAr}</td>
+                          <td className="py-1.5 pe-3">{p.sellingPrice}</td>
+                          <td className="py-1.5">{[p.mainCategory, p.subCategory, p.subSubCategory].filter(Boolean).join(' > ')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {preview.valid.length > 20 && (
+                    <p className="text-xs text-green-600 mt-2">...and {preview.valid.length - 20} more</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Duplicate Products */}
+            {preview.duplicates.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <FiAlertCircle className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-sm font-semibold text-amber-800">{preview.duplicates.length} duplicate barcodes found</h3>
+                  </div>
+                  <button onClick={exportDuplicates} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors">
+                    <FiDownload size={14} /> Export Duplicates
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-amber-700">
+                        <th className="pb-2 pe-3">{t('books.barcode')}</th>
+                        <th className="pb-2 pe-3">{t('books.titleEn')}</th>
+                        <th className="pb-2">{t('books.price')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.duplicates.map((d, i) => (
+                        <tr key={i} className="border-t border-amber-200">
+                          <td className="py-1.5 pe-3 font-mono">{d.barcode}</td>
+                          <td className="py-1.5 pe-3">{d.nameEn}</td>
+                          <td className="py-1.5">{d.sellingPrice}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Errors */}
+            {preview.errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FiX className="w-5 h-5 text-red-600" />
+                  <h3 className="text-sm font-semibold text-red-800">{preview.errors.length} rows with errors</h3>
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {preview.errors.map((err, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-red-600 bg-red-100 px-3 py-1.5 rounded-lg">
+                      <span className="font-medium whitespace-nowrap">{t('data.row')} {err.row}:</span>
+                      <span>{err.error}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confirm with Password */}
+            {preview.valid.length > 0 && (
+              <div className="bg-admin-bg border border-admin-border rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <FiLock className="w-5 h-5 text-admin-muted" />
+                  <h3 className="text-sm font-semibold text-admin-text">Confirm Import</h3>
+                </div>
+                <p className="text-xs text-admin-muted mb-3">Enter your admin password to confirm adding {preview.valid.length} products.</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Admin password"
+                    className="w-64 px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+                    onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
+                  />
+                  <button onClick={handleConfirm} disabled={confirming || !password.trim()} className="px-6 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                    {confirming ? t('common.loading') : `Confirm (${preview.valid.length})`}
+                  </button>
+                  <button onClick={() => { setPreview(null); setPassword(''); }} className="px-4 py-2.5 border border-admin-border text-admin-muted text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* No valid products */}
+            {preview.valid.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-sm text-admin-muted">No valid products to import.</p>
+                <button onClick={() => setPreview(null)} className="mt-2 px-4 py-2 text-sm text-admin-accent hover:underline">
+                  Try another file
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Final Import Results */}
         {importResult && (
           <div className="mt-5 bg-admin-bg border border-admin-border rounded-xl p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -155,23 +317,22 @@ export default function DataManagement() {
               </div>
               <div>
                 <p className="text-sm 3xl:text-base font-semibold text-admin-text">{importResult.message}</p>
-                <p className="text-xs text-admin-muted">{importResult.created} of {importResult.total} products imported successfully</p>
+                <p className="text-xs text-admin-muted">{importResult.created} of {importResult.total} products imported</p>
               </div>
             </div>
-
             {importResult.errors.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs font-medium text-red-600 mb-2">{importResult.errors.length} {t('data.errors')}</p>
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {importResult.errors.map((err, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
-                      <span className="font-medium whitespace-nowrap">{t('data.row')} {err.row}:</span>
-                      <span>{err.error}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-3 max-h-48 overflow-y-auto space-y-1">
+                {importResult.errors.map((err, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
+                    <span className="font-medium whitespace-nowrap">{t('data.row')} {err.row}:</span>
+                    <span>{err.error}</span>
+                  </div>
+                ))}
               </div>
             )}
+            <button onClick={() => setImportResult(null)} className="mt-3 text-sm text-admin-accent hover:underline">
+              Import more
+            </button>
           </div>
         )}
       </div>

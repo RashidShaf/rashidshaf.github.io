@@ -127,6 +127,7 @@
     "agePlaceholder": "مثال: 3-6 سنوات",
     "pricingInventory": "التسعير والمخزون",
     "priceQAR": "السعر (ر.ق) *",
+    "purchasePrice": "سعر الشراء (ر.ق)",
     "compareAtPrice": "السعر قبل الخصم",
     "stockRequired": "المخزون *",
     "comingSoonNote": "قريباً — حقول السعر والمخزون اختيارية",

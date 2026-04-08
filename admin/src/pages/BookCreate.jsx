@@ -24,7 +24,7 @@ export default function BookCreate() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
-    description: '', descriptionAr: '', price: '', compareAtPrice: '',
+    description: '', descriptionAr: '', price: '', purchasePrice: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
     publishedDate: '', weight: '',
@@ -152,6 +152,7 @@ export default function BookCreate() {
       }
 
       if (!payload.categoryId) delete payload.categoryId;
+      if (!payload.purchasePrice) delete payload.purchasePrice;
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
       if (!payload.sku) delete payload.sku;
@@ -406,6 +407,10 @@ export default function BookCreate() {
                 <div>
                   <label className={labelClass}>{t('books.priceQAR')}</label>
                   <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>{t('books.purchasePrice')}</label>
+                  <input name="purchasePrice" type="number" step="0.01" min="0" value={form.purchasePrice} onChange={handleChange} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>{t('books.compareAtPrice')}</label>
