@@ -469,8 +469,8 @@ export default function Banners() {
                     {/* Mobile Logo Toggle */}
                     <div className="flex items-center justify-between mb-3 pt-2 border-t border-admin-border">
                       <div>
-                        <p className="text-sm font-medium text-admin-text">Mobile Logo</p>
-                        <p className="text-xs text-admin-muted mt-0.5">Show logo on mobile banners</p>
+                        <p className="text-sm font-medium text-admin-text">{t('banners.mobileLogo')}</p>
+                        <p className="text-xs text-admin-muted mt-0.5">{t('banners.showMobileLogo')}</p>
                       </div>
                       <div
                         onClick={() => setForm((f) => ({ ...f, showMobileLogo: !f.showMobileLogo }))}

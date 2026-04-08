@@ -272,6 +272,9 @@
     "mobileRecommended": "Recommended: 600 x 300px",
     "animatedLogo": "Animated Logo",
     "showLogo": "Show the rotating Arkaan logo on this banner",
+    "mobileLogo": "Mobile Logo",
+    "showMobileLogo": "Show logo on mobile banners",
+    "logoPosition": "Logo Position",
     "noBanners": "No banners yet. Click \"Add Banner\" to create one.",
     "noMatch": "No banners match the selected filter.",
     "homePageHelper": "Leave as \"Home Page\" for the main homepage banner"

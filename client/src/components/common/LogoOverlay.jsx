@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 
 const positionClasses = {
-  'top-left': 'top-[15%] left-3 sm:left-14 lg:left-24',
-  'top-center': 'top-[15%] left-1/2 -translate-x-1/2',
-  'top-right': 'top-[15%] right-3 sm:right-14 lg:right-24',
-  'center-left': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
-  'center': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-1/2 -translate-x-1/2',
-  'center-right': 'top-[42%] sm:top-[38%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
+  'top-left': 'top-[38%] sm:top-[35%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
+  'top-center': 'top-[38%] sm:top-[35%] -translate-y-1/2 left-1/2 -translate-x-1/2',
+  'top-right': 'top-[38%] sm:top-[35%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
+  'center-left': 'top-[50%] sm:top-[46%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
+  'center': 'top-[50%] sm:top-[46%] -translate-y-1/2 left-1/2 -translate-x-1/2',
+  'center-right': 'top-[50%] sm:top-[46%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
   'bottom-left': 'bottom-[10%] left-3 sm:left-14 lg:left-24',
   'bottom-center': 'bottom-[10%] left-1/2 -translate-x-1/2',
   'bottom-right': 'bottom-[10%] right-3 sm:right-14 lg:right-24',
