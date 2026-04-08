@@ -23,6 +23,7 @@ export default function CategoryEdit() {
   const [isTopLevel, setIsTopLevel] = useState(false);
   const [backUrl, setBackUrl] = useState('/categories?tab=top');
   const ALL_DETAIL_FIELDS = [
+    { key: 'author', label: 'Author' },
     { key: 'publisher', label: 'Publisher' },
     { key: 'pages', label: 'Pages' },
     { key: 'isbn', label: 'ISBN' },

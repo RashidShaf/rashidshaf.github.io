@@ -48,6 +48,7 @@ const Books = () => {
   const [brandsOpen, setBrandsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
   const [categoryBanners, setCategoryBanners] = useState([]);
   const [filterConfig, setFilterConfig] = useState(null);
   const sortRef = useRef(null);
@@ -288,7 +289,7 @@ const Books = () => {
   });
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
-  const hasActiveFilters = category || bookLang || section || authorFilter || publisherFilter || brandFilter || colorFilter || materialFilter;
+  const hasActiveFilters = (category && category !== scopedParentSlug) || bookLang || section || authorFilter || publisherFilter || brandFilter || colorFilter || materialFilter;
   const isBooksDept = scopedParentSlug === 'books' || categories.find((c) => c.slug === 'books' && selectedCategories.includes('books'));
   const totalBooks = pagination?.total || books.length;
 
@@ -296,7 +297,7 @@ const Books = () => {
   const findTopParent = (slugs) => {
     for (const slug of slugs) {
       const topMatch = categories.find((c) => c.slug === slug);
-      if (topMatch && topMatch.children?.length > 0) return topMatch;
+      if (topMatch) return topMatch;
       for (const topCat of categories) {
         if (topCat.children) {
           if (topCat.children.some((s) => s.slug === slug)) return topCat;
@@ -389,7 +390,7 @@ const Books = () => {
             ${filtersOpen ? 'fixed right-0 rtl:right-auto rtl:left-0 top-0 bottom-0 z-50 w-[min(80vw,288px)] bg-background p-5 shadow-2xl overflow-y-auto' : 'hidden'}
             lg:block lg:static lg:w-52 3xl:w-64 lg:p-0 lg:shadow-none lg:bg-transparent flex-shrink-0
           `}>
-            <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pb-8"
+            <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pb-8 overflow-x-hidden"
               style={{ scrollbarWidth: 'thin' }}
             >
               {filtersOpen && (
@@ -402,6 +403,7 @@ const Books = () => {
               )}
 
               {/* Category — multi-select (scoped to selected department) */}
+              {sidebarCategories.length > 0 && (
               <div className="mb-6">
                 <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
                   {t('books.category')}
@@ -488,6 +490,7 @@ const Books = () => {
                   })}
                 </div>
               </div>
+              )}
 
               {/* Dynamic filter sections — driven by filterConfig or hardcoded fallback */}
               {(() => {
@@ -496,26 +499,37 @@ const Books = () => {
                   if (fieldKey === 'language') {
                     return (
                       <div key={fieldKey} className="mb-6">
-                        <label className="text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2 block">
+                        <button
+                          onClick={() => setLanguageOpen(!languageOpen)}
+                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
+                        >
                           {title}
-                        </label>
-                        <div className="space-y-0.5">
-                          {[
-                            { value: '', label: language === 'ar' ? 'الكل' : 'All' },
-                            { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
-                            { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() => updateParam('language', opt.value)}
-                              className={`w-full text-start py-1.5 text-sm 3xl:text-lg transition-colors ${
-                                bookLang === opt.value ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
+                          <FiChevronDown size={14} className={`transition-transform ${languageOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {languageOpen && (
+                          <div className="space-y-0.5">
+                            {[
+                              { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
+                              { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
+                            ].map((opt) => {
+                              const isSelected = bookLang === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => updateParam('language', isSelected ? '' : opt.value)}
+                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   }
@@ -713,6 +727,11 @@ const Books = () => {
                   return null;
                 };
 
+                // If we fetched filter config and it's empty, admin wants no filters — show nothing
+                if (Array.isArray(filterConfig) && filterConfig.length === 0) {
+                  return null;
+                }
+
                 // If filterConfig is available and has entries, use it to control which filters appear and in what order
                 if (filterConfig && filterConfig.length > 0) {
                   const keyToLabel = {
@@ -745,7 +764,11 @@ const Books = () => {
               {/* Clear Filters */}
               {hasActiveFilters && (
                 <button
-                  onClick={() => setSearchParams({})}
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (scopedParentSlug) params.set('category', scopedParentSlug);
+                    setSearchParams(params);
+                  }}
                   className="w-full py-2 text-sm text-red-500 hover:text-red-600 transition-colors"
                 >
                   {language === 'ar' ? 'مسح الفلاتر' : 'Clear all filters'}

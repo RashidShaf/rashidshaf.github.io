@@ -121,7 +121,7 @@ export default function CategoryFilters() {
 
       <p className="text-xs text-admin-muted mt-3">
         {filters.length === 0
-          ? 'No filters enabled — the browse page will show default filters for this category.'
+          ? 'No filters enabled — the browse page will not show any filters for this category.'
           : `${filters.length} filter${filters.length > 1 ? 's' : ''} enabled for this category.`
         }
       </p>

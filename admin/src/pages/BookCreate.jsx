@@ -383,17 +383,18 @@ export default function BookCreate() {
                     </div>
                   )}
                 </div>
-                {/* Author fields — always shown when category is selected */}
-                <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6 pt-2">
-                  <div>
-                    <label className={labelClass}>Author (English)</label>
-                    <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
+                {show('author') && (
+                  <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6 pt-2">
+                    <div>
+                      <label className={labelClass}>Author (English)</label>
+                      <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Author (Arabic)</label>
+                      <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
+                    </div>
                   </div>
-                  <div>
-                    <label className={labelClass}>Author (Arabic)</label>
-                    <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                  </div>
-                </div>
+                )}
               </div>
             )}
 

@@ -133,16 +133,18 @@ exports.list = async (req, res, next) => {
     if (section === 'trending') where.isTrending = true;
 
     // Sort
-    let orderBy = { createdAt: 'desc' };
+    let sortBy = { createdAt: 'desc' };
     switch (sort) {
-      case 'price_asc': orderBy = { price: 'asc' }; break;
-      case 'price_desc': orderBy = { price: 'desc' }; break;
-      case 'newest': orderBy = { createdAt: 'desc' }; break;
-      case 'rating': orderBy = { averageRating: 'desc' }; break;
-      case 'bestselling': orderBy = { salesCount: 'desc' }; break;
-      case 'title_asc': orderBy = { title: 'asc' }; break;
-      case 'title_desc': orderBy = { title: 'desc' }; break;
+      case 'price_asc': sortBy = { price: 'asc' }; break;
+      case 'price_desc': sortBy = { price: 'desc' }; break;
+      case 'newest': sortBy = { createdAt: 'desc' }; break;
+      case 'rating': sortBy = { averageRating: 'desc' }; break;
+      case 'bestselling': sortBy = { salesCount: 'desc' }; break;
+      case 'title_asc': sortBy = { title: 'asc' }; break;
+      case 'title_desc': sortBy = { title: 'desc' }; break;
     }
+    // Out-of-stock products always go to the bottom
+    const orderBy = [{ isOutOfStock: 'asc' }, sortBy];
 
     const [books, total] = await Promise.all([
       prisma.book.findMany({
@@ -241,7 +243,7 @@ exports.featured = async (req, res, next) => {
       });
     }
     const books = await prisma.book.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 8,
+      where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
     });
     res.json(books);
@@ -258,7 +260,7 @@ exports.newArrivals = async (req, res, next) => {
       });
     }
     const books = await prisma.book.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 8,
+      where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
     });
     res.json(books);
@@ -275,7 +277,7 @@ exports.bestsellers = async (req, res, next) => {
       });
     }
     const books = await prisma.book.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 8,
+      where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
     });
     res.json(books);
@@ -294,7 +296,7 @@ exports.trending = async (req, res, next) => {
       });
     }
     const books = await prisma.book.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 8,
+      where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
     });
     res.json(books);
@@ -311,7 +313,7 @@ exports.comingSoon = async (req, res, next) => {
       });
     }
     const books = await prisma.book.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 8,
+      where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
       include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
     });
     res.json(books);
@@ -333,7 +335,7 @@ exports.recommendations = async (req, res, next) => {
           { tags: { hasSome: book.tags } },
         ],
       },
-      orderBy: { averageRating: 'desc' },
+      orderBy: [{ isOutOfStock: 'asc' }, { averageRating: 'desc' }],
       take: 6,
       include: {
         category: { select: { id: true, name: true, nameAr: true, slug: true } },
