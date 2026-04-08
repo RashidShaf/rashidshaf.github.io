@@ -41,10 +41,10 @@ export default function Reports() {
         ) : salesReport && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
             {[
-              { icon: FiShoppingBag, label: 'Total Orders', value: salesReport.summary?.totalOrders ?? 0, bg: 'bg-blue-600' },
-              { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(salesReport.summary?.totalRevenue ?? 0).toFixed(0)}`, bg: 'bg-emerald-600' },
-              { icon: FiBarChart2, label: 'Avg Order', value: `QAR ${parseFloat(salesReport.summary?.averageOrder ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
-              { icon: FiPackage, label: 'Total Items', value: salesReport.summary?.totalItems ?? 0, bg: 'bg-amber-500' },
+              { icon: FiShoppingBag, label: t('reports.totalOrders'), value: salesReport.summary?.totalOrders ?? 0, bg: 'bg-blue-600' },
+              { icon: FiDollarSign, label: t('reports.revenue'), value: `QAR ${parseFloat(salesReport.summary?.totalRevenue ?? 0).toFixed(0)}`, bg: 'bg-emerald-600' },
+              { icon: FiBarChart2, label: t('reports.avgOrder'), value: `QAR ${parseFloat(salesReport.summary?.averageOrder ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
+              { icon: FiPackage, label: t('reports.totalItems'), value: salesReport.summary?.totalItems ?? 0, bg: 'bg-amber-500' },
             ].map((card, i) => (
               <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
                 <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>

@@ -180,13 +180,13 @@ export default function Header({ onMenuClick }) {
               <div className="absolute end-0 mt-2 w-80 3xl:w-96 bg-white rounded-lg shadow-lg border border-admin-border z-50 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 3xl:px-5 3xl:py-4 border-b border-admin-border">
-                  <h3 className="text-sm 3xl:text-base font-bold text-admin-text">Notifications</h3>
+                  <h3 className="text-sm 3xl:text-base font-bold text-admin-text">{t('common.notifications')}</h3>
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
                       className="flex items-center gap-1 text-xs 3xl:text-sm text-admin-accent hover:underline font-medium"
                     >
-                      <FiCheck size={12} /> Mark all as read
+                      <FiCheck size={12} /> {t('common.markAllRead')}
                     </button>
                   )}
                 </div>
@@ -194,9 +194,9 @@ export default function Header({ onMenuClick }) {
                 {/* Notification list */}
                 <div className="max-h-80 3xl:max-h-96 overflow-y-auto">
                   {notifLoading ? (
-                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">Loading...</div>
+                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">{t('common.loading')}</div>
                   ) : notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">No notifications</div>
+                    <div className="px-4 py-6 text-center text-sm 3xl:text-base text-admin-muted">{t('common.noNotifications')}</div>
                   ) : (
                     notifications.map((notif) => (
                       <div

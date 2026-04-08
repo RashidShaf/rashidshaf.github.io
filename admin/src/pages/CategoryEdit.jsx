@@ -23,17 +23,17 @@ export default function CategoryEdit() {
   const [isTopLevel, setIsTopLevel] = useState(false);
   const [backUrl, setBackUrl] = useState('/categories?tab=top');
   const ALL_DETAIL_FIELDS = [
-    { key: 'author', label: 'Author' },
-    { key: 'publisher', label: 'Publisher' },
-    { key: 'pages', label: 'Pages' },
-    { key: 'isbn', label: 'ISBN' },
-    { key: 'language', label: 'Language' },
-    { key: 'publishedDate', label: 'Published Date' },
-    { key: 'brand', label: 'Brand' },
-    { key: 'color', label: 'Color' },
-    { key: 'material', label: 'Material' },
-    { key: 'dimensions', label: 'Dimensions' },
-    { key: 'ageRange', label: 'Age Range' },
+    { key: 'author', label: t('books.author') },
+    { key: 'publisher', label: t('books.publisher') },
+    { key: 'pages', label: t('books.pages') },
+    { key: 'isbn', label: t('books.isbn') },
+    { key: 'language', label: t('books.language') },
+    { key: 'publishedDate', label: t('books.publishedDate') },
+    { key: 'brand', label: t('books.brand') },
+    { key: 'color', label: t('books.color') },
+    { key: 'material', label: t('books.material') },
+    { key: 'dimensions', label: t('books.dimensions') },
+    { key: 'ageRange', label: t('books.ageRange') },
   ];
   const [form, setForm] = useState({ name: '', nameAr: '', parentId: '' });
   const [detailFields, setDetailFields] = useState(ALL_DETAIL_FIELDS.map((f) => f.key));
@@ -104,7 +104,7 @@ export default function CategoryEdit() {
       if (imageFile) fd.append('image', imageFile);
 
       await api.put(`/admin/categories/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success('Category updated');
+      toast.success(t('categories.updated'));
       // Navigate back to the correct tab
       const allCats = categories;
       const parent = form.parentId ? allCats.find((c) => c.id === form.parentId) : null;
@@ -117,7 +117,7 @@ export default function CategoryEdit() {
         navigate(`/categories?tab=${form.parentId}`);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update');
+      toast.error(err.response?.data?.message || t('categories.failedUpdate'));
     } finally {
       setSaving(false);
     }
@@ -137,7 +137,7 @@ export default function CategoryEdit() {
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
         <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">
-          {isTopLevel ? 'Edit Corner' : 'Edit Sub-Category'}
+          {isTopLevel ? t('categories.editCorner') : t('categories.editSubCategory')}
         </h2>
       </div>
 
@@ -147,9 +147,9 @@ export default function CategoryEdit() {
             {/* Parent Category — at top (only for sub-categories) */}
             {!isTopLevel && (
               <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.parentCategory')}</h3>
                 <div>
-                  <label className={labelClass}>Select Parent</label>
+                  <label className={labelClass}>{t('categories.selectParent')}</label>
                   <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
                     {categories.filter((c) => !c.parentId).map((topCat) => {
                       const children = categories.filter((c) => c.parentId === topCat.id && c.id !== id);
@@ -168,14 +168,14 @@ export default function CategoryEdit() {
             )}
 
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.categoryDetails')}</h3>
               <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
-                  <label className={labelClass}>Name (English) *</label>
+                  <label className={labelClass}>{t('categories.nameEn')}</label>
                   <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Name (Arabic)</label>
+                  <label className={labelClass}>{t('categories.nameAr')}</label>
                   <input type="text" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} dir="rtl" className={inputClass} />
                 </div>
               </div>
@@ -184,8 +184,8 @@ export default function CategoryEdit() {
             {/* Detail Fields — only for top-level categories */}
             {isTopLevel && (
               <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Detail Fields</h3>
-                <p className="text-xs text-admin-muted">Select which fields to show on the product detail page for items in this category.</p>
+                <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.detailFields')}</h3>
+                <p className="text-xs text-admin-muted">{t('categories.detailFieldsHelp')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {ALL_DETAIL_FIELDS.map((field) => (
                     <label key={field.key} className="flex items-center gap-2.5 cursor-pointer group">
@@ -212,7 +212,7 @@ export default function CategoryEdit() {
           <div className="space-y-6 3xl:space-y-8">
             {/* Image */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Image</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">{t('categories.image')}</h3>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="relative w-full h-40 border-2 border-dashed border-admin-border rounded-xl cursor-pointer hover:border-admin-accent transition-colors flex items-center justify-center overflow-hidden"
@@ -227,7 +227,7 @@ export default function CategoryEdit() {
                 ) : (
                   <div className="text-center">
                     <FiUpload className="w-6 h-6 text-admin-muted mx-auto mb-1" />
-                    <p className="text-xs text-admin-muted">Click to upload</p>
+                    <p className="text-xs text-admin-muted">{t('common.clickToUpload')}</p>
                   </div>
                 )}
               </div>

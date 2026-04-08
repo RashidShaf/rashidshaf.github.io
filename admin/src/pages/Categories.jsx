@@ -26,7 +26,7 @@ export default function Categories() {
       const res = await api.get('/admin/categories');
       setCategories(res.data.data || res.data);
     } catch (err) {
-      toast.error('Failed to fetch categories');
+      toast.error(t('categories.failedFetch'));
     } finally {
       setLoading(false);
     }
@@ -43,17 +43,17 @@ export default function Categories() {
 
   const handleToggleActive = async (cat) => {
     if (!cat.parentId && cat.slug === 'books') {
-      toast.error('Books category cannot be deactivated');
+      toast.error(t('categories.activateError'));
       return;
     }
     try {
       const fd = new FormData();
       fd.append('isActive', cat.isActive === false ? 'true' : 'false');
       await api.put(`/admin/categories/${cat.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success(cat.isActive === false ? 'Category activated' : 'Category deactivated');
+      toast.success(cat.isActive === false ? t('categories.activated') : t('categories.deactivated'));
       fetchCategories();
     } catch (err) {
-      toast.error('Failed to update');
+      toast.error(t('categories.failedUpdate'));
     }
   };
 
@@ -61,11 +61,11 @@ export default function Categories() {
     if (!deleteId) return;
     try {
       await api.delete(`/admin/categories/${deleteId}`);
-      toast.success('Category deleted');
+      toast.success(t('categories.deleted'));
       setDeleteId(null);
       fetchCategories();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete');
+      toast.error(err.response?.data?.message || t('categories.failedDelete'));
       setDeleteId(null);
     }
   };
@@ -170,8 +170,8 @@ export default function Categories() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiLayers, label: 'Total Categories', value: totalCategories, bg: 'bg-blue-600' },
-          { icon: FiCheckCircle, label: 'Active', value: activeCategories, bg: 'bg-emerald-600' },
+          { icon: FiLayers, label: t('categories.totalCategories'), value: totalCategories, bg: 'bg-blue-600' },
+          { icon: FiCheckCircle, label: t('common.active'), value: activeCategories, bg: 'bg-emerald-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -227,11 +227,11 @@ export default function Categories() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder="Search categories..." className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder={t('common.searchCategories')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchCategories} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
         {selectedParent !== 'top' && (
           <Link
@@ -310,17 +310,17 @@ export default function Categories() {
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         {(isBooks && !isChild) ? (
-                          <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Active</span>
+                          <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">{t('common.active')}</span>
                         ) : (
                           <button onClick={(e) => { e.stopPropagation(); handleToggleActive(rowCat); }} className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${rowCat.isActive !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                            {rowCat.isActive !== false ? 'Active' : 'Inactive'}
+                            {rowCat.isActive !== false ? t('common.active') : t('common.inactive')}
                           </button>
                         )}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {hasLevel3 && !isChild && (
-                            <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Expand">
+                            <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.expand')}>
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}
@@ -363,9 +363,9 @@ export default function Categories() {
 
       <ConfirmModal
         open={!!deleteId}
-        title="Delete Category"
-        message="This will permanently delete this category. This action cannot be undone."
-        confirmText="Delete"
+        title={t('categories.deleteCategory')}
+        message={t('categories.deleteCategoryConfirm')}
+        confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

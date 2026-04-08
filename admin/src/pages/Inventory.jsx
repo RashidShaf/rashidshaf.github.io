@@ -88,10 +88,10 @@ export default function Inventory() {
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
           {[
-            { icon: FiBook, label: 'Total Books', value: summary.totalStock !== undefined ? (inventory.length || '-') : '-', bg: 'bg-blue-600' },
-            { icon: FiLayers, label: 'Total Stock', value: summary.totalStock ?? 0, bg: 'bg-emerald-600' },
-            { icon: FiAlertTriangle, label: 'Low Stock', value: summary.lowStockCount ?? 0, bg: 'bg-amber-500' },
-            { icon: FiDollarSign, label: 'Total Value', value: `QAR ${parseFloat(summary.totalValue ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
+            { icon: FiBook, label: t('inventory.totalBooks'), value: summary.totalStock !== undefined ? (inventory.length || '-') : '-', bg: 'bg-blue-600' },
+            { icon: FiLayers, label: t('inventory.totalStock'), value: summary.totalStock ?? 0, bg: 'bg-emerald-600' },
+            { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: summary.lowStockCount ?? 0, bg: 'bg-amber-500' },
+            { icon: FiDollarSign, label: t('inventory.totalValue'), value: `QAR ${parseFloat(summary.totalValue ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
           ].map((card, i) => (
             <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
               <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -109,11 +109,11 @@ export default function Inventory() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder="Search inventory..." className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder={t('common.searchInventory')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchInventory} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
       </div>
 
@@ -149,7 +149,7 @@ export default function Inventory() {
                     </p>
                   </div>
                   <span className="text-sm font-bold text-red-600 ml-3">
-                    {item.stock ?? item.currentStock} left
+                    {item.stock ?? item.currentStock} {t('common.left')}
                   </span>
                 </div>
               ))}
@@ -164,13 +164,13 @@ export default function Inventory() {
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Book Title</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
                 </th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Value</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Sales</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Availability</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.value')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.sales')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.availability')}</th>
                 <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
                   {t('common.actions')}
                 </th>
@@ -219,7 +219,7 @@ export default function Inventory() {
                           {stock}
                         </span>
                         {isLow && (
-                          <span className="ml-2 text-xs text-red-400">Low</span>
+                          <span className="ml-2 text-xs text-red-400">{t('common.low')}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
@@ -235,14 +235,14 @@ export default function Inventory() {
                             item.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'
                           }`}
                         >
-                          {item.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                          {item.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
                         </button>
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                         {restockId === bookId ? (
                           <div className="flex items-center gap-3 justify-end">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-admin-muted">Qty:</span>
+                              <span className="text-xs text-admin-muted">{t('common.qty')}:</span>
                               <input
                                 type="number"
                                 min="1"
@@ -258,7 +258,7 @@ export default function Inventory() {
                               disabled={restocking || !restockQty}
                               className="px-4 py-2 bg-admin-success text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors disabled:opacity-40"
                             >
-                              {restocking ? '...' : 'Restock'}
+                              {restocking ? '...' : t('inventory.restock')}
                             </button>
                             <button
                               onClick={() => { setRestockId(null); setRestockQty(''); }}

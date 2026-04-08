@@ -72,11 +72,11 @@ export default function DataManagement() {
   };
 
   const exportItems = [
-    { type: 'products', label: 'Products', icon: FiFileText, color: 'bg-blue-600', hasExcel: true },
-    { type: 'customers', label: 'Customers', icon: FiUsers, color: 'bg-emerald-600' },
-    { type: 'orders', label: 'Orders', icon: FiShoppingBag, color: 'bg-amber-500' },
-    { type: 'inventory', label: 'Inventory', icon: FiPackage, color: 'bg-purple-600' },
-    { type: 'categories', label: 'Categories', icon: FiLayers, color: 'bg-rose-600' },
+    { type: 'products', label: t('data.products'), icon: FiFileText, color: 'bg-blue-600', hasExcel: true },
+    { type: 'customers', label: t('data.customers'), icon: FiUsers, color: 'bg-emerald-600' },
+    { type: 'orders', label: t('data.ordersExport'), icon: FiShoppingBag, color: 'bg-amber-500' },
+    { type: 'inventory', label: t('data.inventoryExport'), icon: FiPackage, color: 'bg-purple-600' },
+    { type: 'categories', label: t('data.categoriesExport'), icon: FiLayers, color: 'bg-rose-600' },
   ];
 
   return (
@@ -84,8 +84,8 @@ export default function DataManagement() {
 
       {/* Export Section */}
       <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm mb-6 3xl:mb-8">
-        <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">Export Data</h2>
-        <p className="text-xs 3xl:text-sm text-admin-muted mb-5">Download your data as CSV or Excel files</p>
+        <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">{t('data.exportData')}</h2>
+        <p className="text-xs 3xl:text-sm text-admin-muted mb-5">{t('data.exportDesc')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 3xl:gap-5">
           {exportItems.map((item) => (
             <div key={item.type} className="bg-admin-bg border border-admin-border rounded-xl p-4 3xl:p-5 flex items-center gap-4">
@@ -100,14 +100,14 @@ export default function DataManagement() {
                   onClick={() => exportData(item.type)}
                   className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-white border border-admin-border text-admin-text text-xs 3xl:text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  CSV
+                  {t('data.csv')}
                 </button>
                 {item.hasExcel && (
                   <button
                     onClick={() => exportData(item.type, 'excel')}
                     className="px-3 py-1.5 3xl:px-4 3xl:py-2 bg-green-600 text-white text-xs 3xl:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    Excel
+                    {t('data.excel')}
                   </button>
                 )}
               </div>
@@ -118,21 +118,20 @@ export default function DataManagement() {
 
       {/* Import Section */}
       <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-        <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">Import Products</h2>
-        <p className="text-xs 3xl:text-sm text-admin-muted mb-5">Upload a CSV file to add multiple products at once</p>
+        <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">{t('data.importProducts')}</h2>
+        <p className="text-xs 3xl:text-sm text-admin-muted mb-5">{t('data.importDesc')}</p>
 
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-5">
           <button
             onClick={downloadTemplate}
             className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors"
           >
-            <FiDownload size={16} /> Download Template
+            <FiDownload size={16} /> {t('data.downloadTemplate')}
           </button>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
-            <p>1. Download the CSV template</p>
-            <p>2. Fill in your product data (title and price are required)</p>
-            <p>3. Use category slug for the <code className="bg-gray-100 px-1 rounded">categorySlug</code> column</p>
-            <p>4. Upload the filled CSV file below</p>
+            <p>{t('data.step1')}</p>
+            <p>{t('data.step2')}</p>
+            <p>{t('data.step3')}</p>
           </div>
         </div>
 
@@ -143,7 +142,7 @@ export default function DataManagement() {
             disabled={importing}
             className="flex items-center gap-2 px-6 py-3 3xl:px-8 3xl:py-3.5 bg-admin-accent text-white text-sm 3xl:text-base font-medium rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50"
           >
-            <FiUpload size={16} /> {importing ? 'Importing...' : 'Upload CSV'}
+            <FiUpload size={16} /> {importing ? t('data.importing') : t('data.uploadCsv')}
           </button>
         </div>
 
@@ -162,11 +161,11 @@ export default function DataManagement() {
 
             {importResult.errors.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-medium text-red-600 mb-2">{importResult.errors.length} error(s):</p>
+                <p className="text-xs font-medium text-red-600 mb-2">{importResult.errors.length} {t('data.errors')}</p>
                 <div className="max-h-48 overflow-y-auto space-y-1">
                   {importResult.errors.map((err, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
-                      <span className="font-medium whitespace-nowrap">Row {err.row}:</span>
+                      <span className="font-medium whitespace-nowrap">{t('data.row')} {err.row}:</span>
                       <span>{err.error}</span>
                     </div>
                   ))}

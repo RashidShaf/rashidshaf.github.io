@@ -40,7 +40,7 @@ export default function OrderDetail() {
       setOrder(res.data);
       setNewStatus(res.data.status);
     } catch (err) {
-      toast.error('Order not found');
+      toast.error(t('orders.orderNotFound'));
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ export default function OrderDetail() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-3 mb-6">
           <Link to="/orders" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100"><FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} /></Link>
-          <h2 className="text-2xl font-bold text-admin-text">Order not found</h2>
+          <h2 className="text-2xl font-bold text-admin-text">{t('orders.orderNotFound')}</h2>
         </div>
       </motion.div>
     );
@@ -110,24 +110,24 @@ export default function OrderDetail() {
         <div className="lg:col-span-2 space-y-6 3xl:space-y-8">
           {/* Order Info */}
           <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">Order Information</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">{t('orders.orderInfo')}</h3>
             <div className="grid grid-cols-2 gap-4 3xl:gap-6 text-sm 3xl:text-base">
               <div>
-                <span className="text-admin-muted">Customer</span>
+                <span className="text-admin-muted">{t('orders.customer')}</span>
                 <p className="font-medium text-admin-text mt-1">
                   {order.user ? `${order.user.firstName} ${order.user.lastName}` : <span className="text-amber-600">Guest</span>}
                 </p>
               </div>
               <div>
-                <span className="text-admin-muted">Email</span>
+                <span className="text-admin-muted">{t('common.email')}</span>
                 <p className="font-medium text-admin-text mt-1">{order.user?.email || '—'}</p>
               </div>
               <div>
-                <span className="text-admin-muted">Subtotal</span>
+                <span className="text-admin-muted">{t('orders.subtotal')}</span>
                 <p className="font-medium text-admin-text mt-1">QAR {parseFloat(order.subtotal || 0).toFixed(2)}</p>
               </div>
               <div>
-                <span className="text-admin-muted">Shipping</span>
+                <span className="text-admin-muted">{t('orders.shipping')}</span>
                 <p className="font-medium text-admin-text mt-1">{parseFloat(order.shippingCost) === 0 ? 'Free' : `QAR ${parseFloat(order.shippingCost || 0).toFixed(2)}`}</p>
               </div>
               <div>
@@ -135,7 +135,7 @@ export default function OrderDetail() {
                 <p className="font-bold text-admin-text mt-1">QAR {parseFloat(order.total || 0).toFixed(2)}</p>
               </div>
               <div>
-                <span className="text-admin-muted">Payment</span>
+                <span className="text-admin-muted">{t('orders.payment')}</span>
                 <p className="font-medium text-admin-text mt-1">{order.paymentMethod || 'COD'}</p>
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function OrderDetail() {
 
           {/* Shipping Info */}
           <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">Shipping Details</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">{t('orders.shippingDetails')}</h3>
             <div className="space-y-3 text-sm 3xl:text-base">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0"><FiUser size={14} className="text-admin-muted" /></div>
@@ -169,21 +169,21 @@ export default function OrderDetail() {
           {/* Items Table */}
           <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
             <div className="p-6 3xl:p-8 pb-3 3xl:pb-4">
-              <h3 className="text-base 3xl:text-lg font-bold text-admin-text">Order Items ({order.items?.length || 0})</h3>
+              <h3 className="text-base 3xl:text-lg font-bold text-admin-text">{t('orders.orderItems')} ({order.items?.length || 0})</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm 3xl:text-base">
                 <thead className="bg-gray-50 border-b border-admin-border">
                   <tr>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Item</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Price</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Qty</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Subtotal</th>
+                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.item')}</th>
+                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
+                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.qty')}</th>
+                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.subtotal')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(order.items || []).length === 0 ? (
-                    <tr><td colSpan={4} className="px-4 py-8 text-center text-admin-muted">No items</td></tr>
+                    <tr><td colSpan={4} className="px-4 py-8 text-center text-admin-muted">{t('common.noItems')}</td></tr>
                   ) : (order.items || []).map((item, idx) => (
                     <tr key={idx} className="border-b border-admin-border last:border-0">
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
@@ -226,7 +226,7 @@ export default function OrderDetail() {
 
           {/* Timeline */}
           <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">Status Timeline</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-admin-text mb-4">{t('orders.statusTimeline')}</h3>
             <div className="space-y-4">
               {timeline.map((step, idx) => {
                 const Icon = statusIcons[step.status] || FiClock;

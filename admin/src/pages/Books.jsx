@@ -181,7 +181,7 @@ export default function Books() {
                 selectedSub === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
               }`}
             >
-              All {getTabName(categories.find((c) => c.id === selectedTab) || {})}
+              {t('common.all')} {getTabName(categories.find((c) => c.id === selectedTab) || {})}
             </button>
             {subCategories.map((cat) => (
               <button
@@ -204,7 +204,7 @@ export default function Books() {
                   selectedL3 === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
                 }`}
               >
-                All {getTabName(subCategories.find((c) => c.id === selectedSub) || {})}
+                {t('common.all')} {getTabName(subCategories.find((c) => c.id === selectedSub) || {})}
               </button>
               {l3Categories.map((cat) => (
                 <button
@@ -230,7 +230,7 @@ export default function Books() {
         </div>
         <div className="flex-1" />
         <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
         <Link
           to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
@@ -301,7 +301,7 @@ export default function Books() {
                           book.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
                         }`}
                       >
-                        {book.isActive ? 'Active' : 'Inactive'}
+                        {book.isActive ? t('common.active') : t('common.inactive')}
                       </button>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
@@ -312,7 +312,7 @@ export default function Books() {
                             book.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                           }`}
                         >
-                          {book.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                          {book.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
                         </button>
                         <Link to={`/books/${book.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} /></Link>
                         <button onClick={() => setDeleteId(book.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"><FiTrash2 size={15} /></button>
@@ -350,8 +350,8 @@ export default function Books() {
 
       <ConfirmModal
         open={!!deleteId}
-        title="Delete Product"
-        message="This will permanently delete this product. This action cannot be undone."
+        title={t('books.deleteProduct')}
+        message={t('books.deleteProductConfirm')}
         confirmText="Delete"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}

@@ -204,8 +204,8 @@ export default function Banners() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiImage, label: 'Total Banners', value: totalBanners, bg: 'bg-blue-600' },
-          { icon: FiCheckCircle, label: 'Active Banners', value: activeBanners, bg: 'bg-emerald-600' },
+          { icon: FiImage, label: t('banners.allBanners'), value: totalBanners, bg: 'bg-blue-600' },
+          { icon: FiCheckCircle, label: t('banners.activeBanners'), value: activeBanners, bg: 'bg-emerald-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -226,13 +226,13 @@ export default function Banners() {
             className="flex items-center gap-2 px-3 py-2 3xl:px-4 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent min-w-[160px]"
           >
             <span className="flex-1 text-start">
-              {categoryFilter === 'all' ? 'All Banners' : categoryFilter === 'home' ? 'Home Page' : categories.find((c) => c.id === categoryFilter)?.name || 'Select'}
+              {categoryFilter === 'all' ? t('banners.allBanners') : categoryFilter === 'home' ? t('banners.homePage') : categories.find((c) => c.id === categoryFilter)?.name || 'Select'}
             </span>
             <FiChevronDown size={14} className={`transition-transform ${filterDropOpen ? 'rotate-180' : ''}`} />
           </button>
           {filterDropOpen && (
             <div className="absolute top-full left-0 mt-1 bg-white border border-admin-border rounded-lg shadow-lg z-50 min-w-[160px] py-1 max-h-60 overflow-y-auto">
-              {[{ value: 'all', label: 'All Banners' }, { value: 'home', label: 'Home Page' }, ...categories.map((c) => ({ value: c.id, label: c.name }))].map((opt) => (
+              {[{ value: 'all', label: t('banners.allBanners') }, { value: 'home', label: t('banners.homePage') }, ...categories.map((c) => ({ value: c.id, label: c.name }))].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
@@ -247,10 +247,10 @@ export default function Banners() {
         </div>
         <div className="flex-1" />
         <button onClick={fetchBanners} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap">
-          <FiPlus size={16} /> Add Banner
+          <FiPlus size={16} /> {t('banners.addBanner')}
         </button>
       </div>
 
@@ -261,12 +261,12 @@ export default function Banners() {
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Preview</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Title (EN)</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Title (AR)</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Category</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Link</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Logo</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Order</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleEn')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleAr')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.link')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.logo')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.order')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
                 <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
@@ -277,7 +277,7 @@ export default function Banners() {
                   <tr key={i}><td colSpan={9} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
               ) : filteredBanners.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center text-admin-muted">{banners.length === 0 ? 'No banners yet. Click "Add Banner" to create one.' : 'No banners match the selected filter.'}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-admin-muted">{banners.length === 0 ? t('banners.noBanners') : t('banners.noMatch')}</td></tr>
               ) : (
                 filteredBanners.map((banner) => (
                   <tr key={banner.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
@@ -294,7 +294,7 @@ export default function Banners() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted" dir="rtl">{banner.titleAr || '-'}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${banner.categoryId ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
-                        {banner.category?.name || 'Home Page'}
+                        {banner.category?.name || t('banners.homePage')}
                       </span>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs max-w-[200px] truncate">{banner.link || '-'}</td>
@@ -311,7 +311,7 @@ export default function Banners() {
                         onClick={() => handleToggleActive(banner)}
                         className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${banner.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                       >
-                        {banner.isActive ? 'Active' : 'Inactive'}
+                        {banner.isActive ? t('common.active') : t('common.inactive')}
                       </button>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
@@ -343,25 +343,25 @@ export default function Banners() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setFormOpen(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl 3xl:max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg 3xl:text-xl font-bold text-admin-text">{editingId ? 'Edit Banner' : 'Add Banner'}</h2>
+              <h2 className="text-lg 3xl:text-xl font-bold text-admin-text">{editingId ? t('banners.editBanner') : t('banners.addBanner')}</h2>
               <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-600"><FiX size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {/* Title EN / AR */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Title (EN)</label>
+                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.titleEn')}</label>
                   <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="Optional title" />
                 </div>
                 <div>
-                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Title (AR)</label>
+                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.titleAr')}</label>
                   <input type="text" dir="rtl" value={form.titleAr} onChange={(e) => setForm((f) => ({ ...f, titleAr: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="عنوان اختياري" />
                 </div>
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Category</label>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('books.category')}</label>
                 <div className="relative" ref={formCatDropRef}>
                   <button
                     type="button"
@@ -369,7 +369,7 @@ export default function Banners() {
                     className="w-full flex items-center gap-2 px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent"
                   >
                     <span className="flex-1 text-start">
-                      {form.categoryId ? categories.find((c) => c.id === form.categoryId)?.name || 'Select' : 'Home Page'}
+                      {form.categoryId ? categories.find((c) => c.id === form.categoryId)?.name || 'Select' : t('banners.homePage')}
                     </span>
                     <FiChevronDown size={14} className={`transition-transform ${formCatDropOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -380,7 +380,7 @@ export default function Banners() {
                         onClick={() => { setForm((f) => ({ ...f, categoryId: '' })); setFormCatDropOpen(false); }}
                         className={`w-full text-start px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${!form.categoryId ? 'text-admin-accent font-medium' : 'text-admin-text'}`}
                       >
-                        Home Page
+                        {t('banners.homePage')}
                       </button>
                       {categories.map((cat) => (
                         <button
@@ -395,21 +395,21 @@ export default function Banners() {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-admin-muted mt-1">Leave as "Home Page" for the main homepage banner</p>
+                <p className="text-xs text-admin-muted mt-1">{t('banners.homePageHelper')}</p>
               </div>
 
               {/* Link */}
               <div>
-                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Link URL</label>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.linkUrl')}</label>
                 <input type="text" value={form.link} onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="https://... (optional)" />
               </div>
 
               {/* Desktop Image */}
               <div>
                 <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">
-                  Desktop Image {!editingId && <span className="text-red-500">*</span>}
+                  {t('banners.desktopImage')} {!editingId && <span className="text-red-500">*</span>}
                 </label>
-                <p className="text-xs text-admin-muted mb-2">Recommended: {form.categoryId ? '1200 x 300px (browse page)' : '1920 x 500px (home page)'}</p>
+                <p className="text-xs text-admin-muted mb-2">{t('banners.desktopRecommended')}</p>
                 <input ref={desktopRef} type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'desktop')} className="hidden" />
                 {desktopPreview ? (
                   <div className="relative group">
@@ -421,15 +421,15 @@ export default function Banners() {
                 ) : (
                   <button type="button" onClick={() => desktopRef.current?.click()} className="w-full h-32 3xl:h-40 border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center text-admin-muted hover:border-admin-accent hover:text-admin-accent transition-colors">
                     <FiUpload size={24} className="mb-2" />
-                    <span className="text-sm">Click to upload desktop image</span>
+                    <span className="text-sm">{t('banners.clickToUploadDesktop')}</span>
                   </button>
                 )}
               </div>
 
               {/* Mobile Image */}
               <div>
-                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Mobile Image</label>
-                <p className="text-xs text-admin-muted mb-2">Recommended: {form.categoryId ? '750 x 300px (browse page)' : '750 x 500px (home page)'} (optional, falls back to desktop)</p>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.mobileImage')}</label>
+                <p className="text-xs text-admin-muted mb-2">{t('banners.mobileRecommended')}</p>
                 <input ref={mobileRef} type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'mobile')} className="hidden" />
                 {mobilePreview ? (
                   <div className="relative group">
@@ -443,7 +443,7 @@ export default function Banners() {
                 ) : (
                   <button type="button" onClick={() => mobileRef.current?.click()} className="w-48 h-32 3xl:h-40 border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center text-admin-muted hover:border-admin-accent hover:text-admin-accent transition-colors">
                     <FiUpload size={20} className="mb-2" />
-                    <span className="text-xs">Upload mobile image</span>
+                    <span className="text-xs">{t('banners.clickToUploadMobile')}</span>
                   </button>
                 )}
               </div>
@@ -452,8 +452,8 @@ export default function Banners() {
               {!form.categoryId && <div className="bg-admin-bg border border-admin-border rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-sm 3xl:text-base font-medium text-admin-text">Animated Logo</p>
-                    <p className="text-xs text-admin-muted mt-0.5">Show the rotating Arkaan logo on this banner</p>
+                    <p className="text-sm 3xl:text-base font-medium text-admin-text">{t('banners.animatedLogo')}</p>
+                    <p className="text-xs text-admin-muted mt-0.5">{t('banners.showLogo')}</p>
                   </div>
                   <div
                     onClick={() => setForm((f) => ({ ...f, showLogo: !f.showLogo }))}
@@ -464,7 +464,7 @@ export default function Banners() {
                 </div>
                 {form.showLogo && (
                   <div>
-                    <p className="text-xs font-medium text-admin-text mb-2">Logo Position</p>
+                    <p className="text-xs font-medium text-admin-text mb-2">{t('banners.logoPosition')}</p>
                     <div className="inline-grid grid-cols-3 gap-1.5">
                       {LOGO_POSITIONS.map((pos) => (
                         <button
@@ -488,7 +488,7 @@ export default function Banners() {
               {/* Sort Order + Active */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">Sort Order</label>
+                  <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.order')}</label>
                   <input type="number" value={form.sortOrder} onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
                 </div>
                 <div className="flex items-end pb-1">
@@ -499,7 +499,7 @@ export default function Banners() {
                     >
                       <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.isActive ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
                     </div>
-                    <span className="text-sm 3xl:text-base font-medium text-admin-text">{form.isActive ? 'Active' : 'Inactive'}</span>
+                    <span className="text-sm 3xl:text-base font-medium text-admin-text">{form.isActive ? t('common.active') : t('common.inactive')}</span>
                   </label>
                 </div>
               </div>
@@ -507,10 +507,10 @@ export default function Banners() {
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setFormOpen(false)} className="px-5 py-2.5 3xl:px-6 3xl:py-3 text-sm 3xl:text-base font-medium text-admin-muted hover:text-admin-text border border-admin-border rounded-lg transition-colors">
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" disabled={saving} className="px-5 py-2.5 3xl:px-6 3xl:py-3 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
-                  {saving ? 'Saving...' : editingId ? 'Update Banner' : 'Create Banner'}
+                  {saving ? t('common.saving') : editingId ? t('banners.updateBanner') : t('banners.createBanner')}
                 </button>
               </div>
             </form>
@@ -520,9 +520,9 @@ export default function Banners() {
 
       <ConfirmModal
         open={!!deleteId}
-        title="Delete Banner"
-        message="This will permanently delete this banner. This action cannot be undone."
-        confirmText="Delete"
+        title={t('banners.deleteBanner')}
+        message={t('banners.deleteBannerConfirm')}
+        confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

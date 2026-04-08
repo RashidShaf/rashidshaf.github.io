@@ -317,11 +317,11 @@ export default function BookEdit() {
           <div className="lg:col-span-2 space-y-6 3xl:space-y-8">
             {/* Category — Corner dropdown + checkbox tree */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Category</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.category')}</h3>
               <div>
-                <label className={labelClass}>Corner *</label>
+                <label className={labelClass}>{t('books.corner')}</label>
                 <select name="parentCategoryId" value={form.parentCategoryId} onChange={handleChange} className={inputClass}>
-                  <option value="">— Select Corner —</option>
+                  <option value="">{t('books.selectCorner')}</option>
                   {parentCategories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{getName(cat)}</option>
                   ))}
@@ -330,7 +330,7 @@ export default function BookEdit() {
 
               {cornerChildren.length > 0 && (
                 <div>
-                  <label className={labelClass}>Select Categories</label>
+                  <label className={labelClass}>{t('books.selectCategories')}</label>
                   <div className="border border-admin-input-border rounded-lg max-h-64 overflow-y-auto">
                     {cornerChildren.map((sub) => {
                       const subChildren = allCategories.filter((c) => c.parentId === sub.id);
@@ -376,7 +376,7 @@ export default function BookEdit() {
                     })}
                   </div>
                   {selectedCategoryIds.length > 0 && (
-                    <p className="text-xs text-admin-muted mt-2">{selectedCategoryIds.length} {selectedCategoryIds.length === 1 ? 'category' : 'categories'} selected</p>
+                    <p className="text-xs text-admin-muted mt-2">{selectedCategoryIds.length} {selectedCategoryIds.length === 1 ? t('books.category_one') : t('books.category_other')} {t('common.selected')}</p>
                   )}
                 </div>
               )}
@@ -384,24 +384,24 @@ export default function BookEdit() {
 
             {/* Product Details */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Product Details</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.productDetails')}</h3>
               <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
-                  <label className={labelClass}>Title (English) *</label>
+                  <label className={labelClass}>{t('books.titleEn')}</label>
                   <input name="title" value={form.title} onChange={handleChange} required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Title (Arabic)</label>
+                  <label className={labelClass}>{t('books.titleAr')}</label>
                   <input name="titleAr" value={form.titleAr} onChange={handleChange} dir="rtl" className={inputClass} />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
-                  <label className={labelClass}>Description (English)</label>
+                  <label className={labelClass}>{t('books.descEn')}</label>
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4} className={inputClass + ' resize-none'} />
                 </div>
                 <div>
-                  <label className={labelClass}>Description (Arabic)</label>
+                  <label className={labelClass}>{t('books.descAr')}</label>
                   <textarea name="descriptionAr" value={form.descriptionAr} onChange={handleChange} rows={4} dir="rtl" className={inputClass + ' resize-none'} />
                 </div>
               </div>
@@ -411,91 +411,91 @@ export default function BookEdit() {
             {form.parentCategoryId && (
               <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
                 <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">
-                  {isBooks ? 'Book Details' : 'Product Specifications'}
+                  {isBooks ? t('books.bookDetails') : t('books.productSpecs')}
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                   {show('publisher') && (
                     <div>
-                      <label className={labelClass}>Publisher (English)</label>
+                      <label className={labelClass}>{t('books.publisherEn')}</label>
                       <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
                     </div>
                   )}
                   {show('publisher') && (
                     <div>
-                      <label className={labelClass}>Publisher (Arabic)</label>
+                      <label className={labelClass}>{t('books.publisherAr')}</label>
                       <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
                     </div>
                   )}
                   {show('isbn') && (
                     <div>
-                      <label className={labelClass}>ISBN</label>
+                      <label className={labelClass}>{t('books.isbn')}</label>
                       <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
                   <div>
-                    <label className={labelClass}>Barcode</label>
-                    <input name="sku" value={form.sku} onChange={handleChange} placeholder="e.g. 978316148410" className={inputClass} />
+                    <label className={labelClass}>{t('books.barcode')}</label>
+                    <input name="sku" value={form.sku} onChange={handleChange} placeholder={t('books.barcodePlaceholder')} className={inputClass} />
                   </div>
                   {show('pages') && (
                     <div>
-                      <label className={labelClass}>Pages</label>
+                      <label className={labelClass}>{t('books.pages')}</label>
                       <input name="pages" type="number" min="0" value={form.pages} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
                   {show('language') && (
                     <div>
-                      <label className={labelClass}>Language</label>
+                      <label className={labelClass}>{t('books.language')}</label>
                       <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
-                        <option value="en">English</option>
-                        <option value="ar">Arabic</option>
+                        <option value="en">{t('books.langEnglish')}</option>
+                        <option value="ar">{t('books.langArabic')}</option>
                       </select>
                     </div>
                   )}
                   {show('publishedDate') && (
                     <div>
-                      <label className={labelClass}>Published Date</label>
+                      <label className={labelClass}>{t('books.publishedDate')}</label>
                       <input name="publishedDate" type="date" value={form.publishedDate} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
                   {show('brand') && (
                     <div>
-                      <label className={labelClass}>Brand</label>
+                      <label className={labelClass}>{t('books.brand')}</label>
                       <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
                     </div>
                   )}
                   {show('color') && (
                     <div>
-                      <label className={labelClass}>Color</label>
+                      <label className={labelClass}>{t('books.color')}</label>
                       <input name="color" value={form.color} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
                   {show('material') && (
                     <div>
-                      <label className={labelClass}>Material</label>
+                      <label className={labelClass}>{t('books.material')}</label>
                       <input name="material" value={form.material} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
                   {show('dimensions') && (
                     <div>
-                      <label className={labelClass}>Dimensions</label>
-                      <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="e.g. 20x15x5 cm" className={inputClass} />
+                      <label className={labelClass}>{t('books.dimensions')}</label>
+                      <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder={t('books.dimPlaceholder')} className={inputClass} />
                     </div>
                   )}
                   {show('ageRange') && (
                     <div>
-                      <label className={labelClass}>Age Range</label>
-                      <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder="e.g. 3-6 years" className={inputClass} />
+                      <label className={labelClass}>{t('books.ageRange')}</label>
+                      <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder={t('books.agePlaceholder')} className={inputClass} />
                     </div>
                   )}
                 </div>
                 {show('author') && (
                   <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6 pt-2">
                     <div>
-                      <label className={labelClass}>Author (English)</label>
+                      <label className={labelClass}>{t('books.authorEn')}</label>
                       <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
                     </div>
                     <div>
-                      <label className={labelClass}>Author (Arabic)</label>
+                      <label className={labelClass}>{t('books.authorAr')}</label>
                       <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
                     </div>
                   </div>
@@ -505,19 +505,19 @@ export default function BookEdit() {
 
             {/* Pricing & Inventory */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Pricing & Inventory</h3>
-              {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">Coming Soon — pricing and stock fields are optional</p>}
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.pricingInventory')}</h3>
+              {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">{t('books.comingSoonNote')}</p>}
               <div className="grid sm:grid-cols-3 gap-4 3xl:gap-6">
                 <div>
-                  <label className={labelClass}>Price (QAR) *</label>
+                  <label className={labelClass}>{t('books.priceQAR')}</label>
                   <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Compare at Price</label>
+                  <label className={labelClass}>{t('books.compareAtPrice')}</label>
                   <input name="compareAtPrice" type="number" step="0.01" min="0" value={form.compareAtPrice} onChange={handleChange} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Stock</label>
+                  <label className={labelClass}>{t('books.stock')}</label>
                   <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} className={inputClass} />
                 </div>
               </div>
@@ -538,7 +538,7 @@ export default function BookEdit() {
           <div className="space-y-6 3xl:space-y-8">
             {/* Cover Image */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Cover Image</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">{t('books.coverImage')}</h3>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="relative w-full aspect-[3/4] border-2 border-dashed border-admin-border rounded-xl cursor-pointer hover:border-admin-accent transition-colors overflow-hidden flex items-center justify-center"
@@ -553,8 +553,8 @@ export default function BookEdit() {
                 ) : (
                   <div className="text-center p-4">
                     <FiUpload className="w-8 h-8 text-admin-muted mx-auto mb-2" />
-                    <p className="text-sm text-admin-muted">Click to upload</p>
-                    <p className="text-xs text-admin-muted mt-1">JPG, PNG, WebP</p>
+                    <p className="text-sm text-admin-muted">{t('common.clickToUpload')}</p>
+                    <p className="text-xs text-admin-muted mt-1">{t('common.fileFormats')}</p>
                   </div>
                 )}
               </div>
@@ -563,7 +563,7 @@ export default function BookEdit() {
 
             {/* Additional Images */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Additional Images</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">{t('books.additionalImages')}</h3>
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {existingImages.map((img, i) => (
                   <div key={`existing-${i}`} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -584,12 +584,12 @@ export default function BookEdit() {
                 {totalImages < 3 && (
                   <button type="button" onClick={() => imagesRef.current?.click()} className="aspect-square border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-admin-accent transition-colors cursor-pointer">
                     <FiUpload className="w-5 h-5 text-admin-muted mb-1" />
-                    <span className="text-[10px] text-admin-muted">Add</span>
+                    <span className="text-[10px] text-admin-muted">{t('common.add')}</span>
                   </button>
                 )}
               </div>
               <input ref={imagesRef} type="file" accept="image/*" multiple onChange={handleAddImages} className="hidden" />
-              <p className="text-[11px] text-admin-muted">Max 3 images</p>
+              <p className="text-[11px] text-admin-muted">{t('books.maxImages')}</p>
             </div>
 
 
@@ -597,19 +597,19 @@ export default function BookEdit() {
             <div className={`bg-admin-card rounded-xl border ${form.isOutOfStock ? 'border-red-300' : 'border-admin-border'} p-6 3xl:p-8 shadow-sm`}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="isOutOfStock" checked={form.isOutOfStock} onChange={handleChange} className="w-4 h-4 rounded border-red-300 text-red-500 focus:ring-red-400" />
-                <span className={`text-sm font-semibold ${form.isOutOfStock ? 'text-red-600' : 'text-admin-text'}`}>Out of Stock</span>
+                <span className={`text-sm font-semibold ${form.isOutOfStock ? 'text-red-600' : 'text-admin-text'}`}>{t('books.outOfStock')}</span>
               </label>
             </div>
 
             {/* Section Flags */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Show in Sections</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.showInSections')}</h3>
               {[
-                { name: 'isComingSoon', label: 'Coming Soon' },
-                { name: 'isFeatured', label: 'Featured' },
-                { name: 'isBestseller', label: 'Bestseller' },
-                { name: 'isNewArrival', label: 'New Arrival' },
-                { name: 'isTrending', label: "Everyone's Talking About" },
+                { name: 'isComingSoon', label: t('books.comingSoon') },
+                { name: 'isFeatured', label: t('books.featured') },
+                { name: 'isBestseller', label: t('books.bestseller') },
+                { name: 'isNewArrival', label: t('books.newArrival') },
+                { name: 'isTrending', label: t('books.trending') },
               ].map((opt) => {
                 const disabled = form.isComingSoon && opt.name !== 'isComingSoon';
                 return (
@@ -622,17 +622,17 @@ export default function BookEdit() {
               <div className="border-t border-admin-border pt-3 mt-2">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 rounded border-admin-border text-admin-accent focus:ring-admin-accent" />
-                  <span className="text-sm text-admin-text font-medium">Active</span>
+                  <span className="text-sm text-admin-text font-medium">{t('books.active')}</span>
                 </label>
               </div>
             </div>
 
             {/* Tags */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Tags</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.tags')}</h3>
               <div>
-                <label className={labelClass}>Tags (comma separated)</label>
-                <input name="tags" value={form.tags} onChange={handleChange} placeholder="fiction, bestseller, classic" className={inputClass} />
+                <label className={labelClass}>{t('books.tagsLabel')}</label>
+                <input name="tags" value={form.tags} onChange={handleChange} placeholder={t('books.tagsPlaceholder')} className={inputClass} />
               </div>
             </div>
           </div>

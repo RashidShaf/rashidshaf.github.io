@@ -41,8 +41,8 @@ export default function CategoryCreate() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast.error('Name is required'); return; }
-    if (!form.parentId) { toast.error('Please select a parent category'); return; }
+    if (!form.name.trim()) { toast.error(t('categories.nameRequired')); return; }
+    if (!form.parentId) { toast.error(t('categories.selectParentRequired')); return; }
     setSaving(true);
     try {
       const fd = new FormData();
@@ -52,7 +52,7 @@ export default function CategoryCreate() {
       if (imageFile) fd.append('image', imageFile);
 
       await api.post('/admin/categories', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success('Category created');
+      toast.success(t('categories.created'));
       // Navigate back: find the Level 1 ancestor for the tab
       const parent = categories.find((c) => c.id === form.parentId);
       if (parent && parent.parentId) {
@@ -62,7 +62,7 @@ export default function CategoryCreate() {
         navigate(`/categories?tab=${form.parentId}`);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create');
+      toast.error(err.response?.data?.message || t('categories.failedCreate'));
     } finally {
       setSaving(false);
     }
@@ -78,7 +78,7 @@ export default function CategoryCreate() {
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
         </Link>
         <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">
-          {parentName ? `Create Sub-Category in ${parentName}` : 'Create Sub-Category'}
+          {parentName ? `${t('categories.createIn')} ${parentName}` : t('categories.createSubCategory')}
         </h2>
       </div>
 
@@ -88,11 +88,11 @@ export default function CategoryCreate() {
           <div className="lg:col-span-2 space-y-6 3xl:space-y-8">
             {/* Parent Category — at top */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Parent Category</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.parentCategory')}</h3>
               <div>
-                <label className={labelClass}>Select Parent</label>
+                <label className={labelClass}>{t('categories.selectParent')}</label>
                 <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
-                  <option value="">— Select Parent —</option>
+                  <option value="">{t('categories.selectParentOption')}</option>
                   {(() => {
                     if (parentFromUrl) {
                       const preselected = categories.find((c) => c.id === parentFromUrl);
@@ -142,14 +142,14 @@ export default function CategoryCreate() {
             </div>
 
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">Category Details</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.categoryDetails')}</h3>
               <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
                 <div>
-                  <label className={labelClass}>Name (English) *</label>
+                  <label className={labelClass}>{t('categories.nameEn')}</label>
                   <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className={inputClass} placeholder="e.g. Books Corner" />
                 </div>
                 <div>
-                  <label className={labelClass}>Name (Arabic)</label>
+                  <label className={labelClass}>{t('categories.nameAr')}</label>
                   <input type="text" value={form.nameAr} onChange={(e) => setForm({ ...form, nameAr: e.target.value })} dir="rtl" className={inputClass} placeholder="e.g. ركن الكتب" />
                 </div>
               </div>
@@ -160,7 +160,7 @@ export default function CategoryCreate() {
           <div className="space-y-6 3xl:space-y-8">
             {/* Image */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
-              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">Image</h3>
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider mb-4">{t('categories.image')}</h3>
               <div
                 onClick={() => fileRef.current?.click()}
                 className="relative w-full h-40 border-2 border-dashed border-admin-border rounded-xl cursor-pointer hover:border-admin-accent transition-colors flex items-center justify-center overflow-hidden"
@@ -175,7 +175,7 @@ export default function CategoryCreate() {
                 ) : (
                   <div className="text-center">
                     <FiUpload className="w-6 h-6 text-admin-muted mx-auto mb-1" />
-                    <p className="text-xs text-admin-muted">Click to upload</p>
+                    <p className="text-xs text-admin-muted">{t('common.clickToUpload')}</p>
                   </div>
                 )}
               </div>

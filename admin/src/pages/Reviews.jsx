@@ -103,9 +103,9 @@ export default function Reviews() {
       {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiMessageSquare, label: 'Total Reviews', value: stats.total, bg: 'bg-blue-600' },
-          { icon: FiStar, label: 'Average Rating', value: stats.avgRating, bg: 'bg-amber-500' },
-          { icon: FiEye, label: 'Visible Reviews', value: stats.visible, bg: 'bg-emerald-600' },
+          { icon: FiMessageSquare, label: t('reviews.totalReviews'), value: stats.total, bg: 'bg-blue-600' },
+          { icon: FiStar, label: t('reviews.averageRating'), value: stats.avgRating, bg: 'bg-amber-500' },
+          { icon: FiEye, label: t('reviews.visibleReviews'), value: stats.visible, bg: 'bg-emerald-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -125,7 +125,7 @@ export default function Reviews() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reviews..."
+            placeholder={t('common.searchReviews')}
             className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent"
           />
         </div>
@@ -134,7 +134,7 @@ export default function Reviews() {
           onClick={fetchReviews}
           className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium"
         >
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
         <select
           value={visibilityFilter}
@@ -142,8 +142,8 @@ export default function Reviews() {
           className="px-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[140px]"
         >
           <option value="">{t('common.all')}</option>
-          <option value="true">Visible</option>
-          <option value="false">Hidden</option>
+          <option value="true">{t('common.visible')}</option>
+          <option value="false">{t('common.hidden')}</option>
         </select>
       </div>
 
@@ -154,12 +154,12 @@ export default function Reviews() {
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Book Title</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Customer</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Rating</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Comment</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Verified</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Visible</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.rating')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.comment')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.verified')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.visible')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.date')}</th>
                 <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
@@ -276,8 +276,8 @@ export default function Reviews() {
 
       <ConfirmModal
         open={!!deleteId}
-        title="Delete Review"
-        message="This will permanently delete this review. This action cannot be undone."
+        title={t('reviews.deleteReview')}
+        message={t('reviews.deleteReviewConfirm')}
         confirmText="Delete"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}

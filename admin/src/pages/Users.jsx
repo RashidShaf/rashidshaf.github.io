@@ -70,8 +70,8 @@ export default function Users() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiUsers, label: 'Total Users', value: totalUsers, bg: 'bg-blue-600', color: 'text-white' },
-          { icon: FiUserCheck, label: 'Active Users', value: pagination?.total || totalUsers, bg: 'bg-emerald-600', color: 'text-white' },
+          { icon: FiUsers, label: t('users.totalUsers'), value: totalUsers, bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiUserCheck, label: t('users.activeUsers'), value: pagination?.total || totalUsers, bg: 'bg-emerald-600', color: 'text-white' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -91,7 +91,7 @@ export default function Users() {
         </div>
         <div className="flex-1" />
         <button onClick={fetchUsers} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
       </div>
 
@@ -103,11 +103,11 @@ export default function Users() {
               <tr>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.name')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.email')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Phone</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.phone')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.role')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.blocked')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Orders</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Joined</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.orders')}</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.joined')}</th>
                 <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
@@ -167,7 +167,7 @@ export default function Users() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                       {user.role === 'ADMIN' ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700">
-                          <FiShield size={13} /> Admin
+                          <FiShield size={13} /> {t('users.admin')}
                         </span>
                       ) : (
                         <button

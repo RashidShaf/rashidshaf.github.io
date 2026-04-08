@@ -18,7 +18,7 @@ const FILTER_OPTIONS = [
 export default function CategoryFilters() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
-  const { isRTL } = useLanguageStore();
+  const { isRTL, t } = useLanguageStore();
   const [categoryName, setCategoryName] = useState('');
   const [filters, setFilters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function CategoryFilters() {
       const res = await api.get(`/admin/categories/${categoryId}/filters`);
       setFilters(res.data);
     } catch {
-      toast.error('Failed to fetch filters');
+      toast.error(t('categories.failedFetchFilters'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function CategoryFilters() {
       }
       await fetchFilters();
     } catch {
-      toast.error('Failed to update filter');
+      toast.error(t('categories.failedUpdateFilter'));
     } finally {
       setToggling(null);
     }
@@ -84,16 +84,16 @@ export default function CategoryFilters() {
         </button>
         <div>
           <h1 className="text-xl 3xl:text-2xl font-bold text-admin-text">
-            Filters for {categoryName || 'Category'}
+            {t('categories.filtersFor')} {categoryName || t('books.category')}
           </h1>
-          <p className="text-sm text-admin-muted mt-0.5">Select which filters to show on the browse page for this category</p>
+          <p className="text-sm text-admin-muted mt-0.5">{t('categories.filtersHelp')}</p>
         </div>
       </div>
 
       {/* Filter Toggles */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-admin-muted">Loading...</div>
+          <div className="p-8 text-center text-admin-muted">{t('common.loading')}</div>
         ) : (
           <div className="divide-y divide-admin-border">
             {FILTER_OPTIONS.map((option) => {
@@ -121,8 +121,8 @@ export default function CategoryFilters() {
 
       <p className="text-xs text-admin-muted mt-3">
         {filters.length === 0
-          ? 'No filters enabled — the browse page will not show any filters for this category.'
-          : `${filters.length} filter${filters.length > 1 ? 's' : ''} enabled for this category.`
+          ? t('categories.noFiltersEnabled')
+          : `${filters.length} ${filters.length > 1 ? t('categories.filter_other') : t('categories.filter_one')} ${t('categories.enabledForCategory')}`
         }
       </p>
     </motion.div>

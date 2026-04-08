@@ -89,10 +89,10 @@ export default function Orders() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiShoppingBag, label: 'Total Orders', value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
-          { icon: FiDollarSign, label: 'Revenue', value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
-          { icon: FiClock, label: 'Processing', value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
-          { icon: FiCheckCircle, label: 'Delivered', value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
+          { icon: FiShoppingBag, label: t('orders.totalOrders'), value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiDollarSign, label: t('orders.revenue'), value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
+          { icon: FiClock, label: t('orders.processing'), value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
+          { icon: FiCheckCircle, label: t('orders.delivered'), value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -108,20 +108,20 @@ export default function Orders() {
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.searchOrders')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchOrders} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> Refresh
+          <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
         <select
           value={customerFilter}
           onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
           className="px-3 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[130px]"
         >
-          <option value="ALL">All Customers</option>
-          <option value="customer">Registered</option>
-          <option value="guest">Guests</option>
+          <option value="ALL">{t('orders.allCustomers')}</option>
+          <option value="customer">{t('orders.registered')}</option>
+          <option value="guest">{t('orders.guests')}</option>
         </select>
         <div className="relative">
           <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
@@ -148,7 +148,7 @@ export default function Orders() {
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.orderNumber')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('nav.products')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Items</th>
+                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.items')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.date')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
@@ -182,7 +182,7 @@ export default function Orders() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                       {order.user
                         ? `${order.user.firstName} ${order.user.lastName}`
-                        : <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Guest</span>
+                        : <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">{t('common.guest')}</span>
                       }
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
