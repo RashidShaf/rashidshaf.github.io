@@ -8,7 +8,7 @@ import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
-const emptyForm = { title: '', titleAr: '', link: '', sortOrder: 0, isActive: true, showLogo: true, logoPosition: 'center-left', categoryId: '' };
+const emptyForm = { title: '', titleAr: '', link: '', sortOrder: 0, isActive: true, showLogo: true, showMobileLogo: true, logoPosition: 'center-left', categoryId: '' };
 
 const LOGO_POSITIONS = [
   { value: 'top-left', label: 'TL' },
@@ -93,6 +93,7 @@ export default function Banners() {
       sortOrder: banner.sortOrder || 0,
       isActive: banner.isActive,
       showLogo: banner.showLogo !== false,
+      showMobileLogo: banner.showMobileLogo !== false,
       logoPosition: banner.logoPosition || 'center-left',
       categoryId: banner.categoryId || '',
     });
@@ -132,6 +133,7 @@ export default function Banners() {
       fd.append('sortOrder', form.sortOrder);
       fd.append('isActive', form.isActive);
       fd.append('showLogo', form.showLogo);
+      fd.append('showMobileLogo', form.showMobileLogo);
       fd.append('logoPosition', form.logoPosition);
       fd.append('categoryId', form.categoryId || '');
       if (desktopFile) fd.append('desktopImage', desktopFile);
@@ -448,8 +450,8 @@ export default function Banners() {
                 )}
               </div>
 
-              {/* Animated Logo — only for Home Page banners */}
-              {!form.categoryId && <div className="bg-admin-bg border border-admin-border rounded-xl p-4">
+              {/* Animated Logo */}
+              <div className="bg-admin-bg border border-admin-border rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm 3xl:text-base font-medium text-admin-text">{t('banners.animatedLogo')}</p>
@@ -463,27 +465,43 @@ export default function Banners() {
                   </div>
                 </div>
                 {form.showLogo && (
-                  <div>
-                    <p className="text-xs font-medium text-admin-text mb-2">{t('banners.logoPosition')}</p>
-                    <div className="inline-grid grid-cols-3 gap-1.5">
-                      {LOGO_POSITIONS.map((pos) => (
-                        <button
-                          key={pos.value}
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, logoPosition: pos.value }))}
-                          className={`w-12 h-9 3xl:w-14 3xl:h-10 rounded-lg text-xs font-bold transition-all ${
-                            form.logoPosition === pos.value
-                              ? 'bg-admin-accent text-white shadow-md'
-                              : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:border-admin-accent'
-                          }`}
-                        >
-                          {pos.label}
-                        </button>
-                      ))}
+                  <>
+                    {/* Mobile Logo Toggle */}
+                    <div className="flex items-center justify-between mb-3 pt-2 border-t border-admin-border">
+                      <div>
+                        <p className="text-sm font-medium text-admin-text">Mobile Logo</p>
+                        <p className="text-xs text-admin-muted mt-0.5">Show logo on mobile banners</p>
+                      </div>
+                      <div
+                        onClick={() => setForm((f) => ({ ...f, showMobileLogo: !f.showMobileLogo }))}
+                        className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${form.showMobileLogo ? 'bg-admin-accent' : 'bg-gray-300'}`}
+                      >
+                        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.showMobileLogo ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                      </div>
                     </div>
-                  </div>
+                    {/* Logo Position */}
+                    <div>
+                      <p className="text-xs font-medium text-admin-text mb-2">{t('banners.logoPosition')}</p>
+                      <div className="inline-grid grid-cols-3 gap-1.5">
+                        {LOGO_POSITIONS.map((pos) => (
+                          <button
+                            key={pos.value}
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, logoPosition: pos.value }))}
+                            className={`w-12 h-9 3xl:w-14 3xl:h-10 rounded-lg text-xs font-bold transition-all ${
+                              form.logoPosition === pos.value
+                                ? 'bg-admin-accent text-white shadow-md'
+                                : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:border-admin-accent'
+                            }`}
+                          >
+                            {pos.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
-              </div>}
+              </div>
 
               {/* Sort Order + Active */}
               <div className="grid grid-cols-2 gap-4">

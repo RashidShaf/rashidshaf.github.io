@@ -44,7 +44,7 @@ exports.list = async (req, res, next) => {
 // Admin: Create banner
 exports.create = async (req, res, next) => {
   try {
-    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition, categoryId } = req.body;
+    const { title, titleAr, link, sortOrder, isActive, showLogo, showMobileLogo, logoPosition, categoryId } = req.body;
     const desktopImage = req.files?.desktopImage?.[0]
       ? `uploads/banners/${req.files.desktopImage[0].filename}`
       : null;
@@ -64,6 +64,7 @@ exports.create = async (req, res, next) => {
         mobileImage,
         link: link || null,
         showLogo: showLogo === 'false' ? false : true,
+        showMobileLogo: showMobileLogo === 'false' ? false : true,
         logoPosition: logoPosition || 'center-left',
         categoryId: categoryId || null,
         sortOrder: parseInt(sortOrder) || 0,
@@ -83,13 +84,14 @@ exports.update = async (req, res, next) => {
     if (!existing) return res.status(404).json({ message: 'Banner not found.' });
 
     const data = {};
-    const { title, titleAr, link, sortOrder, isActive, showLogo, logoPosition, categoryId } = req.body;
+    const { title, titleAr, link, sortOrder, isActive, showLogo, showMobileLogo, logoPosition, categoryId } = req.body;
     if (title !== undefined) data.title = title || null;
     if (titleAr !== undefined) data.titleAr = titleAr || null;
     if (link !== undefined) data.link = link || null;
     if (sortOrder !== undefined) data.sortOrder = parseInt(sortOrder) || 0;
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;
     if (showLogo !== undefined) data.showLogo = showLogo === 'false' ? false : true;
+    if (showMobileLogo !== undefined) data.showMobileLogo = showMobileLogo === 'false' ? false : true;
     if (logoPosition !== undefined) data.logoPosition = logoPosition || 'center-left';
     if (categoryId !== undefined) data.categoryId = categoryId || null;
 

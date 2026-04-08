@@ -1,0 +1,52 @@
+import { motion } from 'framer-motion';
+
+const positionClasses = {
+  'top-left': 'top-[15%] left-3 sm:left-14 lg:left-24',
+  'top-center': 'top-[15%] left-1/2 -translate-x-1/2',
+  'top-right': 'top-[15%] right-3 sm:right-14 lg:right-24',
+  'center-left': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
+  'center': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-1/2 -translate-x-1/2',
+  'center-right': 'top-[42%] sm:top-[38%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
+  'bottom-left': 'bottom-[10%] left-3 sm:left-14 lg:left-24',
+  'bottom-center': 'bottom-[10%] left-1/2 -translate-x-1/2',
+  'bottom-right': 'bottom-[10%] right-3 sm:right-14 lg:right-24',
+};
+
+const LogoOverlay = ({ position = 'center-left', compact = false, hideMobile = false }) => (
+  <div className={`absolute z-10 ${hideMobile ? 'hidden sm:flex' : 'flex'} flex-col items-center pointer-events-none ${positionClasses[position] || positionClasses['center-left']}`}>
+    <div className="relative flex items-center justify-center">
+      {compact ? (
+        <>
+          <div className="absolute w-[58px] h-[58px] sm:w-[150px] sm:h-[150px] lg:w-[260px] lg:h-[260px] 3xl:w-[370px] 3xl:h-[370px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[75px] h-[75px] sm:w-[185px] sm:h-[185px] lg:w-[330px] lg:h-[330px] 3xl:w-[460px] 3xl:h-[460px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <motion.img
+            src="/logo.jpg"
+            alt="Arkaan"
+            className="w-12 h-12 sm:w-28 sm:h-28 lg:w-52 lg:h-52 3xl:w-72 3xl:h-72 rounded-full object-cover shadow-2xl"
+            style={{ boxShadow: '0 0 40px rgba(122,27,78,0.4), 0 0 20px rgba(212,165,116,0.15)' }}
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+          />
+        </>
+      ) : (
+        <>
+          <div className="absolute w-[70px] h-[70px] sm:w-[180px] sm:h-[180px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[90px] h-[90px] sm:w-[220px] sm:h-[220px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <motion.img
+            src="/logo.jpg"
+            alt="Arkaan"
+            className="w-14 h-14 sm:w-36 sm:h-36 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
+            style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+          />
+        </>
+      )}
+    </div>
+    <div className={compact ? '-mt-1.5 sm:-mt-3' : '-mt-2 sm:-mt-4'}>
+      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className={compact ? 'w-14 sm:w-24 lg:w-44 3xl:w-56 drop-shadow-lg' : 'w-16 sm:w-28 lg:w-52 3xl:w-64 drop-shadow-lg'} />
+    </div>
+  </div>
+);
+
+export default LogoOverlay;

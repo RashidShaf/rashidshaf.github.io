@@ -9,42 +9,11 @@ import 'swiper/css/pagination';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
+import LogoOverlay from '../components/common/LogoOverlay';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-
-const positionClasses = {
-  'top-left': 'top-[15%] left-3 sm:left-14 lg:left-24',
-  'top-center': 'top-[15%] left-1/2 -translate-x-1/2',
-  'top-right': 'top-[15%] right-3 sm:right-14 lg:right-24',
-  'center-left': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-3 sm:left-14 lg:left-24',
-  'center': 'top-[42%] sm:top-[38%] -translate-y-1/2 left-1/2 -translate-x-1/2',
-  'center-right': 'top-[42%] sm:top-[38%] -translate-y-1/2 right-3 sm:right-14 lg:right-24',
-  'bottom-left': 'bottom-[10%] left-3 sm:left-14 lg:left-24',
-  'bottom-center': 'bottom-[10%] left-1/2 -translate-x-1/2',
-  'bottom-right': 'bottom-[10%] right-3 sm:right-14 lg:right-24',
-};
-
-const LogoOverlay = ({ position = 'center-left' }) => (
-  <div className={`absolute z-10 hidden sm:flex flex-col items-center pointer-events-none ${positionClasses[position] || positionClasses['center-left']}`}>
-    <div className="relative flex items-center justify-center">
-      <div className="absolute w-[70px] h-[70px] sm:w-[180px] sm:h-[180px] lg:w-[320px] lg:h-[320px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-      <div className="absolute w-[90px] h-[90px] sm:w-[220px] sm:h-[220px] lg:w-[400px] lg:h-[400px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
-      <motion.img
-        src="/logo.jpg"
-        alt="Arkaan"
-        className="w-14 h-14 sm:w-36 sm:h-36 lg:w-64 lg:h-64 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
-        style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-      />
-    </div>
-    <div className="-mt-2 sm:-mt-4">
-      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className="w-16 sm:w-28 lg:w-52 3xl:w-64 drop-shadow-lg" />
-    </div>
-  </div>
-);
 
 const BannerSlide = ({ desktop, mobile, alt, link }) => {
   const content = (
@@ -70,7 +39,7 @@ const HeroBanner = () => {
   // Get logo settings from the current banner
   const currentBanner = banners[activeIndex] || banners[0];
   const logo = currentBanner?.showLogo !== false
-    ? <LogoOverlay position={currentBanner?.logoPosition || 'center-left'} />
+    ? <LogoOverlay position={currentBanner?.logoPosition || 'center-left'} hideMobile={currentBanner?.showMobileLogo === false} />
     : null;
 
   // No active banners — show nothing
@@ -82,7 +51,7 @@ const HeroBanner = () => {
     return (
       <section className="relative overflow-hidden">
         <BannerSlide desktop={`${API_BASE}/${b.desktopImage}`} mobile={b.mobileImage ? `${API_BASE}/${b.mobileImage}` : null} alt={b.title || 'Arkaan Bookstore'} link={b.link} />
-        {b.showLogo !== false && <LogoOverlay position={b.logoPosition || 'center-left'} />}
+        {b.showLogo !== false && <LogoOverlay position={b.logoPosition || 'center-left'} hideMobile={b.showMobileLogo === false} />}
       </section>
     );
   }

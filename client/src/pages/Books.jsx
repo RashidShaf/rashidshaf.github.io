@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
+import LogoOverlay from '../components/common/LogoOverlay';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
@@ -789,10 +790,11 @@ const Books = () => {
                 <>
                   <img src={desktopSrc} alt={banner.title || ''} className="hidden sm:block w-full h-auto object-cover" />
                   <img src={mobileSrc} alt={banner.title || ''} className="block sm:hidden w-full h-auto object-cover" />
+                  {banner.showLogo !== false && <LogoOverlay position={banner.logoPosition || 'center-left'} compact hideMobile={banner.showMobileLogo === false} />}
                 </>
               );
               return (
-                <div className="mb-4">
+                <div className="mb-4 relative overflow-hidden rounded-xl">
                   {banner.link ? (
                     <a href={banner.link} target="_blank" rel="noopener noreferrer">{content}</a>
                   ) : content}

@@ -377,8 +377,9 @@ model Banner {
   desktopImage  String   @map("desktop_image")
   mobileImage   String?  @map("mobile_image")
   link          String?
-  showLogo      Boolean  @default(true) @map("show_logo")
-  logoPosition  String   @default("center-left") @map("logo_position")
+  showLogo        Boolean  @default(true) @map("show_logo")
+  showMobileLogo  Boolean  @default(true) @map("show_mobile_logo")
+  logoPosition    String   @default("center-left") @map("logo_position")
   categoryId    String?  @map("category_id")
   sortOrder     Int      @default(0) @map("sort_order")
   isActive      Boolean  @default(true) @map("is_active")
