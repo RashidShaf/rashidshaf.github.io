@@ -173,7 +173,7 @@ const ReviewCard = ({ review, isOwn, onEdit, onDelete }) => {
   );
 };
 
-const ReviewSection = ({ bookId, book }) => {
+const ReviewSection = ({ bookId, book, onReviewChange }) => {
   const { t, language } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
 
@@ -220,6 +220,7 @@ const ReviewSection = ({ bookId, book }) => {
   const handleReviewSuccess = () => {
     setEditingReview(null);
     fetchReviews(1);
+    onReviewChange?.();
   };
 
   const [deleteId, setDeleteId] = useState(null);
@@ -231,6 +232,7 @@ const ReviewSection = ({ bookId, book }) => {
       toast.success(t('book.reviewDeleted'));
       setDeleteId(null);
       fetchReviews(1);
+      onReviewChange?.();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete review');
       setDeleteId(null);
@@ -243,10 +245,6 @@ const ReviewSection = ({ bookId, book }) => {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-foreground mb-4">
-        {t('book.reviews')} {book?.reviewCount > 0 && `(${book.reviewCount})`}
-      </h3>
-
       {/* User review form or status */}
       {user ? (
         userReview && !editingReview ? (
