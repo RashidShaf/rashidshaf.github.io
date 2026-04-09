@@ -46,13 +46,6 @@ const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => {
           ))}
         </div>
       )}
-      <Link
-        to={`/books?category=${sub.slug}`}
-        onClick={onLinkClick}
-        className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
-      >
-        {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
-      </Link>
     </div>
   );
 };
@@ -75,7 +68,7 @@ const CategoryBar = ({ categories = [] }) => {
   };
 
   const handleLeave = () => {
-    closeTimeout.current = setTimeout(() => setHoveredId(null), 200);
+    closeTimeout.current = setTimeout(() => setHoveredId(null), 400);
   };
 
   const handleClick = () => {
