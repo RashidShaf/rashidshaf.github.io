@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
@@ -27,15 +27,27 @@ export default function BookEdit() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [suggestedAuthors, setSuggestedAuthors] = useState([]);
+  const [suggestedAuthorsAr, setSuggestedAuthorsAr] = useState([]);
   const [suggestedPublishers, setSuggestedPublishers] = useState([]);
+  const [suggestedPublishersAr, setSuggestedPublishersAr] = useState([]);
   const [suggestedBrands, setSuggestedBrands] = useState([]);
+  const [suggestedBrandsAr, setSuggestedBrandsAr] = useState([]);
+  const defaultColors = ['Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 'Pink', 'Purple', 'Orange', 'Brown', 'Grey'];
+  const defaultColorsAr = ['أحمر', 'أزرق', 'أخضر', 'أسود', 'أبيض', 'أصفر', 'وردي', 'بنفسجي', 'برتقالي', 'بني', 'رمادي'];
+  const defaultMaterials = ['Wood', 'Plastic', 'Metal', 'Paper', 'Fabric', 'Leather', 'Glass', 'Rubber', 'Silicone'];
+  const defaultMaterialsAr = ['خشب', 'بلاستيك', 'معدن', 'ورق', 'قماش', 'جلد', 'زجاج', 'مطاط', 'سيليكون'];
+  const [suggestedColors, setSuggestedColors] = useState(defaultColors);
+  const [suggestedColorsAr, setSuggestedColorsAr] = useState(defaultColorsAr);
+  const [suggestedMaterials, setSuggestedMaterials] = useState(defaultMaterials);
+  const [suggestedMaterialsAr, setSuggestedMaterialsAr] = useState(defaultMaterialsAr);
+  const [suggestedCustomFields, setSuggestedCustomFields] = useState({});
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
     description: '', descriptionAr: '', price: '', purchasePrice: '', compareAtPrice: '',
     publisher: '', publisherAr: '', language: 'en', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
     publishedDate: '', weight: '',
-    brand: '', material: '', color: '', dimensions: '', ageRange: '',
+    brand: '', brandAr: '', material: '', materialAr: '', color: '', colorAr: '', dimensions: '', ageRange: '',
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false, isActive: true,
   });
 
@@ -47,9 +59,18 @@ export default function BookEdit() {
           api.get('/admin/categories'),
           api.get('/books/filters'),
         ]);
-        setSuggestedAuthors(filtersRes.data.authors || []);
-        setSuggestedPublishers(filtersRes.data.publishers || []);
-        setSuggestedBrands(filtersRes.data.brands || []);
+        const fd = filtersRes.data;
+        setSuggestedAuthors((fd.authors || []).map((a) => typeof a === 'string' ? a : a.value));
+        setSuggestedAuthorsAr((fd.authors || []).map((a) => typeof a === 'string' ? null : a.valueAr).filter(Boolean));
+        setSuggestedPublishers((fd.publishers || []).map((p) => typeof p === 'string' ? p : p.value));
+        setSuggestedPublishersAr((fd.publishers || []).map((p) => typeof p === 'string' ? null : p.valueAr).filter(Boolean));
+        setSuggestedBrands((fd.brands || []).map((b) => typeof b === 'string' ? b : b.value));
+        setSuggestedBrandsAr((fd.brands || []).map((b) => typeof b === 'string' ? null : b.valueAr).filter(Boolean));
+        setSuggestedColors([...new Set([...defaultColors, ...(fd.colors || []).map((c) => typeof c === 'string' ? c : c.value)])]);
+        setSuggestedColorsAr([...new Set([...defaultColorsAr, ...(fd.colors || []).map((c) => typeof c === 'string' ? null : c.valueAr).filter(Boolean)])]);
+        setSuggestedMaterials([...new Set([...defaultMaterials, ...(fd.materials || []).map((m) => typeof m === 'string' ? m : m.value)])]);
+        setSuggestedMaterialsAr([...new Set([...defaultMaterialsAr, ...(fd.materials || []).map((m) => typeof m === 'string' ? null : m.valueAr).filter(Boolean)])]);
+        if (fd.customFieldValues) setSuggestedCustomFields(fd.customFieldValues);
         const book = bookRes.data;
         const cats = catRes.data.data || catRes.data;
         setAllCategories(cats);
@@ -102,8 +123,11 @@ export default function BookEdit() {
           publishedDate: book.publishedDate ? new Date(book.publishedDate).toISOString().split('T')[0] : '',
           weight: book.weight ? parseFloat(book.weight).toString() : '',
           brand: book.brand || '',
+          brandAr: book.brandAr || '',
           material: book.material || '',
+          materialAr: book.materialAr || '',
           color: book.color || '',
+          colorAr: book.colorAr || '',
           dimensions: book.dimensions || '',
           ageRange: book.ageRange || '',
           isFeatured: book.isFeatured || false,
@@ -116,6 +140,9 @@ export default function BookEdit() {
         };
 
         setForm(formData);
+        if (book.customFields) {
+          try { setCustomFieldValues(JSON.parse(book.customFields)); } catch {}
+        }
         setSelectedCategoryIds(allSelectedIds);
 
         // Auto-expand Level 2 parents of selected Level 3 categories
@@ -161,6 +188,12 @@ export default function BookEdit() {
     try { return JSON.parse(selectedParent.detailFields); } catch { return null; }
   }, [selectedParent]);
   const show = (key) => !visibleFields || visibleFields.includes(key);
+
+  const categoryCustomFields = useMemo(() => {
+    if (!selectedParent?.customFields) return [];
+    try { return JSON.parse(selectedParent.customFields); } catch { return []; }
+  }, [selectedParent]);
+  const [customFieldValues, setCustomFieldValues] = useState({});
 
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
@@ -251,7 +284,7 @@ export default function BookEdit() {
       if (!payload.compareAtPrice) delete payload.compareAtPrice;
       if (!payload.isbn) delete payload.isbn;
       if (!payload.sku) delete payload.sku;
-      ['brand', 'material', 'color', 'dimensions', 'ageRange'].forEach((f) => {
+      ['brand', 'brandAr', 'material', 'materialAr', 'color', 'colorAr', 'dimensions', 'ageRange'].forEach((f) => {
         if (!payload[f]) payload[f] = null;
       });
       if (payload.weight) {
@@ -263,6 +296,10 @@ export default function BookEdit() {
         payload.publishedDate = new Date(payload.publishedDate).toISOString();
       } else {
         payload.publishedDate = null;
+      }
+
+      if (Object.keys(customFieldValues).length > 0) {
+        payload.customFields = JSON.stringify(customFieldValues);
       }
 
       await api.put(`/admin/books/${id}`, payload);
@@ -416,17 +453,29 @@ export default function BookEdit() {
                   {isBooks ? t('books.bookDetails') : t('books.productSpecs')}
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6">
-                  {show('publisher') && (
-                    <div>
-                      <label className={labelClass}>{t('books.publisherEn')}</label>
-                      <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
-                    </div>
+                  {show('author') && (
+                    <>
+                      <div>
+                        <label className={labelClass}>{t('books.authorEn')}</label>
+                        <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>{t('books.authorAr')}</label>
+                        <AutocompleteInput name="authorAr" value={form.authorAr} onChange={handleChange} suggestions={suggestedAuthorsAr} dir="rtl" className={inputClass} />
+                      </div>
+                    </>
                   )}
                   {show('publisher') && (
-                    <div>
-                      <label className={labelClass}>{t('books.publisherAr')}</label>
-                      <input name="publisherAr" value={form.publisherAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                    </div>
+                    <>
+                      <div>
+                        <label className={labelClass}>{t('books.publisherEn')}</label>
+                        <AutocompleteInput name="publisher" value={form.publisher} onChange={handleChange} suggestions={suggestedPublishers} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>{t('books.publisherAr')}</label>
+                        <AutocompleteInput name="publisherAr" value={form.publisherAr} onChange={handleChange} suggestions={suggestedPublishersAr} dir="rtl" className={inputClass} />
+                      </div>
+                    </>
                   )}
                   {show('isbn') && (
                     <div>
@@ -460,21 +509,39 @@ export default function BookEdit() {
                     </div>
                   )}
                   {show('brand') && (
-                    <div>
-                      <label className={labelClass}>{t('books.brand')}</label>
-                      <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
+                    <div className="sm:col-span-2 grid sm:grid-cols-2 gap-4 3xl:gap-6">
+                      <div>
+                        <label className={labelClass}>{t('books.brand')}</label>
+                        <AutocompleteInput name="brand" value={form.brand} onChange={handleChange} suggestions={suggestedBrands} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>{t('books.brandAr')}</label>
+                        <AutocompleteInput name="brandAr" value={form.brandAr} onChange={handleChange} suggestions={suggestedBrandsAr} dir="rtl" className={inputClass} />
+                      </div>
                     </div>
                   )}
                   {show('color') && (
-                    <div>
-                      <label className={labelClass}>{t('books.color')}</label>
-                      <input name="color" value={form.color} onChange={handleChange} className={inputClass} />
+                    <div className="sm:col-span-2 grid sm:grid-cols-2 gap-4 3xl:gap-6">
+                      <div>
+                        <label className={labelClass}>{t('books.color')}</label>
+                        <AutocompleteInput name="color" value={form.color} onChange={handleChange} suggestions={suggestedColors} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>{t('books.colorAr')}</label>
+                        <AutocompleteInput name="colorAr" value={form.colorAr} onChange={handleChange} suggestions={suggestedColorsAr} dir="rtl" className={inputClass} />
+                      </div>
                     </div>
                   )}
                   {show('material') && (
-                    <div>
-                      <label className={labelClass}>{t('books.material')}</label>
-                      <input name="material" value={form.material} onChange={handleChange} className={inputClass} />
+                    <div className="sm:col-span-2 grid sm:grid-cols-2 gap-4 3xl:gap-6">
+                      <div>
+                        <label className={labelClass}>{t('books.material')}</label>
+                        <AutocompleteInput name="material" value={form.material} onChange={handleChange} suggestions={suggestedMaterials} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>{t('books.materialAr')}</label>
+                        <AutocompleteInput name="materialAr" value={form.materialAr} onChange={handleChange} suggestions={suggestedMaterialsAr} dir="rtl" className={inputClass} />
+                      </div>
                     </div>
                   )}
                   {show('dimensions') && (
@@ -489,19 +556,35 @@ export default function BookEdit() {
                       <input name="ageRange" value={form.ageRange} onChange={handleChange} placeholder={t('books.agePlaceholder')} className={inputClass} />
                     </div>
                   )}
+                  {categoryCustomFields.map((cf) => {
+                    const cfSuggestions = suggestedCustomFields[cf.key] || [];
+                    return (
+                      <div key={cf.key} className="sm:col-span-2 grid sm:grid-cols-2 gap-4 3xl:gap-6">
+                        <div>
+                          <label className={labelClass}>{cf.name}</label>
+                          <AutocompleteInput
+                            name={`cf_${cf.key}`}
+                            value={customFieldValues[cf.key]?.value || ''}
+                            onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [cf.key]: { ...prev[cf.key], value: e.target.value } }))}
+                            suggestions={cfSuggestions.map((s) => s.value).filter(Boolean)}
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>{cf.nameAr || `${cf.name} (AR)`}</label>
+                          <AutocompleteInput
+                            name={`cf_${cf.key}_ar`}
+                            value={customFieldValues[cf.key]?.valueAr || ''}
+                            onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [cf.key]: { ...prev[cf.key], valueAr: e.target.value } }))}
+                            suggestions={cfSuggestions.map((s) => s.valueAr).filter(Boolean)}
+                            dir="rtl"
+                            className={inputClass}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                {show('author') && (
-                  <div className="grid sm:grid-cols-2 gap-4 3xl:gap-6 pt-2">
-                    <div>
-                      <label className={labelClass}>{t('books.authorEn')}</label>
-                      <AutocompleteInput name="author" value={form.author} onChange={handleChange} suggestions={suggestedAuthors} className={inputClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>{t('books.authorAr')}</label>
-                      <input name="authorAr" value={form.authorAr} onChange={handleChange} dir="rtl" className={inputClass} />
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 

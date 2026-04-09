@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw, FiChevronDown, FiArrowUp, FiArrowDown, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiImage, FiEdit2, FiLayers, FiCheckCircle, FiSearch, FiRefreshCw, FiChevronDown, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -330,11 +330,6 @@ export default function Categories() {
                           <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
                             <FiArrowDown size={15} />
                           </button>
-                          {!rowCat.parentId && (
-                            <Link to={`/categories/${rowCat.id}/filters`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Manage Filters">
-                              <FiFilter size={15} />
-                            </Link>
-                          )}
                           <Link to={`/categories/${rowCat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                             <FiEdit2 size={15} />
                           </Link>

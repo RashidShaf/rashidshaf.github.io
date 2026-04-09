@@ -96,12 +96,14 @@ exports.create = async (req, res, next) => {
     if (data.tags && typeof data.tags === 'string') data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
     else if (!data.tags) data.tags = [];
     // Clean empty strings
-    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'brandAr', 'color', 'colorAr', 'material', 'materialAr', 'dimensions', 'ageRange'].forEach((f) => {
       if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
     ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon', 'isOutOfStock'].forEach((f) => {
       data[f] = data[f] === 'true' || data[f] === true;
     });
+    // Handle customFields — keep as JSON string for TEXT column, null if empty
+    if (!data.customFields || data.customFields === '{}') data.customFields = null;
 
     // Extract additionalCategoryIds before creating (not a Book field)
     const additionalCategoryIds = data.additionalCategoryIds;
@@ -143,13 +145,18 @@ exports.update = async (req, res, next) => {
     if (data.isbn === '') delete data.isbn;
     if (data.categoryId === '') delete data.categoryId;
     if (typeof data.tags === 'string') data.tags = data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
-    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'color', 'material', 'dimensions', 'ageRange'].forEach((f) => {
+    ['titleAr', 'authorAr', 'description', 'descriptionAr', 'publisher', 'publisherAr', 'brand', 'brandAr', 'color', 'colorAr', 'material', 'materialAr', 'dimensions', 'ageRange'].forEach((f) => {
       if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
     ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon', 'isOutOfStock'].forEach((f) => {
       if (data[f] !== undefined) data[f] = data[f] === 'true' || data[f] === true;
     });
     if (data.isActive !== undefined) data.isActive = data.isActive === 'true' || data.isActive === true;
+    if (data.customFields && typeof data.customFields === 'string') {
+      // Keep as string for TEXT column
+    } else if (data.customFields === '' || data.customFields === undefined) {
+      delete data.customFields;
+    }
 
     // Extract additionalCategoryIds before updating (not a Book field)
     const additionalCategoryIds = data.additionalCategoryIds;

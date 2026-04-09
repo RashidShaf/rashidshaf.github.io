@@ -535,7 +535,7 @@ const Books = () => {
                     );
                   }
 
-                  if (fieldKey === 'author' && availableAuthors.length > 0) {
+                  if (fieldKey === 'author' && availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
                     return (
                       <div key={fieldKey} className="mb-6">
                         <button
@@ -547,13 +547,15 @@ const Books = () => {
                         </button>
                         {authorsOpen && (
                           <div className="space-y-0.5">
-                            {availableAuthors.map((author) => {
-                              const isSelected = selectedAuthors.includes(author);
+                            {availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
+                              const val = typeof item === 'string' ? item : item.value;
+                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
+                              const isSelected = selectedAuthors.includes(val);
                               return (
                                 <button
-                                  key={author}
+                                  key={val}
                                   onClick={() => {
-                                    const next = isSelected ? selectedAuthors.filter((a) => a !== author) : [...selectedAuthors, author];
+                                    const next = isSelected ? selectedAuthors.filter((a) => a !== val) : [...selectedAuthors, val];
                                     updateParam('author', next.join(','));
                                   }}
                                   className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
@@ -563,7 +565,7 @@ const Books = () => {
                                   <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
                                     {isSelected && <span className="text-white text-[7px]">✓</span>}
                                   </span>
-                                  {author}
+                                  {label}
                                 </button>
                               );
                             })}
@@ -573,7 +575,7 @@ const Books = () => {
                     );
                   }
 
-                  if (fieldKey === 'publisher' && availablePublishers.length > 0) {
+                  if (fieldKey === 'publisher' && availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
                     return (
                       <div key={fieldKey} className="mb-6">
                         <button
@@ -585,13 +587,15 @@ const Books = () => {
                         </button>
                         {publishersOpen && (
                           <div className="space-y-0.5">
-                            {availablePublishers.map((publisher) => {
-                              const isSelected = selectedPublishers.includes(publisher);
+                            {availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
+                              const val = typeof item === 'string' ? item : item.value;
+                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
+                              const isSelected = selectedPublishers.includes(val);
                               return (
                                 <button
-                                  key={publisher}
+                                  key={val}
                                   onClick={() => {
-                                    const next = isSelected ? selectedPublishers.filter((p) => p !== publisher) : [...selectedPublishers, publisher];
+                                    const next = isSelected ? selectedPublishers.filter((p) => p !== val) : [...selectedPublishers, val];
                                     updateParam('publisher', next.join(','));
                                   }}
                                   className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
@@ -601,7 +605,7 @@ const Books = () => {
                                   <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
                                     {isSelected && <span className="text-white text-[7px]">✓</span>}
                                   </span>
-                                  {publisher}
+                                  {label}
                                 </button>
                               );
                             })}
@@ -611,7 +615,7 @@ const Books = () => {
                     );
                   }
 
-                  if (fieldKey === 'brand' && availableBrands.length > 0) {
+                  if (fieldKey === 'brand' && availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
                     return (
                       <div key={fieldKey} className="mb-6">
                         <button
@@ -623,13 +627,15 @@ const Books = () => {
                         </button>
                         {brandsOpen && (
                           <div className="space-y-0.5">
-                            {availableBrands.map((brand) => {
-                              const isSelected = selectedBrands.includes(brand);
+                            {availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
+                              const val = typeof item === 'string' ? item : item.value;
+                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
+                              const isSelected = selectedBrands.includes(val);
                               return (
                                 <button
-                                  key={brand}
+                                  key={val}
                                   onClick={() => {
-                                    const next = isSelected ? selectedBrands.filter((b) => b !== brand) : [...selectedBrands, brand];
+                                    const next = isSelected ? selectedBrands.filter((b) => b !== val) : [...selectedBrands, val];
                                     updateParam('brand', next.join(','));
                                   }}
                                   className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
@@ -639,7 +645,7 @@ const Books = () => {
                                   <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
                                     {isSelected && <span className="text-white text-[7px]">✓</span>}
                                   </span>
-                                  {brand}
+                                  {label}
                                 </button>
                               );
                             })}
@@ -649,7 +655,7 @@ const Books = () => {
                     );
                   }
 
-                  if (fieldKey === 'color' && availableColors.length > 0) {
+                  if (fieldKey === 'color' && availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
                     return (
                       <div key={fieldKey} className="mb-6">
                         <button
@@ -661,13 +667,15 @@ const Books = () => {
                         </button>
                         {colorsOpen && (
                           <div className="space-y-0.5">
-                            {availableColors.map((color) => {
-                              const isSelected = selectedColors.includes(color);
+                            {availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
+                              const val = typeof item === 'string' ? item : item.value;
+                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
+                              const isSelected = selectedColors.includes(val);
                               return (
                                 <button
-                                  key={color}
+                                  key={val}
                                   onClick={() => {
-                                    const next = isSelected ? selectedColors.filter((c) => c !== color) : [...selectedColors, color];
+                                    const next = isSelected ? selectedColors.filter((c) => c !== val) : [...selectedColors, val];
                                     updateParam('color', next.join(','));
                                   }}
                                   className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
@@ -677,7 +685,7 @@ const Books = () => {
                                   <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
                                     {isSelected && <span className="text-white text-[7px]">✓</span>}
                                   </span>
-                                  {color}
+                                  {label}
                                 </button>
                               );
                             })}
@@ -687,7 +695,7 @@ const Books = () => {
                     );
                   }
 
-                  if (fieldKey === 'material' && availableMaterials.length > 0) {
+                  if (fieldKey === 'material' && availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
                     return (
                       <div key={fieldKey} className="mb-6">
                         <button
@@ -699,13 +707,15 @@ const Books = () => {
                         </button>
                         {materialsOpen && (
                           <div className="space-y-0.5">
-                            {availableMaterials.map((mat) => {
-                              const isSelected = selectedMaterials.includes(mat);
+                            {availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
+                              const val = typeof item === 'string' ? item : item.value;
+                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
+                              const isSelected = selectedMaterials.includes(val);
                               return (
                                 <button
-                                  key={mat}
+                                  key={val}
                                   onClick={() => {
-                                    const next = isSelected ? selectedMaterials.filter((m) => m !== mat) : [...selectedMaterials, mat];
+                                    const next = isSelected ? selectedMaterials.filter((m) => m !== val) : [...selectedMaterials, val];
                                     updateParam('material', next.join(','));
                                   }}
                                   className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
@@ -715,7 +725,7 @@ const Books = () => {
                                   <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
                                     {isSelected && <span className="text-white text-[7px]">✓</span>}
                                   </span>
-                                  {mat}
+                                  {label}
                                 </button>
                               );
                             })}

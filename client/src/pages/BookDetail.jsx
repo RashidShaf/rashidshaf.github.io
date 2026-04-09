@@ -330,12 +330,28 @@ const BookDetail = () => {
                 show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
                 show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
                 show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
-                show('brand') && book.brand && { label: t('books.brand'), value: book.brand },
-                show('color') && book.color && { label: t('books.color'), value: book.color },
-                show('material') && book.material && { label: t('books.material'), value: book.material },
+                show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
+                show('color') && book.color && { label: t('books.color'), value: language === 'ar' && book.colorAr ? book.colorAr : book.color },
+                show('material') && book.material && { label: t('books.material'), value: language === 'ar' && book.materialAr ? book.materialAr : book.material },
                 show('dimensions') && book.dimensions && { label: t('books.dimensions'), value: book.dimensions },
                 show('ageRange') && book.ageRange && { label: t('books.ageRange'), value: book.ageRange },
               ].filter(Boolean);
+
+              // Add custom field values
+              if (book.customFields) {
+                try {
+                  const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
+                  const rawCF = book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+                  let cfDefs = [];
+                  if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
+                  cfDefs.forEach((def) => {
+                    const val = cfValues[def.key];
+                    if (val && (val.value || val.valueAr)) {
+                      items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
+                    }
+                  });
+                } catch {}
+              }
 
               if (items.length === 0) return null;
 
@@ -369,12 +385,28 @@ const BookDetail = () => {
               show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
               show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
               show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
-              show('brand') && book.brand && { label: t('books.brand'), value: book.brand },
-              show('color') && book.color && { label: t('books.color'), value: book.color },
-              show('material') && book.material && { label: t('books.material'), value: book.material },
+              show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
+              show('color') && book.color && { label: t('books.color'), value: language === 'ar' && book.colorAr ? book.colorAr : book.color },
+              show('material') && book.material && { label: t('books.material'), value: language === 'ar' && book.materialAr ? book.materialAr : book.material },
               show('dimensions') && book.dimensions && { label: t('books.dimensions'), value: book.dimensions },
               show('ageRange') && book.ageRange && { label: t('books.ageRange'), value: book.ageRange },
             ].filter(Boolean);
+
+            // Add custom field values
+            if (book.customFields) {
+              try {
+                const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
+                const rawCF = book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+                let cfDefs = [];
+                if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
+                cfDefs.forEach((def) => {
+                  const val = cfValues[def.key];
+                  if (val && (val.value || val.valueAr)) {
+                    items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
+                  }
+                });
+              } catch {}
+            }
 
             if (items.length === 0) return null;
 

@@ -57,20 +57,25 @@ exports.getBySlug = async (req, res, next) => {
 };
 
 exports.getFilters = async (req, res, next) => {
+  const FILTERABLE_KEYS = ['author', 'publisher', 'language', 'brand', 'color', 'material'];
   try {
     const category = await prisma.category.findUnique({
       where: { slug: req.params.slug },
-      select: { id: true },
+      select: { id: true, detailFields: true },
     });
 
     if (!category) {
       return res.status(404).json({ message: 'Category not found.' });
     }
 
-    const filters = await prisma.categoryFilter.findMany({
-      where: { categoryId: category.id, isActive: true },
-      orderBy: { displayOrder: 'asc' },
-    });
+    let fields = [];
+    if (category.detailFields) {
+      try { fields = JSON.parse(category.detailFields); } catch {}
+    }
+
+    const filters = fields
+      .filter((key) => FILTERABLE_KEYS.includes(key))
+      .map((key, i) => ({ fieldKey: key, displayOrder: i }));
 
     res.json(filters);
   } catch (error) {

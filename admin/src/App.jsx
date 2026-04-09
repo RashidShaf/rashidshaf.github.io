@@ -22,7 +22,6 @@ import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import Banners from './pages/Banners';
 import DataManagement from './pages/DataManagement';
-import CategoryFilters from './pages/CategoryFilters';
 
 const AdminRoute = ({ children }) => {
   const user = useAuthStore((state) => state.user);
@@ -54,7 +53,6 @@ function App() {
           <Route path="categories" element={<Categories />} />
           <Route path="categories/create" element={<CategoryCreate />} />
           <Route path="categories/:id/edit" element={<CategoryEdit />} />
-          <Route path="categories/:categoryId/filters" element={<CategoryFilters />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />

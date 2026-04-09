@@ -84,6 +84,7 @@ model Category {
   image         String?
   parentId      String?   @map("parent_id")
   detailFields  String?   @map("detail_fields") @db.Text
+  customFields  String?   @map("custom_fields") @db.Text
   displayOrder  Int       @default(0) @map("display_order")
   isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -126,9 +127,13 @@ model Book {
 
   // General product fields
   brand          String?
+  brandAr        String?    @map("brand_ar")
   color          String?
+  colorAr        String?    @map("color_ar")
   material       String?
+  materialAr     String?    @map("material_ar")
   ageRange       String?    @map("age_range")
+  customFields   String?    @map("custom_fields") @db.Text
 
   // Inventory
   stock             Int    @default(0)

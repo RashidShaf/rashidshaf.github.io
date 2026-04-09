@@ -172,9 +172,9 @@ exports.getBySlug = async (req, res, next) => {
       include: {
         category: {
           select: {
-            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true,
-            parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, parentId: true,
-              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true } },
+            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true, customFields: true,
+            parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true,
+              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true } },
             } },
           },
         },
@@ -374,19 +374,43 @@ exports.filters = async (req, res, next) => {
     }
 
     const [authors, publishers, brands, colors, materials] = await Promise.all([
-      prisma.book.findMany({ where, select: { author: true }, distinct: ['author'], orderBy: { author: 'asc' } }),
-      prisma.book.findMany({ where, select: { publisher: true }, distinct: ['publisher'], orderBy: { publisher: 'asc' } }),
-      prisma.book.findMany({ where, select: { brand: true }, distinct: ['brand'], orderBy: { brand: 'asc' } }),
-      prisma.book.findMany({ where, select: { color: true }, distinct: ['color'], orderBy: { color: 'asc' } }),
-      prisma.book.findMany({ where, select: { material: true }, distinct: ['material'], orderBy: { material: 'asc' } }),
+      prisma.book.findMany({ where, select: { author: true, authorAr: true }, distinct: ['author'], orderBy: { author: 'asc' } }),
+      prisma.book.findMany({ where, select: { publisher: true, publisherAr: true }, distinct: ['publisher'], orderBy: { publisher: 'asc' } }),
+      prisma.book.findMany({ where, select: { brand: true, brandAr: true }, distinct: ['brand'], orderBy: { brand: 'asc' } }),
+      prisma.book.findMany({ where, select: { color: true, colorAr: true }, distinct: ['color'], orderBy: { color: 'asc' } }),
+      prisma.book.findMany({ where, select: { material: true, materialAr: true }, distinct: ['material'], orderBy: { material: 'asc' } }),
     ]);
 
+    // Extract distinct custom field values
+    const booksWithCF = await prisma.book.findMany({
+      where: { ...where, customFields: { not: null } },
+      select: { customFields: true },
+    });
+    const cfMap = {};
+    booksWithCF.forEach((b) => {
+      try {
+        const parsed = JSON.parse(b.customFields);
+        Object.entries(parsed).forEach(([key, val]) => {
+          if (!val || (!val.value && !val.valueAr)) return;
+          if (!cfMap[key]) cfMap[key] = new Map();
+          if (val.value && !cfMap[key].has(val.value)) {
+            cfMap[key].set(val.value, val.valueAr || null);
+          }
+        });
+      } catch {}
+    });
+    const customFieldValues = {};
+    Object.entries(cfMap).forEach(([key, map]) => {
+      customFieldValues[key] = Array.from(map.entries()).map(([v, vAr]) => ({ value: v, valueAr: vAr }));
+    });
+
     res.json({
-      authors: authors.map(a => a.author).filter(Boolean),
-      publishers: publishers.map(p => p.publisher).filter(Boolean),
-      brands: brands.map(b => b.brand).filter(Boolean),
-      colors: colors.map(c => c.color).filter(Boolean),
-      materials: materials.map(m => m.material).filter(Boolean),
+      authors: authors.filter(a => a.author).map(a => ({ value: a.author, valueAr: a.authorAr })),
+      publishers: publishers.filter(p => p.publisher).map(p => ({ value: p.publisher, valueAr: p.publisherAr })),
+      brands: brands.filter(b => b.brand).map(b => ({ value: b.brand, valueAr: b.brandAr })),
+      colors: colors.filter(c => c.color).map(c => ({ value: c.color, valueAr: c.colorAr })),
+      materials: materials.filter(m => m.material).map(m => ({ value: m.material, valueAr: m.materialAr })),
+      customFieldValues,
     });
   } catch (error) {
     next(error);
