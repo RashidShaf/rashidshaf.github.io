@@ -430,7 +430,7 @@ const BookDetail = () => {
                   ))}
                 </div>
                 {description && (
-                  <div className="mt-5 pt-4 border-t border-muted/10 3xl:w-[1600px]">
+                  <div className="mt-5 pt-4 border-t border-muted/10 2xl:w-[550px] 3xl:w-[1600px]">
                     <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-2">{t('book.description')}</h3>
                     <p className="text-foreground/70 text-sm 3xl:text-base leading-relaxed whitespace-pre-line">{description}</p>
                   </div>
