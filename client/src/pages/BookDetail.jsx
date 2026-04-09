@@ -319,7 +319,7 @@ const BookDetail = () => {
 
             {/* Product Details — mobile only */}
             {(() => {
-              const rawFields = book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
+              const rawFields = book.category?.parent?.parent?.parent?.detailFields || book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
               let allowed = null;
               if (rawFields) { try { allowed = JSON.parse(rawFields); } catch {} }
               const show = (key) => !allowed || allowed.includes(key);
@@ -341,7 +341,7 @@ const BookDetail = () => {
               if (book.customFields) {
                 try {
                   const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
-                  const rawCF = book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+                  const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
                   let cfDefs = [];
                   if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
                   cfDefs.forEach((def) => {
@@ -382,7 +382,7 @@ const BookDetail = () => {
 
           {/* Product Details — right column */}
           {(() => {
-            const rawFields = book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
+            const rawFields = book.category?.parent?.parent?.parent?.detailFields || book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
             let allowed = null;
             if (rawFields) { try { allowed = JSON.parse(rawFields); } catch {} }
             const show = (key) => !allowed || allowed.includes(key);
@@ -404,7 +404,7 @@ const BookDetail = () => {
             if (book.customFields) {
               try {
                 const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
-                const rawCF = book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+                const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
                 let cfDefs = [];
                 if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
                 cfDefs.forEach((def) => {
@@ -419,7 +419,7 @@ const BookDetail = () => {
             if (items.length === 0) return null;
 
             return (
-              <div className="hidden lg:block flex-shrink-0 w-[280px] 3xl:w-[340px] h-fit">
+              <div className="hidden lg:block flex-shrink-0 w-[360px] 3xl:w-[440px] h-fit">
                 <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-4">{t('book.details')}</h3>
                 <div className="grid grid-cols-2 gap-2.5 3xl:gap-3">
                   {items.map((item, i) => (

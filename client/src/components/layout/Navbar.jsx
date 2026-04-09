@@ -308,14 +308,24 @@ const Navbar = () => {
                                 {subHasChildren && subExpanded && (
                                   <div className="ps-6 pb-0.5 space-y-0.5">
                                     {sub.children.map((l3) => (
-                                      <Link
-                                        key={l3.id}
-                                        to={`/books?category=${l3.slug}`}
-                                        onClick={() => setMobileOpen(false)}
-                                        className="block px-4 py-1.5 rounded-lg text-[13px] text-foreground/45 hover:text-accent hover:bg-surface-alt transition-colors"
-                                      >
-                                        {getName(l3)}
-                                      </Link>
+                                      <div key={l3.id}>
+                                        <Link
+                                          to={`/books?category=${l3.slug}`}
+                                          onClick={() => setMobileOpen(false)}
+                                          className="block px-4 py-1.5 rounded-lg text-[13px] text-foreground/45 hover:text-accent hover:bg-surface-alt transition-colors"
+                                        >
+                                          {getName(l3)}
+                                        </Link>
+                                        {l3.children && l3.children.length > 0 && (
+                                          <div className="ps-4 space-y-0.5">
+                                            {l3.children.map((l4) => (
+                                              <Link key={l4.id} to={`/books?category=${l4.slug}`} onClick={() => setMobileOpen(false)} className="block px-4 py-1 rounded-lg text-[12px] text-foreground/35 hover:text-accent hover:bg-surface-alt transition-colors">
+                                                {getName(l4)}
+                                              </Link>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
                                     ))}
                                   </div>
                                 )}

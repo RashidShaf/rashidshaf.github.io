@@ -64,15 +64,25 @@ export default function CategoryEdit() {
             if (cat.customFields) { try { setCustomFields(JSON.parse(cat.customFields)); } catch {} }
           }
           // Compute back URL based on hierarchy
+          const getAncestors = (c) => {
+            const chain = [];
+            let cur = c;
+            while (cur.parentId) {
+              cur = allCats.find((p) => p.id === cur.parentId);
+              if (cur) chain.unshift(cur.id);
+              else break;
+            }
+            return chain;
+          };
           if (!cat.parentId) {
             setBackUrl('/categories?tab=top');
           } else {
-            const parent = allCats.find((c) => c.id === cat.parentId);
-            if (parent && parent.parentId) {
-              // Level 3: go to Level 1 tab with Level 2 sub-tab
-              setBackUrl(`/categories?tab=${parent.parentId}&sub=${cat.parentId}`);
+            const ancestors = getAncestors(cat);
+            if (ancestors.length >= 3) {
+              setBackUrl(`/categories?tab=${ancestors[0]}&sub=${ancestors[1]}&sub2=${ancestors[2]}`);
+            } else if (ancestors.length === 2) {
+              setBackUrl(`/categories?tab=${ancestors[0]}&sub=${ancestors[1]}`);
             } else {
-              // Level 2: go to Level 1 tab
               setBackUrl(`/categories?tab=${cat.parentId}`);
             }
           }
@@ -116,14 +126,22 @@ export default function CategoryEdit() {
       toast.success(t('categories.updated'));
       // Navigate back to the correct tab
       const allCats = categories;
-      const parent = form.parentId ? allCats.find((c) => c.id === form.parentId) : null;
+      const getAncestorChain = (parentId) => {
+        const chain = [];
+        let cur = allCats.find((c) => c.id === parentId);
+        while (cur) {
+          chain.unshift(cur.id);
+          cur = cur.parentId ? allCats.find((c) => c.id === cur.parentId) : null;
+        }
+        return chain;
+      };
       if (!form.parentId) {
         navigate('/categories?tab=top');
-      } else if (parent && parent.parentId) {
-        // Level 3: go to Level 1 tab with Level 2 sub-tab
-        navigate(`/categories?tab=${parent.parentId}&sub=${form.parentId}`);
       } else {
-        navigate(`/categories?tab=${form.parentId}`);
+        const chain = getAncestorChain(form.parentId);
+        if (chain.length >= 3) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}&sub2=${chain[2]}`);
+        else if (chain.length === 2) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}`);
+        else navigate(`/categories?tab=${form.parentId}`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || t('categories.failedUpdate'));
@@ -161,13 +179,19 @@ export default function CategoryEdit() {
                   <label className={labelClass}>{t('categories.selectParent')}</label>
                   <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })} required className={inputClass}>
                     {categories.filter((c) => !c.parentId).map((topCat) => {
-                      const children = categories.filter((c) => c.parentId === topCat.id && c.id !== id);
+                      const l2 = categories.filter((c) => c.parentId === topCat.id && c.id !== id);
                       return (
                         <optgroup key={topCat.id} label={topCat.name}>
                           <option value={topCat.id}>{topCat.name}</option>
-                          {children.map((child) => (
-                            <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
-                          ))}
+                          {l2.map((child) => {
+                            const l3 = categories.filter((c) => c.parentId === child.id && c.id !== id);
+                            return [
+                              <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>,
+                              ...l3.map((gc) => (
+                                <option key={gc.id} value={gc.id}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ {gc.name}</option>
+                              )),
+                            ];
+                          })}
                         </optgroup>
                       );
                     })}

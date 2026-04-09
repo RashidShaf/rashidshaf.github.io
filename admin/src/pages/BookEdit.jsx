@@ -396,15 +396,39 @@ export default function BookEdit() {
                             <div className="ps-8 pb-2 space-y-0.5">
                               {subChildren.map((l3) => {
                                 const l3Checked = selectedCategoryIds.includes(l3.id);
+                                const l4Children = allCategories.filter((c) => c.parentId === l3.id);
+                                const l3Expanded = expandedSubs[l3.id];
                                 return (
-                                  <div key={l3.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded">
-                                    <input
-                                      type="checkbox"
-                                      checked={l3Checked}
-                                      onChange={() => toggleCategorySelect(l3.id)}
-                                      className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
-                                    />
-                                    <span className="text-sm text-admin-muted">{getName(l3)}</span>
+                                  <div key={l3.id}>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded">
+                                      <input
+                                        type="checkbox"
+                                        checked={l3Checked}
+                                        onChange={() => toggleCategorySelect(l3.id)}
+                                        className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                                      />
+                                      <span className="flex-1 text-sm text-admin-muted">{getName(l3)}</span>
+                                      {l4Children.length > 0 && (
+                                        <button type="button" onClick={() => setExpandedSubs((prev) => ({ ...prev, [l3.id]: !prev[l3.id] }))} className="p-0.5 text-admin-muted hover:text-admin-text">
+                                          <FiChevronDown size={12} className={`transition-transform ${l3Expanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                      )}
+                                    </div>
+                                    {l4Children.length > 0 && l3Expanded && (
+                                      <div className="ps-6 space-y-0.5">
+                                        {l4Children.map((l4) => (
+                                          <div key={l4.id} className="flex items-center gap-2 px-3 py-1 hover:bg-gray-50 rounded">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedCategoryIds.includes(l4.id)}
+                                              onChange={() => toggleCategorySelect(l4.id)}
+                                              className="w-3 h-3 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                                            />
+                                            <span className="text-xs text-admin-muted">{getName(l4)}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}

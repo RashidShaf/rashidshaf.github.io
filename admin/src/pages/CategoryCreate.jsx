@@ -53,14 +53,16 @@ export default function CategoryCreate() {
 
       await api.post('/admin/categories', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success(t('categories.created'));
-      // Navigate back: find the Level 1 ancestor for the tab
-      const parent = categories.find((c) => c.id === form.parentId);
-      if (parent && parent.parentId) {
-        // Parent is Level 2 — go to Level 1 tab with Level 2 sub-tab
-        navigate(`/categories?tab=${parent.parentId}&sub=${form.parentId}`);
-      } else {
-        navigate(`/categories?tab=${form.parentId}`);
+      // Navigate back: build ancestor chain for tabs
+      const chain = [];
+      let cur = categories.find((c) => c.id === form.parentId);
+      while (cur) {
+        chain.unshift(cur.id);
+        cur = cur.parentId ? categories.find((c) => c.id === cur.parentId) : null;
       }
+      if (chain.length >= 3) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}&sub2=${chain[2]}`);
+      else if (chain.length === 2) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}`);
+      else navigate(`/categories?tab=${form.parentId}`);
     } catch (err) {
       toast.error(err.response?.data?.message || t('categories.failedCreate'));
     } finally {
@@ -97,42 +99,79 @@ export default function CategoryCreate() {
                     if (parentFromUrl) {
                       const preselected = categories.find((c) => c.id === parentFromUrl);
                       if (preselected) {
-                        // If Level 1: show it + its Level 2 children
+                        // If Level 1: show it + L2 + L3 children
                         if (!preselected.parentId) {
-                          const children = categories.filter((c) => c.parentId === preselected.id);
+                          const l2 = categories.filter((c) => c.parentId === preselected.id);
                           return (
                             <optgroup key={preselected.id} label={preselected.name}>
                               <option value={preselected.id}>{preselected.name}</option>
-                              {children.map((child) => (
-                                <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
-                              ))}
+                              {l2.map((child) => {
+                                const l3 = categories.filter((c) => c.parentId === child.id);
+                                return [
+                                  <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>,
+                                  ...l3.map((gc) => (
+                                    <option key={gc.id} value={gc.id}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ {gc.name}</option>
+                                  )),
+                                ];
+                              })}
                             </optgroup>
                           );
                         }
-                        // If Level 2: show its Level 1 parent group with this pre-selected
+                        // If Level 2: show L1 parent + siblings + L3 children
                         const level1Parent = categories.find((c) => c.id === preselected.parentId);
-                        if (level1Parent) {
+                        if (level1Parent && !level1Parent.parentId) {
                           const siblings = categories.filter((c) => c.parentId === level1Parent.id);
                           return (
                             <optgroup key={level1Parent.id} label={level1Parent.name}>
                               <option value={level1Parent.id}>{level1Parent.name}</option>
-                              {siblings.map((child) => (
-                                <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
-                              ))}
+                              {siblings.map((child) => {
+                                const l3 = categories.filter((c) => c.parentId === child.id);
+                                return [
+                                  <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>,
+                                  ...l3.map((gc) => (
+                                    <option key={gc.id} value={gc.id}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ {gc.name}</option>
+                                  )),
+                                ];
+                              })}
+                            </optgroup>
+                          );
+                        }
+                        // If Level 3: show full ancestor chain
+                        if (level1Parent) {
+                          const l1 = categories.find((c) => c.id === level1Parent.parentId) || level1Parent;
+                          const l2 = categories.filter((c) => c.parentId === l1.id);
+                          return (
+                            <optgroup key={l1.id} label={l1.name}>
+                              <option value={l1.id}>{l1.name}</option>
+                              {l2.map((child) => {
+                                const l3 = categories.filter((c) => c.parentId === child.id);
+                                return [
+                                  <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>,
+                                  ...l3.map((gc) => (
+                                    <option key={gc.id} value={gc.id}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ {gc.name}</option>
+                                  )),
+                                ];
+                              })}
                             </optgroup>
                           );
                         }
                       }
                     }
-                    // Default: show all
+                    // Default: show all levels
                     return categories.filter((c) => !c.parentId).map((topCat) => {
-                      const children = categories.filter((c) => c.parentId === topCat.id);
+                      const l2 = categories.filter((c) => c.parentId === topCat.id);
                       return (
                         <optgroup key={topCat.id} label={topCat.name}>
                           <option value={topCat.id}>{topCat.name}</option>
-                          {children.map((child) => (
-                            <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>
-                          ))}
+                          {l2.map((child) => {
+                            const l3 = categories.filter((c) => c.parentId === child.id);
+                            return [
+                              <option key={child.id} value={child.id}>&nbsp;&nbsp;└ {child.name}</option>,
+                              ...l3.map((gc) => (
+                                <option key={gc.id} value={gc.id}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ {gc.name}</option>
+                              )),
+                            ];
+                          })}
                         </optgroup>
                       );
                     });

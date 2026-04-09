@@ -18,6 +18,7 @@ export default function Categories() {
   const [catSearch, setCatSearch] = useState('');
   const [selectedParent, setSelectedParent] = useState(searchParams.get('tab') || '');
   const [selectedLevel2, setSelectedLevel2] = useState(searchParams.get('sub') || '');
+  const [selectedLevel3, setSelectedLevel3] = useState(searchParams.get('sub2') || '');
   const [expandedRows, setExpandedRows] = useState({});
 
   const fetchCategories = async () => {
@@ -88,16 +89,23 @@ export default function Categories() {
   const parentCategories = categories.filter((c) => !c.parentId);
 
   const getDepth = (cat) => {
-    if (!cat.parentId) return 1;
-    const parent = categories.find((c) => c.id === cat.parentId);
-    if (!parent || !parent.parentId) return 2;
-    return 3;
+    let depth = 1;
+    let current = cat;
+    while (current.parentId) {
+      depth++;
+      current = categories.find((c) => c.id === current.parentId);
+      if (!current) break;
+    }
+    return depth;
   };
 
   // Only show Level 2 sub-tabs if selectedParent is actually a Level 1 category
   const isLevel1Selected = selectedParent && selectedParent !== 'top' && parentCategories.some((c) => c.id === selectedParent);
   const level2Categories = isLevel1Selected
     ? categories.filter((c) => c.parentId === selectedParent)
+    : [];
+  const level3Categories = selectedLevel2
+    ? categories.filter((c) => c.parentId === selectedLevel2)
     : [];
 
   // Determine what to show in the table
@@ -113,8 +121,11 @@ export default function Categories() {
       return result.filter((c) => !c.parentId);
     }
 
+    if (selectedLevel3) {
+      return result.filter((c) => c.parentId === selectedLevel3);
+    }
+
     if (selectedLevel2) {
-      // Show Level 3 children of selected Level 2
       return result.filter((c) => c.parentId === selectedLevel2);
     }
 
@@ -160,6 +171,7 @@ export default function Categories() {
 
   // Determine what the Create button's parent should be
   const getCreateParent = () => {
+    if (selectedLevel3) return selectedLevel3;
     if (selectedLevel2) return selectedLevel2;
     if (selectedParent && selectedParent !== 'top') return selectedParent;
     return '';
@@ -186,7 +198,7 @@ export default function Categories() {
       {/* Level 1 Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         <button
-          onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); }}
+          onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); setSelectedLevel3(''); }}
           className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === 'top' ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
         >
           Top Level
@@ -194,7 +206,7 @@ export default function Categories() {
         {parentCategories.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); }}
+            onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); setSelectedLevel3(''); }}
             className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             {getName(cat)}
@@ -206,7 +218,7 @@ export default function Categories() {
       {level2Categories.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
           <button
-            onClick={() => setSelectedLevel2('')}
+            onClick={() => { setSelectedLevel2(''); setSelectedLevel3(''); }}
             className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             All {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
@@ -214,8 +226,29 @@ export default function Categories() {
           {level2Categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedLevel2(cat.id)}
+              onClick={() => { setSelectedLevel2(cat.id); setSelectedLevel3(''); }}
               className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${selectedLevel2 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+            >
+              {getName(cat)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Level 3 Sub-tabs */}
+      {level3Categories.length > 0 && (
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-4" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setSelectedLevel3('')}
+            className={`px-4 py-1.5 3xl:px-5 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${!selectedLevel3 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+          >
+            All {getName(level2Categories.find((c) => c.id === selectedLevel2) || {})}
+          </button>
+          {level3Categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedLevel3(cat.id)}
+              className={`px-4 py-1.5 3xl:px-5 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${selectedLevel3 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
             >
               {getName(cat)}
             </button>
@@ -272,15 +305,15 @@ export default function Categories() {
                   const isParent = !cat.parentId;
                   const isBooks = isParent && cat.slug === 'books';
                   const depth = getDepth(cat);
-                  const level3Children = categories.filter((c) => c.parentId === cat.id);
-                  const hasLevel3 = depth === 2 && level3Children.length > 0 && !selectedLevel2;
+                  const childCats = categories.filter((c) => c.parentId === cat.id);
+                  const hasChildren = childCats.length > 0 && !selectedLevel2 && !selectedLevel3;
                   const isExpanded = expandedRows[cat.id];
 
                   const renderRow = (rowCat, rowDepth, isChild = false) => (
                     <tr
                       key={rowCat.id}
-                      onClick={() => { if (hasLevel3 && !isChild) setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] })); }}
-                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasLevel3 && !isChild ? 'cursor-pointer' : ''}`}
+                      onClick={() => { if (hasChildren && !isChild) setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] })); }}
+                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasChildren && !isChild ? 'cursor-pointer' : ''}`}
                     >
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <div className={`${isChild ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg overflow-hidden bg-gray-100 flex-shrink-0`}>
@@ -319,7 +352,7 @@ export default function Categories() {
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          {hasLevel3 && !isChild && (
+                          {hasChildren && !isChild && (
                             <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.expand')}>
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
@@ -346,7 +379,7 @@ export default function Categories() {
                   return (
                     <React.Fragment key={cat.id}>
                       {renderRow(cat, depth)}
-                      {hasLevel3 && isExpanded && level3Children.map((child) => renderRow(child, 3, true))}
+                      {hasChildren && isExpanded && childCats.map((child) => renderRow(child, getDepth(child), true))}
                     </React.Fragment>
                   );
                 })

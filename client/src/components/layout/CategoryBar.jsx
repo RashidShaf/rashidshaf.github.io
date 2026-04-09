@@ -14,14 +14,24 @@ const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => (
     {sub.children && sub.children.length > 0 && (
       <div className="mt-1.5 space-y-0.5">
         {sub.children.map((l3) => (
-          <Link
-            key={l3.id}
-            to={`/books?category=${l3.slug}`}
-            onClick={onLinkClick}
-            className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
-          >
-            {getName(l3)}
-          </Link>
+          <div key={l3.id}>
+            <Link
+              to={`/books?category=${l3.slug}`}
+              onClick={onLinkClick}
+              className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
+            >
+              {getName(l3)}
+            </Link>
+            {l3.children && l3.children.length > 0 && (
+              <div className="ps-3 space-y-0.5">
+                {l3.children.map((l4) => (
+                  <Link key={l4.id} to={`/books?category=${l4.slug}`} onClick={onLinkClick} className="block text-[12px] 3xl:text-xs text-foreground/45 hover:text-accent transition-colors py-0.5">
+                    {getName(l4)}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </div>
     )}
@@ -102,7 +112,7 @@ const CategoryBar = ({ categories = [] }) => {
             const selectedSlugs = currentCategory ? currentCategory.split(',').filter(Boolean) : [];
             const isActive = selectedSlugs.includes(cat.slug) ||
               cat.children?.some((sub) => selectedSlugs.includes(sub.slug) ||
-                sub.children?.some((l3) => selectedSlugs.includes(l3.slug)));
+                sub.children?.some((l3) => selectedSlugs.includes(l3.slug) || l3.children?.some((l4) => selectedSlugs.includes(l4.slug))));
             return (
               <div
                 key={cat.id}

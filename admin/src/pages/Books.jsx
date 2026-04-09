@@ -23,6 +23,7 @@ export default function Books() {
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
   const [selectedSub, setSelectedSub] = useState('');
   const [selectedL3, setSelectedL3] = useState('');
+  const [selectedL4, setSelectedL4] = useState('');
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
@@ -50,7 +51,8 @@ export default function Books() {
     try {
       const params = new URLSearchParams({ page, limit });
       if (search) params.set('search', search);
-      if (selectedL3) params.set('category', selectedL3);
+      if (selectedL4) params.set('category', selectedL4);
+      else if (selectedL3) params.set('category', selectedL3);
       else if (selectedSub) params.set('category', selectedSub);
       else if (selectedTab) params.set('category', selectedTab);
       const res = await api.get(`/admin/books?${params}`);
@@ -63,7 +65,7 @@ export default function Books() {
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3]);
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setPage(1); fetchBooks(); }, 300);
@@ -74,17 +76,25 @@ export default function Books() {
     setSelectedTab(tabId);
     setSelectedSub('');
     setSelectedL3('');
+    setSelectedL4('');
     setPage(1);
   };
 
   const handleSubChange = (subId) => {
     setSelectedSub(subId);
     setSelectedL3('');
+    setSelectedL4('');
     setPage(1);
   };
 
   const handleL3Change = (l3Id) => {
     setSelectedL3(l3Id);
+    setSelectedL4('');
+    setPage(1);
+  };
+
+  const handleL4Change = (l4Id) => {
+    setSelectedL4(l4Id);
     setPage(1);
   };
 
@@ -92,6 +102,8 @@ export default function Books() {
   const subCategories = selectedTab ? allCategories.filter((c) => c.parentId === selectedTab) : [];
   // Get L3 categories for selected L2
   const l3Categories = selectedSub ? allCategories.filter((c) => c.parentId === selectedSub) : [];
+  // Get L4 categories for selected L3
+  const l4Categories = selectedL3 ? allCategories.filter((c) => c.parentId === selectedL3) : [];
 
   const getTabName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
@@ -212,6 +224,30 @@ export default function Books() {
                   onClick={() => handleL3Change(cat.id)}
                   className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
                     selectedL3 === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+                  }`}
+                >
+                  {getTabName(cat)}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Level 4 */}
+          {l4Categories.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-admin-border/50 overflow-x-auto ps-2" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => handleL4Change('')}
+                className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedL4 === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+                }`}
+              >
+                {t('common.all')} {getTabName(l3Categories.find((c) => c.id === selectedL3) || {})}
+              </button>
+              {l4Categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleL4Change(cat.id)}
+                  className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-colors ${
+                    selectedL4 === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
                   }`}
                 >
                   {getTabName(cat)}

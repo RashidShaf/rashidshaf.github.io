@@ -30,30 +30,24 @@ exports.list = async (req, res, next) => {
       });
     }
 
-    // Category filter — supports multiple comma-separated slugs, includes sub-categories (3 levels)
+    // Category filter — supports multiple comma-separated slugs, includes sub-categories (4 levels)
     if (category) {
       const slugs = category.split(',').map(s => s.trim()).filter(Boolean);
       const cats = await prisma.category.findMany({
         where: { slug: { in: slugs } },
         include: {
           children: {
-            select: { id: true, children: { select: { id: true } } },
+            select: { id: true, children: { select: { id: true, children: { select: { id: true } } } } },
           },
         },
       });
       if (cats.length > 0) {
         const allIds = [];
-        cats.forEach(cat => {
+        const collectIds = (cat) => {
           allIds.push(cat.id);
-          if (cat.children) {
-            cat.children.forEach(child => {
-              allIds.push(child.id);
-              if (child.children) {
-                child.children.forEach(gc => allIds.push(gc.id));
-              }
-            });
-          }
-        });
+          cat.children?.forEach((child) => collectIds(child));
+        };
+        cats.forEach(collectIds);
         where.AND.push({
           OR: [
             { categoryId: { in: allIds } },
@@ -174,7 +168,9 @@ exports.getBySlug = async (req, res, next) => {
           select: {
             id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true, customFields: true,
             parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true,
-              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true } },
+              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true,
+                parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true } },
+              } },
             } },
           },
         },
@@ -216,20 +212,14 @@ const getCornerCategoryIds = async (cornerSlug) => {
     where: { slug: cornerSlug },
     include: {
       children: {
-        select: { id: true, children: { select: { id: true } } },
+        select: { id: true, children: { select: { id: true, children: { select: { id: true } } } } },
       },
     },
   });
   if (!cat) return null;
-  const allIds = [cat.id];
-  if (cat.children) {
-    cat.children.forEach(child => {
-      allIds.push(child.id);
-      if (child.children) {
-        child.children.forEach(gc => allIds.push(gc.id));
-      }
-    });
-  }
+  const allIds = [];
+  const collect = (c) => { allIds.push(c.id); c.children?.forEach(collect); };
+  collect(cat);
   return allIds;
 };
 
@@ -357,16 +347,11 @@ exports.filters = async (req, res, next) => {
       const slugs = category.split(',').map(s => s.trim()).filter(Boolean);
       const cats = await prisma.category.findMany({
         where: { slug: { in: slugs } },
-        include: { children: { select: { id: true, children: { select: { id: true } } } } },
+        include: { children: { select: { id: true, children: { select: { id: true, children: { select: { id: true } } } } } } },
       });
       const allIds = [];
-      cats.forEach(cat => {
-        allIds.push(cat.id);
-        cat.children?.forEach(child => {
-          allIds.push(child.id);
-          child.children?.forEach(gc => allIds.push(gc.id));
-        });
-      });
+      const collectIds = (c) => { allIds.push(c.id); c.children?.forEach(collectIds); };
+      cats.forEach(collectIds);
       where.OR = [
         { categoryId: { in: allIds } },
         { bookCategories: { some: { categoryId: { in: allIds } } } },
