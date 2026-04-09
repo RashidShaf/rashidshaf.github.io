@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import useLanguageStore from '../../stores/useLanguageStore';
 
 const L3Item = ({ l3, getName, onLinkClick }) => {
@@ -27,19 +27,18 @@ const L3Item = ({ l3, getName, onLinkClick }) => {
   );
 };
 
-const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => {
-  const [hovered, setHovered] = useState(false);
+const SubcategoryColumn = ({ sub, getName, language, onLinkClick, isExpanded, onHover }) => {
   const hasChildren = sub.children && sub.children.length > 0;
   return (
-    <div className="min-w-[150px]" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <div className="min-w-[150px]" onMouseEnter={() => onHover(sub.id)}>
       <Link
         to={`/books?category=${sub.slug}`}
         onClick={onLinkClick}
-        className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
+        className={`text-sm 3xl:text-base font-semibold transition-colors pb-1.5 mb-2 block ${isExpanded && hasChildren ? 'text-accent border-b border-accent/30' : 'text-primary hover:text-accent border-b border-primary/20'}`}
       >
         {getName(sub)}
       </Link>
-      {hasChildren && hovered && (
+      {hasChildren && isExpanded && (
         <div className="mt-1.5 space-y-0.5">
           {sub.children.map((l3) => (
             <L3Item key={l3.id} l3={l3} getName={getName} onLinkClick={onLinkClick} />
@@ -54,21 +53,34 @@ const CategoryBar = ({ categories = [] }) => {
   const { t, language } = useLanguageStore();
   const [searchParams] = useSearchParams();
   const [hoveredId, setHoveredId] = useState(null);
+  const [hoveredSubId, setHoveredSubId] = useState(null);
   const closeTimeout = useRef(null);
   const itemRefs = useRef({});
   const barRef = useRef(null);
   const [menuStyle, setMenuStyle] = useState({});
 
+  const location = useLocation();
+  const hoverDisabled = useRef(false);
   const currentCategory = searchParams.get('category') || '';
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
+  useEffect(() => {
+    setHoveredId(null);
+    hoverDisabled.current = true;
+    const timer = setTimeout(() => { hoverDisabled.current = false; }, 300);
+    return () => clearTimeout(timer);
+  }, [location.pathname, location.search]);
+
   const handleEnter = (id) => {
+    if (hoverDisabled.current) return;
     clearTimeout(closeTimeout.current);
+    if (id !== hoveredId) setHoveredSubId(null);
     setHoveredId(id);
   };
 
   const handleLeave = () => {
     setHoveredId(null);
+    setHoveredSubId(null);
   };
 
   const handleClick = () => {
@@ -154,7 +166,7 @@ const CategoryBar = ({ categories = [] }) => {
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="flex gap-8">
                 {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} />
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} isExpanded={hoveredSubId === sub.id} onHover={setHoveredSubId} />
                 ))}
               </div>
             </div>
@@ -168,7 +180,7 @@ const CategoryBar = ({ categories = [] }) => {
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
                 {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} />
+                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} isExpanded={hoveredSubId === sub.id} onHover={setHoveredSubId} />
                 ))}
               </div>
             </div>
