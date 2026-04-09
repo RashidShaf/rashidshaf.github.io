@@ -175,7 +175,7 @@ const BookDetail = () => {
 
               {/* Main cover */}
               <div className="flex-1 flex justify-center sm:justify-start">
-              <div className="relative w-[160px] sm:w-[320px] 3xl:w-[405px] h-[200px] sm:h-[400px] 3xl:h-[506px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="relative w-[260px] sm:w-[320px] 3xl:w-[405px] h-[325px] sm:h-[400px] 3xl:h-[506px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
