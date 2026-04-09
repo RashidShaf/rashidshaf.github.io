@@ -2,48 +2,60 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import useLanguageStore from '../../stores/useLanguageStore';
 
-const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => (
-  <div className="min-w-[150px]">
-    <Link
-      to={`/books?category=${sub.slug}`}
-      onClick={onLinkClick}
-      className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
-    >
-      {getName(sub)}
-    </Link>
-    {sub.children && sub.children.length > 0 && (
-      <div className="mt-1.5 space-y-0.5">
-        {sub.children.map((l3) => (
-          <div key={l3.id}>
-            <Link
-              to={`/books?category=${l3.slug}`}
-              onClick={onLinkClick}
-              className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
-            >
-              {getName(l3)}
+const L3Item = ({ l3, getName, onLinkClick }) => {
+  const [hovered, setHovered] = useState(false);
+  const hasChildren = l3.children && l3.children.length > 0;
+  return (
+    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <Link
+        to={`/books?category=${l3.slug}`}
+        onClick={onLinkClick}
+        className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
+      >
+        {getName(l3)}
+      </Link>
+      {hasChildren && hovered && (
+        <div className="ps-3 space-y-0.5">
+          {l3.children.map((l4) => (
+            <Link key={l4.id} to={`/books?category=${l4.slug}`} onClick={onLinkClick} className="block text-[12px] 3xl:text-xs text-foreground/45 hover:text-accent transition-colors py-0.5">
+              {getName(l4)}
             </Link>
-            {l3.children && l3.children.length > 0 && (
-              <div className="ps-3 space-y-0.5">
-                {l3.children.map((l4) => (
-                  <Link key={l4.id} to={`/books?category=${l4.slug}`} onClick={onLinkClick} className="block text-[12px] 3xl:text-xs text-foreground/45 hover:text-accent transition-colors py-0.5">
-                    {getName(l4)}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-    <Link
-      to={`/books?category=${sub.slug}`}
-      onClick={onLinkClick}
-      className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
-    >
-      {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
-    </Link>
-  </div>
-);
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SubcategoryColumn = ({ sub, getName, language, onLinkClick }) => {
+  const [hovered, setHovered] = useState(false);
+  const hasChildren = sub.children && sub.children.length > 0;
+  return (
+    <div className="min-w-[150px]" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <Link
+        to={`/books?category=${sub.slug}`}
+        onClick={onLinkClick}
+        className="text-sm 3xl:text-base font-semibold text-primary hover:text-accent transition-colors border-b border-primary/20 pb-1.5 mb-2 block"
+      >
+        {getName(sub)}
+      </Link>
+      {hasChildren && hovered && (
+        <div className="mt-1.5 space-y-0.5">
+          {sub.children.map((l3) => (
+            <L3Item key={l3.id} l3={l3} getName={getName} onLinkClick={onLinkClick} />
+          ))}
+        </div>
+      )}
+      <Link
+        to={`/books?category=${sub.slug}`}
+        onClick={onLinkClick}
+        className="block text-[13px] 3xl:text-sm text-accent hover:text-accent-light transition-colors py-0.5 mt-1.5 font-medium"
+      >
+        {language === 'ar' ? 'تصفح الكل ←' : 'Browse All →'}
+      </Link>
+    </div>
+  );
+};
 
 const CategoryBar = ({ categories = [] }) => {
   const { t, language } = useLanguageStore();
