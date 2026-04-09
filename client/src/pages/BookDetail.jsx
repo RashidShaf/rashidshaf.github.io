@@ -175,7 +175,7 @@ const BookDetail = () => {
 
               {/* Main cover */}
               <div className="flex-1 flex justify-center sm:justify-start">
-              <div className="relative w-[260px] sm:w-[320px] 3xl:w-[405px] h-[325px] sm:h-[400px] 3xl:h-[506px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
@@ -370,6 +370,14 @@ const BookDetail = () => {
               );
             })()}
 
+            {/* Description — mobile only */}
+            {description && (
+              <div className="lg:hidden mt-5 pt-4 border-t border-muted/10">
+                <h3 className="text-base font-semibold text-foreground mb-2">{t('book.description')}</h3>
+                <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line">{description}</p>
+              </div>
+            )}
+
           </motion.div>
 
           {/* Product Details — right column */}
@@ -421,18 +429,16 @@ const BookDetail = () => {
                     </div>
                   ))}
                 </div>
+                {description && (
+                  <div className="mt-5 pt-4 border-t border-muted/10">
+                    <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-2">{t('book.description')}</h3>
+                    <p className="text-foreground/70 text-sm 3xl:text-base leading-relaxed whitespace-pre-line">{description}</p>
+                  </div>
+                )}
               </div>
             );
           })()}
         </div>
-
-        {/* Description — aligned with title */}
-        {description && (
-          <div className="mt-8 lg:ps-[424px] 3xl:ps-[510px]">
-            <h3 className="text-lg font-semibold text-foreground mb-3">{t('book.description')}</h3>
-            <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line max-w-4xl">{description}</p>
-          </div>
-        )}
 
         {/* Review Modal */}
         {reviewModalOpen && (
