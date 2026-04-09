@@ -419,7 +419,7 @@ const BookDetail = () => {
             if (items.length === 0) return null;
 
             return (
-              <div className="hidden lg:block flex-shrink-0 w-[360px] 3xl:w-[440px] h-fit">
+              <div className="hidden lg:block flex-1 min-w-[300px] max-w-[360px] 3xl:max-w-[600px] h-fit">
                 <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-4">{t('book.details')}</h3>
                 <div className="grid grid-cols-2 gap-2.5 3xl:gap-3">
                   {items.map((item, i) => (
