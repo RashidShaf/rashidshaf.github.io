@@ -44,16 +44,12 @@ const Books = () => {
   const [availableBrands, setAvailableBrands] = useState([]);
   const [availableColors, setAvailableColors] = useState([]);
   const [availableMaterials, setAvailableMaterials] = useState([]);
-  const [authorsOpen, setAuthorsOpen] = useState(false);
-  const [publishersOpen, setPublishersOpen] = useState(false);
-  const [brandsOpen, setBrandsOpen] = useState(false);
-  const [colorsOpen, setColorsOpen] = useState(false);
-  const [materialsOpen, setMaterialsOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
+  const [openFilter, setOpenFilter] = useState(null);
   const [categoryBanners, setCategoryBanners] = useState([]);
   const [filterConfig, setFilterConfig] = useState(null);
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
+  const filterDropdownRef = useRef(null);
 
   const toggleExpand = (catId) => {
     setExpandedCats((prev) => ({ ...prev, [catId]: !prev[catId] }));
@@ -64,6 +60,7 @@ const Books = () => {
     const handleClick = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
       if (sectionRef.current && !sectionRef.current.contains(e.target)) setSectionOpen(false);
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) setOpenFilter(null);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -406,6 +403,132 @@ const Books = () => {
     return `${t('books.browse')} ${names.join(' & ')}`;
   };
 
+  // Build the list of filter dropdown definitions visible in the header bar
+  const getVisibleFilters = () => {
+    const keyToLabel = {
+      author: t('books.author'),
+      publisher: t('books.publisher'),
+      language: t('books.language'),
+      brand: t('books.brand'),
+      color: t('books.color'),
+      material: t('books.material'),
+    };
+
+    const filterDefs = {
+      language: {
+        key: 'language',
+        label: keyToLabel.language,
+        items: [
+          { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
+          { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
+        ],
+        selected: bookLang ? [bookLang] : [],
+        isRadio: true,
+        onToggle: (val) => updateParam('language', bookLang === val ? '' : val),
+        hasItems: true,
+      },
+      author: {
+        key: 'author',
+        label: keyToLabel.author,
+        items: availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => ({
+          value: typeof item === 'string' ? item : item.value,
+          label: typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value),
+        })),
+        selected: selectedAuthors,
+        onToggle: (val) => {
+          const next = selectedAuthors.includes(val) ? selectedAuthors.filter((a) => a !== val) : [...selectedAuthors, val];
+          updateParam('author', next.join(','));
+        },
+        hasItems: availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
+      },
+      publisher: {
+        key: 'publisher',
+        label: keyToLabel.publisher,
+        items: availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => ({
+          value: typeof item === 'string' ? item : item.value,
+          label: typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value),
+        })),
+        selected: selectedPublishers,
+        onToggle: (val) => {
+          const next = selectedPublishers.includes(val) ? selectedPublishers.filter((p) => p !== val) : [...selectedPublishers, val];
+          updateParam('publisher', next.join(','));
+        },
+        hasItems: availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
+      },
+      brand: {
+        key: 'brand',
+        label: keyToLabel.brand,
+        items: availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => ({
+          value: typeof item === 'string' ? item : item.value,
+          label: typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value),
+        })),
+        selected: selectedBrands,
+        onToggle: (val) => {
+          const next = selectedBrands.includes(val) ? selectedBrands.filter((b) => b !== val) : [...selectedBrands, val];
+          updateParam('brand', next.join(','));
+        },
+        hasItems: availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
+      },
+      color: {
+        key: 'color',
+        label: keyToLabel.color,
+        items: availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => ({
+          value: typeof item === 'string' ? item : item.value,
+          label: typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value),
+        })),
+        selected: selectedColors,
+        onToggle: (val) => {
+          const next = selectedColors.includes(val) ? selectedColors.filter((c) => c !== val) : [...selectedColors, val];
+          updateParam('color', next.join(','));
+        },
+        hasItems: availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
+      },
+      material: {
+        key: 'material',
+        label: keyToLabel.material,
+        items: availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => ({
+          value: typeof item === 'string' ? item : item.value,
+          label: typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value),
+        })),
+        selected: selectedMaterials,
+        onToggle: (val) => {
+          const next = selectedMaterials.includes(val) ? selectedMaterials.filter((m) => m !== val) : [...selectedMaterials, val];
+          updateParam('material', next.join(','));
+        },
+        hasItems: availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
+      },
+    };
+
+    // If filterConfig is an empty array, show no filters
+    if (Array.isArray(filterConfig) && filterConfig.length === 0) {
+      return [];
+    }
+
+    // If filterConfig has entries, use it to control which filters appear and in what order
+    if (filterConfig && filterConfig.length > 0) {
+      return filterConfig
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+        .map((fc) => filterDefs[fc.fieldKey])
+        .filter((def) => def && def.hasItems);
+    }
+
+    // Fallback: hardcoded filter behavior (backwards compatible)
+    const result = [];
+    if (isBooksDept || !scopedParentSlug) {
+      if (filterDefs.language.hasItems) result.push(filterDefs.language);
+      if (filterDefs.author.hasItems) result.push(filterDefs.author);
+      if (filterDefs.publisher.hasItems) result.push(filterDefs.publisher);
+    }
+    if (!isBooksDept || !scopedParentSlug) {
+      if (filterDefs.brand.hasItems) result.push(filterDefs.brand);
+      if (filterDefs.color.hasItems) result.push(filterDefs.color);
+      if (filterDefs.material.hasItems) result.push(filterDefs.material);
+    }
+    return result;
+  };
+
+  const visibleFilters = getVisibleFilters();
+
   return (
     <PageTransition>
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4">
@@ -554,285 +677,6 @@ const Books = () => {
               </div>
               )}
 
-              {/* Dynamic filter sections — driven by filterConfig or hardcoded fallback */}
-              {(() => {
-                // Render a filter section by fieldKey, with a custom title
-                const renderFilterSection = (fieldKey, title) => {
-                  if (fieldKey === 'language') {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setLanguageOpen(!languageOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${languageOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {languageOpen && (
-                          <div className="space-y-0.5">
-                            {[
-                              { value: 'en', label: language === 'ar' ? 'إنجليزي' : 'English' },
-                              { value: 'ar', label: language === 'ar' ? 'عربي' : 'Arabic' },
-                            ].map((opt) => {
-                              const isSelected = bookLang === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  onClick={() => updateParam('language', isSelected ? '' : opt.value)}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (fieldKey === 'author' && availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setAuthorsOpen(!authorsOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${authorsOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {authorsOpen && (
-                          <div className="space-y-0.5">
-                            {availableAuthors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
-                              const val = typeof item === 'string' ? item : item.value;
-                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
-                              const isSelected = selectedAuthors.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  onClick={() => {
-                                    const next = isSelected ? selectedAuthors.filter((a) => a !== val) : [...selectedAuthors, val];
-                                    updateParam('author', next.join(','));
-                                  }}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (fieldKey === 'publisher' && availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setPublishersOpen(!publishersOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${publishersOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {publishersOpen && (
-                          <div className="space-y-0.5">
-                            {availablePublishers.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
-                              const val = typeof item === 'string' ? item : item.value;
-                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
-                              const isSelected = selectedPublishers.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  onClick={() => {
-                                    const next = isSelected ? selectedPublishers.filter((p) => p !== val) : [...selectedPublishers, val];
-                                    updateParam('publisher', next.join(','));
-                                  }}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (fieldKey === 'brand' && availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setBrandsOpen(!brandsOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${brandsOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {brandsOpen && (
-                          <div className="space-y-0.5">
-                            {availableBrands.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
-                              const val = typeof item === 'string' ? item : item.value;
-                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
-                              const isSelected = selectedBrands.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  onClick={() => {
-                                    const next = isSelected ? selectedBrands.filter((b) => b !== val) : [...selectedBrands, val];
-                                    updateParam('brand', next.join(','));
-                                  }}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (fieldKey === 'color' && availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setColorsOpen(!colorsOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${colorsOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {colorsOpen && (
-                          <div className="space-y-0.5">
-                            {availableColors.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
-                              const val = typeof item === 'string' ? item : item.value;
-                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
-                              const isSelected = selectedColors.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  onClick={() => {
-                                    const next = isSelected ? selectedColors.filter((c) => c !== val) : [...selectedColors, val];
-                                    updateParam('color', next.join(','));
-                                  }}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (fieldKey === 'material' && availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0) {
-                    return (
-                      <div key={fieldKey} className="mb-6">
-                        <button
-                          onClick={() => setMaterialsOpen(!materialsOpen)}
-                          className="w-full flex items-center justify-between text-xs 3xl:text-base font-semibold text-foreground/50 uppercase tracking-wider mb-2"
-                        >
-                          {title}
-                          <FiChevronDown size={14} className={`transition-transform ${materialsOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {materialsOpen && (
-                          <div className="space-y-0.5">
-                            {availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).map((item) => {
-                              const val = typeof item === 'string' ? item : item.value;
-                              const label = typeof item === 'string' ? item : (language === 'ar' && item.valueAr ? item.valueAr : item.value);
-                              const isSelected = selectedMaterials.includes(val);
-                              return (
-                                <button
-                                  key={val}
-                                  onClick={() => {
-                                    const next = isSelected ? selectedMaterials.filter((m) => m !== val) : [...selectedMaterials, val];
-                                    updateParam('material', next.join(','));
-                                  }}
-                                  className={`w-full flex items-center gap-2 text-start py-1.5 text-sm transition-colors ${
-                                    isSelected ? 'text-accent font-medium' : 'text-foreground/70 hover:text-accent'
-                                  }`}
-                                >
-                                  <span className={`w-3 h-3 rounded border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
-                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
-                                  </span>
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  return null;
-                };
-
-                // If we fetched filter config and it's empty, admin wants no filters — show nothing
-                if (Array.isArray(filterConfig) && filterConfig.length === 0) {
-                  return null;
-                }
-
-                // If filterConfig is available and has entries, use it to control which filters appear and in what order
-                if (filterConfig && filterConfig.length > 0) {
-                  const keyToLabel = {
-                    author: t('books.author'),
-                    publisher: t('books.publisher'),
-                    language: t('books.language'),
-                    brand: t('books.brand'),
-                    color: t('books.color'),
-                    material: t('books.material'),
-                    price: t('books.price'),
-                  };
-                  return filterConfig
-                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                    .map((filter) => renderFilterSection(filter.fieldKey, keyToLabel[filter.fieldKey] || filter.fieldKey));
-                }
-
-                // Fallback: hardcoded filter behavior (backwards compatible)
-                return (
-                  <>
-                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('language', t('books.language'))}
-                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('author', t('books.author'))}
-                    {(isBooksDept || !scopedParentSlug) && renderFilterSection('publisher', t('books.publisher'))}
-                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('brand', t('books.brand'))}
-                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('color', t('books.color'))}
-                    {(!isBooksDept || !scopedParentSlug) && renderFilterSection('material', t('books.material'))}
-                  </>
-                );
-              })()}
-
               {/* Clear Filters */}
               {hasActiveFilters && (
                 <button
@@ -874,7 +718,7 @@ const Books = () => {
             })()}
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div className="flex items-center justify-between gap-4 mb-3">
               <div>
                 <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground">
                   {getPageTitle()}
@@ -884,69 +728,128 @@ const Books = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {/* Collection filter */}
-                <div className="relative" ref={sectionRef}>
-                  <button
-                    onClick={() => { setSectionOpen(!sectionOpen); setSortOpen(false); }}
-                    className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
-                  >
-                    {t(sectionOptions.find((o) => o.value === section)?.labelKey || 'books.section')}
-                    <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60 transition-transform ${sectionOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {sectionOpen && (
-                    <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
-                      {sectionOptions.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => { updateParam('section', opt.value); setSectionOpen(false); }}
-                          className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
-                            section === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
-                          }`}
-                        >
-                          {t(opt.labelKey)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className={`lg:hidden flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                  hasActiveFilters ? 'border-accent text-accent bg-accent/5' : 'border-muted/15 text-foreground'
+                }`}
+              >
+                <FiFilter size={16} />
+                {t('books.filters')}
+              </button>
+            </div>
 
-                {/* Sort */}
-                <div className="relative" ref={sortRef}>
-                  <button
-                    onClick={() => { setSortOpen(!sortOpen); setSectionOpen(false); }}
-                    className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-4 py-2 pe-9 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer"
-                  >
-                    {t(sortOptions.find((o) => o.value === sort)?.labelKey || sortOptions[0].labelKey)}
-                    <FiChevronDown className={`absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60 transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {sortOpen && (
-                    <div className="absolute top-full mt-1 left-0 sm:left-auto sm:right-0 rtl:left-auto rtl:right-0 rtl:sm:right-auto rtl:sm:left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
-                      {sortOptions.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => { updateParam('sort', opt.value); setSortOpen(false); }}
-                          className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
-                            sort === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
-                          }`}
-                        >
-                          {t(opt.labelKey)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
+            {/* Filter Bar */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap" ref={filterDropdownRef}>
+              {/* Section */}
+              <div className="relative flex-shrink-0" ref={sectionRef}>
                 <button
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  className={`lg:hidden flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                    hasActiveFilters ? 'border-accent text-accent bg-accent/5' : 'border-muted/15 text-foreground'
-                  }`}
+                  onClick={() => { setSectionOpen(!sectionOpen); setSortOpen(false); setOpenFilter(null); }}
+                  className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-3 py-1.5 pe-8 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer whitespace-nowrap"
                 >
-                  <FiFilter size={16} />
-                  {t('books.filters')}
+                  {t(sectionOptions.find((o) => o.value === section)?.labelKey || 'books.section')}
+                  <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${sectionOpen ? 'rotate-180' : ''}`} />
                 </button>
+                {sectionOpen && (
+                  <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                    {sectionOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { updateParam('section', opt.value); setSectionOpen(false); }}
+                        className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
+                          section === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                        }`}
+                      >
+                        {t(opt.labelKey)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Sort */}
+              <div className="relative flex-shrink-0" ref={sortRef}>
+                <button
+                  onClick={() => { setSortOpen(!sortOpen); setSectionOpen(false); setOpenFilter(null); }}
+                  className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-3 py-1.5 pe-8 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer whitespace-nowrap"
+                >
+                  {t(sortOptions.find((o) => o.value === sort)?.labelKey || sortOptions[0].labelKey)}
+                  <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {sortOpen && (
+                  <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                    {sortOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { updateParam('sort', opt.value); setSortOpen(false); }}
+                        className={`w-full text-start px-4 py-2.5 text-sm transition-colors ${
+                          sort === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                        }`}
+                      >
+                        {t(opt.labelKey)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Divider */}
+              {visibleFilters.length > 0 && <div className="w-px h-6 bg-muted/20 flex-shrink-0" />}
+
+              {/* Filters */}
+                {visibleFilters.map((filterDef) => {
+                  const isOpen = openFilter === filterDef.key;
+                  const count = filterDef.selected.length;
+                  return (
+                    <div key={filterDef.key} className="relative flex-shrink-0">
+                      <button
+                        onClick={() => { setOpenFilter(isOpen ? null : filterDef.key); setSortOpen(false); setSectionOpen(false); }}
+                        className={`flex items-center gap-2 bg-surface border rounded-lg px-3 py-1.5 pe-8 text-sm focus:outline-none focus:border-accent cursor-pointer transition-colors whitespace-nowrap ${
+                          count > 0 ? 'border-accent text-accent' : 'border-muted/40 text-foreground'
+                        }`}
+                      >
+                        {filterDef.label}{count > 0 ? ` (${count})` : ''}
+                        <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isOpen && (
+                        <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[200px] py-1">
+                          <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                            {filterDef.items.map((item) => {
+                              const isSelected = filterDef.selected.includes(item.value);
+                              return (
+                                <button
+                                  key={item.value}
+                                  onClick={() => filterDef.onToggle(item.value)}
+                                  className={`w-full flex items-center gap-2 text-start px-4 py-2 text-sm transition-colors ${
+                                    isSelected ? 'text-accent font-medium' : 'text-foreground hover:bg-accent/10 hover:text-accent'
+                                  }`}
+                                >
+                                  <span className={`w-3 h-3 rounded${filterDef.isRadio ? '-full' : ''} border-2 flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300'}`}>
+                                    {isSelected && <span className="text-white text-[7px]">✓</span>}
+                                  </span>
+                                  {item.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {hasActiveFilters && (
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (scopedParentSlug) params.set('category', scopedParentSlug);
+                      setSearchParams(params);
+                    }}
+                    className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 text-sm text-red-500 hover:text-red-600 transition-colors"
+                  >
+                    <FiX size={14} />
+                    {language === 'ar' ? 'مسح' : 'Clear'}
+                  </button>
+                )}
             </div>
 
             {loading ? (

@@ -32,7 +32,7 @@ const AnimatedRoutes = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   return (
     <AnimatePresence>
