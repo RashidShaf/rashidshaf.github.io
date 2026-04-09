@@ -8,6 +8,7 @@ const PUBLIC_KEYS = [
   'storeEmail',
   'storePhone',
   'storeAddress',
+  'storeAddressAr',
   'instagram',
   'whatsapp',
   'facebook',

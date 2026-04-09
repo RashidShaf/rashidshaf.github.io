@@ -54,7 +54,11 @@
     "deleteConfirmText": "This will permanently delete this item. This action cannot be undone.",
     "markAllRead": "Mark all as read",
     "notifications": "Notifications",
-    "noNotifications": "No notifications"
+    "noNotifications": "No notifications",
+    "saving": "Saving...",
+    "savedSuccess": "Saved successfully",
+    "saveFailed": "Failed to save",
+    "exportFailed": "Export failed"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -285,7 +289,8 @@
     "storeNameEn": "Store Name (English)",
     "storeNameAr": "Store Name (Arabic)",
     "phone": "Phone",
-    "address": "Address",
+    "address": "Address (English)",
+    "addressAr": "Address (Arabic)",
     "shippingConfig": "Shipping Configuration",
     "freeShippingThreshold": "Free Shipping Threshold (QAR)",
     "flatShippingRate": "Flat Shipping Rate (QAR)",
@@ -297,7 +302,25 @@
     "tiktok": "TikTok",
     "snapchat": "Snapchat",
     "whatsapp": "WhatsApp",
-    "youtube": "YouTube"
+    "youtube": "YouTube",
+    "saveSettings": "Save Settings",
+    "linkedin": "LinkedIn",
+    "pinterest": "Pinterest"
+  },
+  "reports": {
+    "title": "Reports",
+    "salesReport": "Sales Report",
+    "inventoryReport": "Inventory Report",
+    "dateRange": "Date Range",
+    "from": "From",
+    "to": "To",
+    "generate": "Generate Report",
+    "totalOrders": "Total Orders",
+    "revenue": "Revenue",
+    "avgOrder": "Avg Order",
+    "totalItems": "Total Items",
+    "orderNumber": "Order #",
+    "loadFailed": "Failed to load sales report"
   },
   "data": {
     "exportData": "Export Data",
@@ -319,19 +342,6 @@
     "ordersExport": "Orders",
     "inventoryExport": "Inventory",
     "categoriesExport": "Categories"
-  },
-  "reports": {
-    "title": "Reports",
-    "salesReport": "Sales Report",
-    "inventoryReport": "Inventory Report",
-    "dateRange": "Date Range",
-    "from": "From",
-    "to": "To",
-    "generate": "Generate Report",
-    "totalOrders": "Total Orders",
-    "revenue": "Revenue",
-    "avgOrder": "Avg Order",
-    "totalItems": "Total Items"
   },
   "auth": {
     "login": "Admin Login",

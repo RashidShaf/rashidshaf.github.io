@@ -15,7 +15,9 @@ const Footer = () => {
 
   const phone = settings.storePhone || '+974 5994 3131';
   const email = settings.storeEmail || 'info@arkaan.com';
-  const address = settings.storeAddress || 'Doha, Qatar';
+  const address = language === 'ar'
+    ? (settings.storeAddressAr || settings.storeAddress || 'الدوحة، قطر')
+    : (settings.storeAddress || 'Doha, Qatar');
 
   const socialLinks = [
     { key: 'instagram', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
@@ -29,7 +31,6 @@ const Footer = () => {
 
   const quickLinks = [
     { to: '/', label: t('nav.home') },
-    { to: '/books?category=books', label: t('nav.books') },
     { to: '/about', label: t('nav.about') },
     { to: '/contact', label: t('nav.contact') },
     { to: '/cart', label: t('nav.cart') },
@@ -71,41 +72,42 @@ const Footer = () => {
             )}
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
-              {t('footer.quickLinks')}
-            </h4>
-            <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="text-sm 3xl:text-lg text-background/70 hover:text-background transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Quick Links + Contact — side by side on mobile */}
+          <div className="grid grid-cols-2 gap-6 sm:contents">
+            <div>
+              <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
+                {t('footer.quickLinks')}
+              </h4>
+              <ul className="space-y-2.5">
+                {quickLinks.map((link) => (
+                  <li key={link.to}>
+                    <Link to={link.to} className="text-sm 3xl:text-lg text-background/70 hover:text-background transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
-              {t('footer.contact')}
-            </h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-sm 3xl:text-lg text-background/70">
-                <FiMapPin className="w-4 h-4 mt-0.5 text-background/70 flex-shrink-0" />
-                <span>{address}</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
-                <FiPhone className="w-4 h-4 text-background/70 flex-shrink-0" />
-                <span dir="ltr">{phone}</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
-                <FiMail className="w-4 h-4 text-background/70 flex-shrink-0" />
-                <span>{email}</span>
-              </li>
-            </ul>
+            <div>
+              <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
+                {t('footer.contact')}
+              </h4>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-sm 3xl:text-lg text-background/70">
+                  <FiMapPin className="w-4 h-4 mt-0.5 text-background/70 flex-shrink-0" />
+                  <span>{address}</span>
+                </li>
+                <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
+                  <FiPhone className="w-4 h-4 text-background/70 flex-shrink-0" />
+                  <span dir="ltr">{phone}</span>
+                </li>
+                <li className="flex items-center gap-3 text-sm 3xl:text-lg text-background/70">
+                  <FiMail className="w-4 h-4 text-background/70 flex-shrink-0" />
+                  <span>{email}</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Newsletter */}

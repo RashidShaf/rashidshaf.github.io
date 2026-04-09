@@ -54,7 +54,11 @@
     "deleteConfirmText": "سيتم حذف هذا العنصر نهائياً. لا يمكن التراجع عن هذا الإجراء.",
     "markAllRead": "تعيين الكل كمقروء",
     "notifications": "الإشعارات",
-    "noNotifications": "لا توجد إشعارات"
+    "noNotifications": "لا توجد إشعارات",
+    "saving": "جاري الحفظ...",
+    "savedSuccess": "تم الحفظ بنجاح",
+    "saveFailed": "فشل في الحفظ",
+    "exportFailed": "فشل التصدير"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -285,7 +289,8 @@
     "storeNameEn": "اسم المتجر (إنجليزي)",
     "storeNameAr": "اسم المتجر (عربي)",
     "phone": "الهاتف",
-    "address": "العنوان",
+    "address": "العنوان (إنجليزي)",
+    "addressAr": "العنوان (عربي)",
     "shippingConfig": "إعدادات الشحن",
     "freeShippingThreshold": "حد الشحن المجاني (ر.ق)",
     "flatShippingRate": "سعر الشحن الثابت (ر.ق)",
@@ -297,7 +302,25 @@
     "tiktok": "تيك توك",
     "snapchat": "سناب شات",
     "whatsapp": "واتساب",
-    "youtube": "يوتيوب"
+    "youtube": "يوتيوب",
+    "saveSettings": "حفظ الإعدادات",
+    "linkedin": "لينكد إن",
+    "pinterest": "بينتريست"
+  },
+  "reports": {
+    "title": "التقارير",
+    "salesReport": "تقرير المبيعات",
+    "inventoryReport": "تقرير المخزون",
+    "dateRange": "النطاق الزمني",
+    "from": "من",
+    "to": "إلى",
+    "generate": "إنشاء التقرير",
+    "totalOrders": "إجمالي الطلبات",
+    "revenue": "الإيرادات",
+    "avgOrder": "متوسط الطلب",
+    "totalItems": "إجمالي العناصر",
+    "orderNumber": "رقم الطلب",
+    "loadFailed": "فشل في تحميل تقرير المبيعات"
   },
   "data": {
     "exportData": "تصدير البيانات",
@@ -319,19 +342,6 @@
     "ordersExport": "الطلبات",
     "inventoryExport": "المخزون",
     "categoriesExport": "التصنيفات"
-  },
-  "reports": {
-    "title": "التقارير",
-    "salesReport": "تقرير المبيعات",
-    "inventoryReport": "تقرير المخزون",
-    "dateRange": "نطاق التاريخ",
-    "from": "من",
-    "to": "إلى",
-    "generate": "إنشاء التقرير",
-    "totalOrders": "إجمالي الطلبات",
-    "revenue": "الإيرادات",
-    "avgOrder": "متوسط الطلب",
-    "totalItems": "إجمالي العناصر"
   },
   "auth": {
     "login": "تسجيل دخول المدير",

@@ -11,6 +11,7 @@ const defaultSettings = {
   storeEmail: '',
   storePhone: '',
   storeAddress: '',
+  storeAddressAr: '',
   shippingThreshold: '',
   shippingCost: '',
   instagram: '',
@@ -60,9 +61,9 @@ export default function Settings() {
     setSaving(true);
     try {
       await api.put('/admin/settings', form);
-      toast.success('Settings saved successfully');
+      toast.success(t('common.savedSuccess'));
     } catch (err) {
-      toast.error('Failed to save settings');
+      toast.error(t('common.saveFailed'));
       console.error(err);
     } finally {
       setSaving(false);
@@ -113,6 +114,10 @@ export default function Settings() {
             <div className="md:col-span-2">
               <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.address')}</label>
               <input type="text" value={form.storeAddress} onChange={(e) => handleChange('storeAddress', e.target.value)} placeholder="Doha, Qatar" className={inputClass} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.addressAr')}</label>
+              <input type="text" value={form.storeAddressAr} onChange={(e) => handleChange('storeAddressAr', e.target.value)} placeholder="الدوحة، قطر" className={inputClass} dir="rtl" />
             </div>
           </div>
         </div>

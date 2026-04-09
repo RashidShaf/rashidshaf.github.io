@@ -22,7 +22,7 @@ export default function Reports() {
       const res = await api.get(`/admin/reports/sales${params.length ? '?' + params.join('&') : ''}`);
       setSalesReport(res.data);
     } catch (err) {
-      toast.error('Failed to load sales report');
+      toast.error(t('reports.loadFailed'));
     } finally {
       setSalesLoading(false);
     }
@@ -87,7 +87,7 @@ export default function Reports() {
                     a.click();
                     URL.revokeObjectURL(a.href);
                   })
-                  .catch(() => toast.error('Export failed'));
+                  .catch(() => toast.error(t('common.exportFailed')));
               }}
               className="flex items-center gap-1.5 px-4 py-2.5 3xl:px-5 3xl:py-3 border border-admin-border text-admin-muted rounded-lg text-sm 3xl:text-base font-medium hover:bg-gray-100 transition-colors"
             >
@@ -102,7 +102,7 @@ export default function Reports() {
             <table className="w-full text-sm 3xl:text-base">
               <thead className="bg-gray-50 border-b border-admin-border">
                 <tr>
-                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Order #</th>
+                  <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('reports.orderNumber')}</th>
                   <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
                   <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('nav.products')}</th>
                   <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.total')} (QAR)</th>
@@ -122,7 +122,7 @@ export default function Reports() {
                       {order.items?.length > 2 && ` +${order.items.length - 2}`}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {parseFloat(order.total || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4"><span className="text-xs font-medium">{order.status}</span></td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4"><span className="text-xs font-medium">{t(`orders.statuses.${order.status}`) || order.status}</span></td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">{new Date(order.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}

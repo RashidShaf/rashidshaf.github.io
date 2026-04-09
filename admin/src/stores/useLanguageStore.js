@@ -15,7 +15,15 @@ const useLanguageStore = create(
         const isRTL = lang === 'ar';
         document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
         document.documentElement.setAttribute('lang', lang);
-        set({ language: lang, isRTL });
+        const t = (key) => {
+          const keys = key.split('.');
+          let value = translations[lang];
+          for (const k of keys) {
+            value = value?.[k];
+          }
+          return value || key;
+        };
+        set({ language: lang, isRTL, t });
       },
 
       t: (key) => {
