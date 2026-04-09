@@ -68,7 +68,7 @@ const CategoryBar = ({ categories = [] }) => {
   };
 
   const handleLeave = () => {
-    closeTimeout.current = setTimeout(() => setHoveredId(null), 400);
+    setHoveredId(null);
   };
 
   const handleClick = () => {
@@ -110,7 +110,7 @@ const CategoryBar = ({ categories = [] }) => {
   if (categories.length === 0) return null;
 
   return (
-    <div ref={barRef} className="hidden lg:block bg-primary relative">
+    <div ref={barRef} className="hidden lg:block bg-primary relative" onMouseLeave={handleLeave}>
       <div className="mx-auto px-2 sm:px-4 lg:px-4 xl:px-4 3xl:px-10">
         <div className={`flex items-center ${categories.length < 5 ? 'justify-center gap-8' : 'justify-between gap-1'}`}>
           {categories.map((cat) => {
@@ -124,7 +124,6 @@ const CategoryBar = ({ categories = [] }) => {
                 ref={(el) => { itemRefs.current[cat.id] = el; }}
                 className={categories.length >= 5 ? 'flex-1' : ''}
                 onMouseEnter={() => handleEnter(cat.id)}
-                onMouseLeave={handleLeave}
               >
                 <Link
                   to={`/books?category=${cat.slug}`}
@@ -151,7 +150,6 @@ const CategoryBar = ({ categories = [] }) => {
             className="absolute top-full z-40 pt-2"
             style={menuStyle}
             onMouseEnter={() => handleEnter(hoveredCat.id)}
-            onMouseLeave={handleLeave}
           >
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="flex gap-8">
@@ -166,7 +164,6 @@ const CategoryBar = ({ categories = [] }) => {
           <div
             className="absolute top-full left-0 right-0 z-40 px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12 pt-2"
             onMouseEnter={() => handleEnter(hoveredCat.id)}
-            onMouseLeave={handleLeave}
           >
             <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
               <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
