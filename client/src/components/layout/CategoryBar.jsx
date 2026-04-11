@@ -1,48 +1,62 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
+import { FiChevronRight } from 'react-icons/fi';
 import useLanguageStore from '../../stores/useLanguageStore';
 
-const L3Item = ({ l3, getName, onLinkClick }) => {
+// Cascading menu item — recursive: shows children in a flyout. Direction inherited from parent.
+// `direction` is 'right' or 'left' — the side flyouts open toward, fixed for the entire chain.
+const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, direction = 'right' }) => {
   const [hovered, setHovered] = useState(false);
-  const hasChildren = l3.children && l3.children.length > 0;
+  const hasChildren = item.children && item.children.length > 0;
+
+  const fontSize = level === 2 ? 'text-[13px] 3xl:text-sm font-medium' : level === 3 ? 'text-[12px] 3xl:text-[13px]' : 'text-[11px] 3xl:text-[12px]';
+
+  const opensRight = direction === 'right';
+  const flyoutPositionClass = opensRight ? 'left-full ps-1' : 'right-full pe-1';
+  const chevronRotation = opensRight ? '' : 'rotate-180';
+
   return (
-    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <div
+      className="relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <Link
-        to={`/books?category=${l3.slug}`}
+        to={`/books?category=${item.slug}`}
         onClick={onLinkClick}
-        className="block text-[13px] 3xl:text-sm text-foreground/60 hover:text-accent transition-colors py-0.5"
+        className={`group relative flex items-center gap-3 mx-1.5 my-0.5 px-3 py-2 rounded-md ${fontSize} transition-all duration-150 ${
+          opensRight ? 'justify-between' : 'flex-row-reverse justify-between'
+        } ${
+          hovered
+            ? 'bg-accent text-white shadow-sm'
+            : 'text-foreground/80 hover:bg-accent/8 hover:text-accent'
+        }`}
       >
-        {getName(l3)}
+        <span className="break-words leading-tight">{getName(item)}</span>
+        {hasChildren && (
+          <FiChevronRight
+            size={13}
+            className={`flex-shrink-0 transition-transform ${chevronRotation} ${
+              hovered ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'
+            }`}
+          />
+        )}
       </Link>
       {hasChildren && hovered && (
-        <div className="ps-3 space-y-0.5">
-          {l3.children.map((l4) => (
-            <Link key={l4.id} to={`/books?category=${l4.slug}`} onClick={onLinkClick} className="block text-[12px] 3xl:text-xs text-foreground/45 hover:text-accent transition-colors py-0.5">
-              {getName(l4)}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const SubcategoryColumn = ({ sub, getName, language, onLinkClick, isExpanded, onHover }) => {
-  const hasChildren = sub.children && sub.children.length > 0;
-  return (
-    <div className="min-w-[150px]" onMouseEnter={() => onHover(sub.id)}>
-      <Link
-        to={`/books?category=${sub.slug}`}
-        onClick={onLinkClick}
-        className={`text-sm 3xl:text-base font-semibold transition-colors pb-1.5 mb-2 block ${isExpanded && hasChildren ? 'text-accent border-b border-accent/30' : 'text-primary hover:text-accent border-b border-primary/20'}`}
-      >
-        {getName(sub)}
-      </Link>
-      {hasChildren && isExpanded && (
-        <div className="mt-1.5 space-y-0.5">
-          {sub.children.map((l3) => (
-            <L3Item key={l3.id} l3={l3} getName={getName} onLinkClick={onLinkClick} />
-          ))}
+        <div className={`absolute top-[-6px] ${flyoutPositionClass} z-50`}>
+          <div className="min-w-[210px] max-w-[260px] bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 ring-1 ring-black/5">
+            {item.children.map((child) => (
+              <CascadeItem
+                key={child.id}
+                item={child}
+                getName={getName}
+                language={language}
+                onLinkClick={onLinkClick}
+                level={level + 1}
+                direction={direction}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -53,11 +67,11 @@ const CategoryBar = ({ categories = [] }) => {
   const { t, language } = useLanguageStore();
   const [searchParams] = useSearchParams();
   const [hoveredId, setHoveredId] = useState(null);
-  const [hoveredSubId, setHoveredSubId] = useState(null);
   const closeTimeout = useRef(null);
   const itemRefs = useRef({});
   const barRef = useRef(null);
   const [menuStyle, setMenuStyle] = useState({});
+  const [menuDirection, setMenuDirection] = useState('right');
 
   const location = useLocation();
   const hoverDisabled = useRef(false);
@@ -74,13 +88,11 @@ const CategoryBar = ({ categories = [] }) => {
   const handleEnter = (id) => {
     if (hoverDisabled.current) return;
     clearTimeout(closeTimeout.current);
-    if (id !== hoveredId) setHoveredSubId(null);
     setHoveredId(id);
   };
 
   const handleLeave = () => {
     setHoveredId(null);
-    setHoveredSubId(null);
   };
 
   const handleClick = () => {
@@ -89,35 +101,54 @@ const CategoryBar = ({ categories = [] }) => {
   };
 
   const hoveredCat = categories.find((c) => c.id === hoveredId);
-  const subCount = hoveredCat?.children?.length || 0;
-  const isCompact = subCount > 0 && subCount <= 3;
 
-  // Calculate position for compact menus, clamped to viewport
+  // Position the dropdown under the hovered L1 item, and decide flyout direction
   useEffect(() => {
-    if (!isCompact || !hoveredId) { setMenuStyle({}); return; }
+    if (!hoveredId) { setMenuStyle({}); return; }
     const itemEl = itemRefs.current[hoveredId];
     const barEl = barRef.current;
     if (!itemEl || !barEl) return;
 
+    const cat = categories.find((c) => c.id === hoveredId);
+    if (!cat) return;
+
+    // Find max depth of children tree to calculate space needed
+    const getMaxDepth = (node, depth = 0) => {
+      if (!node.children || node.children.length === 0) return depth;
+      return Math.max(...node.children.map((c) => getMaxDepth(c, depth + 1)));
+    };
+    const maxDepth = getMaxDepth(cat); // 1 = L2 only, 2 = L3, 3 = L4
+
     const itemRect = itemEl.getBoundingClientRect();
     const barRect = barEl.getBoundingClientRect();
-    const itemCenter = itemRect.left + itemRect.width / 2 - barRect.left;
-
-    // Estimate menu width: ~180px per subcategory + padding + gaps
-    const estimatedWidth = subCount * 180 + (subCount - 1) * 32 + 48;
-    const barWidth = barRect.width;
+    const menuWidth = 230;
+    const flyoutWidth = 230;
     const padding = 16;
+    const barWidth = barRect.width;
+    const viewportWidth = window.innerWidth;
 
-    let left = itemCenter - estimatedWidth / 2;
-    // Clamp: don't overflow left
-    if (left < padding) left = padding;
-    // Clamp: don't overflow right
-    if (left + estimatedWidth > barWidth - padding) left = barWidth - padding - estimatedWidth;
-    // Safety: if menu wider than bar, just use left padding
+    let left = itemRect.left - barRect.left;
+    if (left + menuWidth > barWidth - padding) left = barWidth - padding - menuWidth;
     if (left < padding) left = padding;
 
     setMenuStyle({ left });
-  }, [hoveredId, isCompact, subCount]);
+
+    // Total width needed = L2 menu + each cascading flyout (maxDepth - 1)
+    const totalRightWidth = menuWidth + (maxDepth - 1) * flyoutWidth;
+    const menuLeftAbsolute = barRect.left + left;
+    const isRTL = language === 'ar';
+
+    if (isRTL) {
+      // RTL prefers left; flip to right if no room on left
+      const spaceOnLeft = menuLeftAbsolute + menuWidth; // available space going left from menu's right edge
+      const requiredLeft = (maxDepth - 1) * flyoutWidth + padding;
+      setMenuDirection(spaceOnLeft >= requiredLeft + menuWidth ? 'left' : 'right');
+    } else {
+      // LTR prefers right; flip to left if no room
+      const spaceOnRight = viewportWidth - menuLeftAbsolute;
+      setMenuDirection(spaceOnRight >= totalRightWidth + padding ? 'right' : 'left');
+    }
+  }, [hoveredId, language, categories]);
 
   if (categories.length === 0) return null;
 
@@ -154,38 +185,27 @@ const CategoryBar = ({ categories = [] }) => {
         </div>
       </div>
 
-      {/* Mega menu */}
+      {/* Mega menu — cascading dropdown */}
       {hoveredCat && hoveredCat.children && hoveredCat.children.length > 0 && (
-        isCompact ? (
-          /* Compact: positioned under the hovered category, sized to content */
-          <div
-            className="absolute top-full z-40 pt-2"
-            style={menuStyle}
-            onMouseEnter={() => handleEnter(hoveredCat.id)}
-          >
-            <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
-              <div className="flex gap-8">
-                {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} isExpanded={hoveredSubId === sub.id} onHover={setHoveredSubId} />
-                ))}
-              </div>
-            </div>
+        <div
+          className="absolute top-full z-40 pt-1"
+          style={menuStyle}
+          onMouseEnter={() => handleEnter(hoveredCat.id)}
+        >
+          <div className="bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 min-w-[230px] max-w-[280px] ring-1 ring-black/5">
+            {hoveredCat.children.map((sub) => (
+              <CascadeItem
+                key={sub.id}
+                item={sub}
+                getName={getName}
+                language={language}
+                onLinkClick={handleClick}
+                level={2}
+                direction={menuDirection}
+              />
+            ))}
           </div>
-        ) : (
-          /* Full width: for 4+ subcategories */
-          <div
-            className="absolute top-full left-0 right-0 z-40 px-4 sm:px-6 lg:px-6 xl:px-6 3xl:px-12 pt-2"
-            onMouseEnter={() => handleEnter(hoveredCat.id)}
-          >
-            <div className="bg-surface border border-muted/15 rounded-2xl shadow-2xl p-6">
-              <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-6">
-                {hoveredCat.children.map((sub) => (
-                  <SubcategoryColumn key={sub.id} sub={sub} getName={getName} language={language} onLinkClick={handleClick} isExpanded={hoveredSubId === sub.id} onHover={setHoveredSubId} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )
+        </div>
       )}
     </div>
   );
