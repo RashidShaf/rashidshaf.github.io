@@ -374,7 +374,7 @@ const BookDetail = () => {
             {description && (
               <div className="lg:hidden mt-5 pt-4 border-t border-muted/10">
                 <h3 className="text-base font-semibold text-foreground mb-2">{t('book.description')}</h3>
-                <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line">{description}</p>
+                <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-line break-words text-justify">{description}</p>
               </div>
             )}
 
@@ -432,7 +432,7 @@ const BookDetail = () => {
                 {description && (
                   <div className="mt-5 pt-4 border-t border-muted/10 2xl:w-[550px] 3xl:w-[1600px]">
                     <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-2">{t('book.description')}</h3>
-                    <p className="text-foreground/70 text-sm 3xl:text-base leading-relaxed whitespace-pre-line">{description}</p>
+                    <p className="text-foreground/70 text-sm 3xl:text-base leading-relaxed whitespace-pre-line break-words text-justify">{description}</p>
                   </div>
                 )}
               </div>
