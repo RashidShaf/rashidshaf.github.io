@@ -9,7 +9,7 @@ const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, directio
   const [hovered, setHovered] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
 
-  const fontSize = level === 2 ? 'text-[13px] 3xl:text-sm font-medium' : level === 3 ? 'text-[12px] 3xl:text-[13px]' : 'text-[11px] 3xl:text-[12px]';
+  const fontSize = level === 2 ? 'text-[13px] 3xl:text-base font-medium' : level === 3 ? 'text-[12px] 3xl:text-[15px]' : 'text-[11px] 3xl:text-[14px]';
 
   const opensRight = direction === 'right';
   const flyoutPositionClass = opensRight ? 'left-full ps-1' : 'right-full pe-1';
@@ -24,7 +24,7 @@ const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, directio
       <Link
         to={`/books?category=${item.slug}`}
         onClick={onLinkClick}
-        className={`group relative flex items-center gap-3 mx-1.5 my-0.5 px-3 py-2 rounded-md ${fontSize} transition-all duration-150 ${
+        className={`group relative flex items-center gap-3 mx-1.5 my-0.5 px-3 py-2 3xl:px-4 3xl:py-2.5 rounded-md ${fontSize} transition-all duration-150 ${
           opensRight ? 'justify-between' : 'flex-row-reverse justify-between'
         } ${
           hovered
@@ -44,7 +44,7 @@ const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, directio
       </Link>
       {hasChildren && hovered && (
         <div className={`absolute top-[-6px] ${flyoutPositionClass} z-50`}>
-          <div className="min-w-[210px] max-w-[260px] bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 ring-1 ring-black/5">
+          <div className="min-w-[210px] max-w-[260px] 3xl:min-w-[280px] 3xl:max-w-[340px] bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 3xl:py-2 ring-1 ring-black/5">
             {item.children.map((child) => (
               <CascadeItem
                 key={child.id}
@@ -121,8 +121,10 @@ const CategoryBar = ({ categories = [] }) => {
 
     const itemRect = itemEl.getBoundingClientRect();
     const barRect = barEl.getBoundingClientRect();
-    const menuWidth = 230;
-    const flyoutWidth = 230;
+    // Larger dropdowns at 3xl breakpoint (1920px+)
+    const is3xl = window.innerWidth >= 1920;
+    const menuWidth = is3xl ? 300 : 230;
+    const flyoutWidth = is3xl ? 280 : 230;
     const padding = 16;
     const barWidth = barRect.width;
     const viewportWidth = window.innerWidth;
@@ -192,7 +194,7 @@ const CategoryBar = ({ categories = [] }) => {
           style={menuStyle}
           onMouseEnter={() => handleEnter(hoveredCat.id)}
         >
-          <div className="bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 min-w-[230px] max-w-[280px] ring-1 ring-black/5">
+          <div className="bg-surface border border-muted/10 rounded-xl shadow-2xl py-1.5 3xl:py-2 min-w-[230px] max-w-[280px] 3xl:min-w-[300px] 3xl:max-w-[360px] ring-1 ring-black/5">
             {hoveredCat.children.map((sub) => (
               <CascadeItem
                 key={sub.id}

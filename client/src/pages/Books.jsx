@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
@@ -273,7 +273,7 @@ const Books = () => {
   }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter]);
 
   // Load more books (next page)
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (loadingMore || !pagination || currentPage >= pagination.totalPages) return;
     const nextPage = currentPage + 1;
     setLoadingMore(true);
@@ -301,7 +301,7 @@ const Books = () => {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [loadingMore, pagination, currentPage, search, category, bookLang, section, sort, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter]);
 
   // Infinite scroll — trigger loadMore when near bottom
   const loadTriggerRef = useRef(null);
@@ -314,7 +314,7 @@ const Books = () => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  });
+  }, [loadMore]);
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
   const hasActiveFilters = (category && category !== scopedParentSlug) || bookLang || section || authorFilter || publisherFilter || brandFilter || colorFilter || materialFilter;
