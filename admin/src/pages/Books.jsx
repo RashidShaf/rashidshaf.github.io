@@ -31,7 +31,6 @@ export default function Books() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
   const [bulkCatOpen, setBulkCatOpen] = useState(false);
-  const [bulkCatSearch, setBulkCatSearch] = useState('');
   const [bulkSelectedL1, setBulkSelectedL1] = useState('');
   const [bulkSelectedCats, setBulkSelectedCats] = useState([]);
   const [bulkSectionOpen, setBulkSectionOpen] = useState(false);
@@ -446,13 +445,9 @@ export default function Books() {
               {t('books.moveCategory')}
             </button>
             {bulkCatOpen && (() => {
-              const l1Cats = allCategories.filter(c => !c.parentId).filter(c => !bulkCatSearch || c.name.toLowerCase().includes(bulkCatSearch.toLowerCase()));
-              const l2Cats = bulkSelectedL1 ? allCategories.filter(c => c.parentId === bulkSelectedL1) : [];
+              const l1Cats = allCategories.filter(c => !c.parentId);
               return (
                 <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[320px] 3xl:w-[400px]">
-                  <div className="p-2 border-b border-admin-border">
-                    <input type="text" value={bulkCatSearch} onChange={(e) => setBulkCatSearch(e.target.value)} placeholder={t('common.searchCategories')} className="w-full px-3 py-1.5 3xl:py-2 text-sm 3xl:text-base border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent" />
-                  </div>
                   <div className="max-h-72 overflow-y-auto p-2" style={{ scrollbarWidth: 'thin' }}>
                     {l1Cats.map(l1 => {
                       const isL1Selected = bulkSelectedL1 === l1.id;
