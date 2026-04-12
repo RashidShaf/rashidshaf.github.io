@@ -9,7 +9,7 @@ const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, directio
   const [hovered, setHovered] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
 
-  const fontSize = level === 2 ? 'text-[13px] 3xl:text-base font-medium' : level === 3 ? 'text-[12px] 3xl:text-[15px]' : 'text-[11px] 3xl:text-[14px]';
+  const fontSize = 'text-[13px] 3xl:text-base font-medium';
 
   const opensRight = direction === 'right';
   const flyoutPositionClass = opensRight ? 'left-full ps-1' : 'right-full pe-1';
