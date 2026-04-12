@@ -24,9 +24,7 @@ const CascadeItem = ({ item, getName, language, onLinkClick, level = 2, directio
       <Link
         to={`/books?category=${item.slug}`}
         onClick={onLinkClick}
-        className={`group relative flex items-center gap-3 mx-1.5 my-0.5 px-3 py-2 3xl:px-4 3xl:py-2.5 rounded-md ${fontSize} transition-all duration-150 ${
-          opensRight ? 'justify-between' : 'flex-row-reverse justify-between'
-        } ${
+        className={`group relative flex items-center justify-between gap-3 mx-1.5 my-0.5 px-3 py-2 3xl:px-4 3xl:py-2.5 rounded-md ${fontSize} transition-all duration-150 ${
           hovered
             ? 'bg-accent text-white shadow-sm'
             : 'text-foreground/80 hover:bg-accent/8 hover:text-accent'
