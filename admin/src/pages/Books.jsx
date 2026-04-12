@@ -28,6 +28,14 @@ export default function Books() {
   const [descFilter, setDescFilter] = useState(searchParams.get('desc') || '');
   const [issueFilter, setIssueFilter] = useState(searchParams.get('issue') || '');
   const [openFilterMenu, setOpenFilterMenu] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
+  const [bulkCatOpen, setBulkCatOpen] = useState(false);
+  const [bulkCatSearch, setBulkCatSearch] = useState('');
+  const [bulkSelectedL1, setBulkSelectedL1] = useState('');
+  const [bulkSelectedCats, setBulkSelectedCats] = useState([]);
+  const [bulkSectionOpen, setBulkSectionOpen] = useState(false);
+  const [bulkSections, setBulkSections] = useState({});
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
@@ -69,6 +77,7 @@ export default function Books() {
       const res = await api.get(`/admin/books?${params}`);
       setBooks(res.data.data);
       setPagination(res.data.pagination);
+      setSelectedIds([]);
     } catch (err) {
       // silently handle error
     } finally {
@@ -82,6 +91,26 @@ export default function Books() {
   };
 
   const saveScroll = () => sessionStorage.setItem('admin-books-scroll', window.scrollY.toString());
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/books/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      setBulkConfirmAction(null);
+      fetchBooks();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
+      setBulkConfirmAction(null);
+    }
+  };
 
   useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter]);
 
@@ -403,12 +432,137 @@ export default function Books() {
         </Link>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <button onClick={() => setBulkConfirmAction('delete')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkDelete')}</button>
+          <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkActivate')}</button>
+          <button onClick={() => handleBulkAction('deactivate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">{t('common.bulkDeactivate')}</button>
+          {/* Move to Category dropdown */}
+          <div className="relative">
+            <button onClick={() => { setBulkCatOpen(!bulkCatOpen); setBulkSectionOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors whitespace-nowrap">
+              {t('books.moveCategory')}
+            </button>
+            {bulkCatOpen && (() => {
+              const l1Cats = allCategories.filter(c => !c.parentId).filter(c => !bulkCatSearch || c.name.toLowerCase().includes(bulkCatSearch.toLowerCase()));
+              const l2Cats = bulkSelectedL1 ? allCategories.filter(c => c.parentId === bulkSelectedL1) : [];
+              return (
+                <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[320px] 3xl:w-[400px]">
+                  <div className="p-2 border-b border-admin-border">
+                    <input type="text" value={bulkCatSearch} onChange={(e) => setBulkCatSearch(e.target.value)} placeholder={t('common.searchCategories')} className="w-full px-3 py-1.5 3xl:py-2 text-sm 3xl:text-base border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent" />
+                  </div>
+                  <div className="max-h-72 overflow-y-auto p-2" style={{ scrollbarWidth: 'thin' }}>
+                    {l1Cats.map(l1 => {
+                      const isL1Selected = bulkSelectedL1 === l1.id;
+                      const l2Children = isL1Selected ? allCategories.filter(c => c.parentId === l1.id) : [];
+                      return (
+                        <div key={l1.id}>
+                          <label className={`flex items-center gap-2 px-2 py-1.5 text-sm 3xl:text-base font-semibold rounded cursor-pointer ${isL1Selected ? 'bg-admin-accent/10 text-admin-accent' : 'text-admin-text hover:bg-gray-50'}`}>
+                            <input type="radio" name="bulkL1" checked={isL1Selected} onChange={() => { setBulkSelectedL1(l1.id); setBulkSelectedCats([]); }} className="w-3.5 h-3.5 text-admin-accent" />
+                            {getTabName(l1)}
+                          </label>
+                          {/* L2 under selected L1 */}
+                          {l2Children.map(l2 => {
+                            const l2Selected = bulkSelectedCats.includes(l2.id);
+                            const l3Cats = allCategories.filter(c => c.parentId === l2.id);
+                            return (
+                              <div key={l2.id}>
+                                <label className={`flex items-center gap-2 px-2 py-1 ps-6 text-sm 3xl:text-base rounded cursor-pointer ${l2Selected ? 'text-admin-accent font-medium' : 'text-admin-text hover:bg-gray-50'}`}>
+                                  <input type="checkbox" checked={l2Selected} onChange={() => setBulkSelectedCats(prev => prev.includes(l2.id) ? prev.filter(id => id !== l2.id) : [...prev, l2.id])} className="w-3.5 h-3.5 rounded border-gray-300 text-admin-accent" />
+                                  {getTabName(l2)}
+                                </label>
+                                {/* L3 under selected L2 */}
+                                {l2Selected && l3Cats.map(l3 => {
+                                  const l3Selected = bulkSelectedCats.includes(l3.id);
+                                  const l4Cats = allCategories.filter(c => c.parentId === l3.id);
+                                  return (
+                                    <div key={l3.id}>
+                                      <label className={`flex items-center gap-2 px-2 py-1 ps-10 text-xs 3xl:text-sm rounded cursor-pointer ${l3Selected ? 'text-admin-accent font-medium' : 'text-admin-muted hover:bg-gray-50'}`}>
+                                        <input type="checkbox" checked={l3Selected} onChange={() => setBulkSelectedCats(prev => prev.includes(l3.id) ? prev.filter(id => id !== l3.id) : [...prev, l3.id])} className="w-3 h-3 rounded border-gray-300 text-admin-accent" />
+                                        {getTabName(l3)}
+                                      </label>
+                                      {/* L4 under selected L3 */}
+                                      {l3Selected && l4Cats.map(l4 => (
+                                        <label key={l4.id} className={`flex items-center gap-2 px-2 py-1 ps-14 text-xs 3xl:text-sm rounded cursor-pointer ${bulkSelectedCats.includes(l4.id) ? 'text-admin-accent font-medium' : 'text-admin-muted/70 hover:bg-gray-50'}`}>
+                                          <input type="checkbox" checked={bulkSelectedCats.includes(l4.id)} onChange={() => setBulkSelectedCats(prev => prev.includes(l4.id) ? prev.filter(id => id !== l4.id) : [...prev, l4.id])} className="w-3 h-3 rounded border-gray-300 text-admin-accent" />
+                                          {getTabName(l4)}
+                                        </label>
+                                      ))}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Selected categories chips */}
+                  {bulkSelectedCats.length > 0 && (
+                    <div className="px-2 py-1.5 border-t border-admin-border flex flex-wrap gap-1.5">
+                      {bulkSelectedCats.map(id => {
+                        const cat = allCategories.find(c => c.id === id);
+                        if (!cat) return null;
+                        return (
+                          <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs 3xl:text-sm bg-admin-accent/10 text-admin-accent rounded-full">
+                            {getTabName(cat)}
+                            <button type="button" onClick={() => setBulkSelectedCats(prev => prev.filter(i => i !== id))} className="hover:text-red-500">×</button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="p-2 border-t border-admin-border flex items-center justify-between">
+                    <span className="text-xs 3xl:text-sm text-admin-muted">{bulkSelectedCats.length} {t('common.selected')}</span>
+                    <button disabled={bulkSelectedCats.length === 0} onClick={() => { handleBulkAction('moveCategory', { categoryId: bulkSelectedCats[0], additionalCategoryIds: bulkSelectedCats.slice(1) }); setBulkCatOpen(false); setBulkSelectedCats([]); setBulkSelectedL1(''); setBulkCatSearch(''); }} className="px-4 py-1.5 3xl:px-5 3xl:py-2 text-sm 3xl:text-base bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                      {t('common.apply')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          {/* Set Section dropdown */}
+          <div className="relative">
+            <button onClick={() => { setBulkSectionOpen(!bulkSectionOpen); setBulkCatOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors whitespace-nowrap">
+              {t('books.setSection')}
+            </button>
+            {bulkSectionOpen && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[220px] 3xl:w-[280px] p-3 space-y-2">
+                {[
+                  { key: 'isFeatured', label: t('books.featured') },
+                  { key: 'isBestseller', label: t('books.bestseller') },
+                  { key: 'isNewArrival', label: t('books.newArrival') },
+                  { key: 'isTrending', label: t('books.trending') },
+                  { key: 'isComingSoon', label: t('books.comingSoon') },
+                ].map(opt => (
+                  <label key={opt.key} className="flex items-center gap-2 text-sm text-admin-text cursor-pointer">
+                    <input type="checkbox" checked={!!bulkSections[opt.key]} onChange={() => setBulkSections(prev => ({ ...prev, [opt.key]: !prev[opt.key] }))} className="w-4 h-4 rounded border-gray-300 text-admin-accent" />
+                    {opt.label}
+                  </label>
+                ))}
+                <button onClick={() => { handleBulkAction('setSection', bulkSections); setBulkSectionOpen(false); setBulkSections({}); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600">
+                  {t('common.apply')}
+                </button>
+              </div>
+            )}
+          </div>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 3xl:px-5 3xl:py-4 w-10 3xl:w-12">
+                  <input type="checkbox" checked={isAllSelected(books)} onChange={() => toggleSelectAll(books)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
@@ -421,23 +575,26 @@ export default function Books() {
             <tbody>
               {loading ? (
                 [...Array(5)].map((_, i) => (
-                  <tr key={i}><td colSpan={7} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
+                  <tr key={i}><td colSpan={8} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
               ) : books.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
               ) : (
                 books.map((book, index) => (
-                  <tr key={book.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">{(page - 1) * limit + index + 1}</td>
+                  <tr key={book.id} className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(book.id) ? 'bg-blue-50' : ''}`}>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                          {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-admin-muted">{book.title.charAt(0)}</div>}
+                      <input type="checkbox" checked={selectedIds.includes(book.id)} onChange={() => toggleSelect(book.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                    </td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs 3xl:text-sm">{(page - 1) * limit + index + 1}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4">
+                      <div className="flex items-center gap-3 3xl:gap-4">
+                        <div className="w-8 h-10 3xl:w-10 3xl:h-12 rounded bg-gray-100 overflow-hidden flex-shrink-0">
+                          {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] 3xl:text-xs font-bold text-admin-muted">{book.title.charAt(0)}</div>}
                         </div>
-                        <span className="font-medium text-admin-text truncate max-w-[200px]">{book.title}</span>
+                        <span className="font-medium text-admin-text truncate max-w-[200px] 3xl:max-w-[300px]">{book.title}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs 3xl:text-sm">
                       <div className="flex items-center gap-1.5">
                         <span>{book.category ? (language === 'ar' && book.category.nameAr ? book.category.nameAr : book.category.name) : '—'}</span>
                         {(() => {
@@ -460,7 +617,7 @@ export default function Books() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <button
                         onClick={() => handleToggleActive(book)}
-                        className={`px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${
+                        className={`px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full cursor-pointer transition-colors ${
                           book.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
                         }`}
                       >
@@ -471,14 +628,14 @@ export default function Books() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleToggleOutOfStock(book)}
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-pointer transition-colors ${
+                          className={`px-2 py-0.5 3xl:px-2.5 3xl:py-1 text-[10px] 3xl:text-xs font-semibold rounded-full cursor-pointer transition-colors ${
                             book.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                           }`}
                         >
                           {book.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
                         </button>
-                        <Link to={`/books/${book.id}/edit`} onClick={saveScroll} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} /></Link>
-                        <button onClick={() => setDeleteId(book.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"><FiTrash2 size={15} /></button>
+                        <Link to={`/books/${book.id}/edit`} onClick={saveScroll} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} className="3xl:w-[18px] 3xl:h-[18px]" /></Link>
+                        <button onClick={() => setDeleteId(book.id)} className="p-1.5 3xl:p-2 text-admin-muted hover:text-red-500 transition-colors"><FiTrash2 size={15} className="3xl:w-[18px] 3xl:h-[18px]" /></button>
                       </div>
                     </td>
                   </tr>
@@ -488,9 +645,9 @@ export default function Books() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
+        <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total || books.length}</span>
+            <span className="text-xs 3xl:text-sm text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total || books.length}</span>
             <select
               value={limit}
               onChange={(e) => {
@@ -564,6 +721,15 @@ export default function Books() {
         confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmModal
+        open={bulkConfirmAction === 'delete'}
+        title={t('common.bulkDelete')}
+        message={t('common.bulkConfirm').replace('{count}', selectedIds.length)}
+        confirmText={t('common.delete')}
+        onConfirm={() => handleBulkAction('delete')}
+        onCancel={() => setBulkConfirmAction(null)}
       />
     </motion.div>
   );

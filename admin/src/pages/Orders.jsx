@@ -29,6 +29,8 @@ export default function Orders() {
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pending: 0, delivered: 0 });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkStatusValue, setBulkStatusValue] = useState('');
 
   useEffect(() => {
     api.get('/admin/dashboard/stats').then((res) => {
@@ -57,6 +59,7 @@ export default function Orders() {
       const res = await api.get(`/admin/orders?${params}`);
       setOrders(res.data.data || res.data);
       setPagination(res.data.pagination || null);
+      setSelectedIds([]);
     } catch (err) {
       toast.error(t('orders.failedFetch'));
     } finally {
@@ -70,6 +73,24 @@ export default function Orders() {
   };
 
   const saveScroll = () => sessionStorage.setItem('admin-orders-scroll', window.scrollY.toString());
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/orders/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      fetchOrders();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
+    }
+  };
 
   useEffect(() => { fetchOrders(); }, [page, statusFilter, customerFilter]);
 
@@ -153,12 +174,36 @@ export default function Orders() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1.5">
+            <select value={bulkStatusValue} onChange={(e) => setBulkStatusValue(e.target.value)} className="px-2 py-1.5 3xl:px-4 3xl:py-2.5 text-xs 3xl:text-base border border-admin-input-border rounded-lg bg-admin-bg text-admin-text focus:outline-none focus:border-admin-accent">
+              <option value="">{t('common.bulkUpdateStatus')}</option>
+              {['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((s) => (
+                <option key={s} value={s}>{t(`orders.statuses.${s}`)}</option>
+              ))}
+            </select>
+            {bulkStatusValue && (
+              <button onClick={() => { handleBulkAction('updateStatus', { status: bulkStatusValue }); setBulkStatusValue(''); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">{t('common.save')}</button>
+            )}
+          </div>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={isAllSelected(orders)} onChange={() => toggleSelectAll(orders)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
+                <th className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-10">#</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.orderNumber')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('nav.products')}</th>
@@ -172,24 +217,28 @@ export default function Orders() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7} className="px-4 py-4">
+                    <td colSpan={9} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={9} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
               ) : (
-                orders.map((order) => (
+                orders.map((order, index) => (
                   <tr
                     key={order.id}
                     onClick={() => { saveScroll(); navigate(`/orders/${order.id}`); }}
-                    className="border-b border-admin-border hover:bg-gray-50 transition-colors cursor-pointer"
+                    className={`border-b border-admin-border hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(order.id) ? 'bg-blue-50' : ''}`}
                   >
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" checked={selectedIds.includes(order.id)} onChange={() => toggleSelect(order.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                    </td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-sm 3xl:text-base">{(page - 1) * 10 + index + 1}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
                       {order.orderNumber}
                     </td>
@@ -214,7 +263,7 @@ export default function Orders() {
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span
-                        className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                        className={`inline-block px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full ${
                           statusColors[order.status] || 'bg-gray-100 text-gray-700'
                         }`}
                       >
@@ -230,8 +279,8 @@ export default function Orders() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
-            <span className="text-xs text-admin-muted">
+          <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
+            <span className="text-xs 3xl:text-sm text-admin-muted">
               {t('common.showing')} {orders.length} {t('common.of')} {pagination.total}
             </span>
             <div className="flex gap-1">
@@ -271,6 +320,7 @@ export default function Orders() {
           </div>
         )}
       </div>
+
     </motion.div>
   );
 }

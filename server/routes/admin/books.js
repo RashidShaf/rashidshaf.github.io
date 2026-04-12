@@ -71,6 +71,7 @@ const updateBookSchema = Joi.object({
 }).min(1);
 
 router.get('/', [auth, admin], adminBookController.list);
+router.post('/bulk-action', [auth, admin], adminBookController.bulkAction);
 router.get('/:id', [auth, admin], adminBookController.getById);
 router.post('/', [auth, admin], validate(createBookSchema), adminBookController.create);
 router.put('/:id', [auth, admin], validate(updateBookSchema), adminBookController.update);

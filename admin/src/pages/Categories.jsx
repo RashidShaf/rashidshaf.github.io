@@ -20,12 +20,15 @@ export default function Categories() {
   const [selectedLevel2, setSelectedLevel2] = useState(searchParams.get('sub') || '');
   const [selectedLevel3, setSelectedLevel3] = useState(searchParams.get('sub2') || '');
   const [expandedRows, setExpandedRows] = useState({});
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
 
   const fetchCategories = async () => {
     setLoading(true);
     try {
       const res = await api.get('/admin/categories');
       setCategories(res.data.data || res.data);
+      setSelectedIds([]);
     } catch (err) {
       toast.error(t('categories.failedFetch'));
     } finally {
@@ -39,6 +42,26 @@ export default function Categories() {
   };
 
   const saveScroll = () => sessionStorage.setItem('admin-categories-scroll', window.scrollY.toString());
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/categories/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      setBulkConfirmAction(null);
+      fetchCategories();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
+      setBulkConfirmAction(null);
+    }
+  };
 
   useEffect(() => { fetchCategories(); }, []);
 
@@ -293,12 +316,27 @@ export default function Categories() {
         )}
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <button onClick={() => setBulkConfirmAction('delete')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkDelete')}</button>
+          <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkActivate')}</button>
+          <button onClick={() => handleBulkAction('deactivate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">{t('common.bulkDeactivate')}</button>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={isAllSelected(sortedFilteredCategories)} onChange={() => toggleSelectAll(sortedFilteredCategories)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Image</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (EN)</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (AR)</th>
@@ -313,10 +351,10 @@ export default function Categories() {
             <tbody>
               {loading ? (
                 [...Array(4)].map((_, i) => (
-                  <tr key={i}><td colSpan={8} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
+                  <tr key={i}><td colSpan={9} className="px-4 py-4"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
                 ))
               ) : sortedFilteredCategories.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
               ) : (
                 sortedFilteredCategories.map((cat) => {
                   const isParent = !cat.parentId;
@@ -330,8 +368,11 @@ export default function Categories() {
                     <tr
                       key={rowCat.id}
                       onClick={() => { if (hasChildren && !isChild) setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] })); }}
-                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasChildren && !isChild ? 'cursor-pointer' : ''}`}
+                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${isChild ? 'bg-gray-50/50' : ''} ${hasChildren && !isChild ? 'cursor-pointer' : ''} ${selectedIds.includes(rowCat.id) ? 'bg-blue-50' : ''}`}
                     >
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" checked={selectedIds.includes(rowCat.id)} onChange={() => toggleSelect(rowCat.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                      </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <div className={`${isChild ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg overflow-hidden bg-gray-100 flex-shrink-0`}>
                           {rowCat.image ? <img src={`${API_BASE}/${rowCat.image}`} alt={rowCat.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FiImage size={isChild ? 12 : 16} /></div>}
@@ -360,9 +401,9 @@ export default function Categories() {
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         {(isBooks && !isChild) ? (
-                          <span className="inline-block px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">{t('common.active')}</span>
+                          <span className="inline-block px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full bg-green-100 text-green-700">{t('common.active')}</span>
                         ) : (
-                          <button onClick={(e) => { e.stopPropagation(); handleToggleActive(rowCat); }} className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${rowCat.isActive !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                          <button onClick={(e) => { e.stopPropagation(); handleToggleActive(rowCat); }} className={`inline-block px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full cursor-pointer transition-colors ${rowCat.isActive !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                             {rowCat.isActive !== false ? t('common.active') : t('common.inactive')}
                           </button>
                         )}
@@ -370,21 +411,21 @@ export default function Categories() {
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {hasChildren && !isChild && (
-                            <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.expand')}>
+                            <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.expand')}>
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}
-                          <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
+                          <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
                             <FiArrowUp size={15} />
                           </button>
-                          <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
+                          <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
                             <FiArrowDown size={15} />
                           </button>
-                          <Link to={`/categories/${rowCat.id}/edit`} onClick={saveScroll} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
+                          <Link to={`/categories/${rowCat.id}/edit`} onClick={saveScroll} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                             <FiEdit2 size={15} />
                           </Link>
                           {rowCat.parentId && (
-                            <button onClick={() => setDeleteId(rowCat.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
+                            <button onClick={() => setDeleteId(rowCat.id)} className="p-1.5 3xl:p-2 text-admin-muted hover:text-red-500 transition-colors" title={t('common.delete')}>
                               <FiTrash2 size={15} />
                             </button>
                           )}
@@ -413,6 +454,37 @@ export default function Categories() {
         confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmModal
+        open={bulkConfirmAction === 'delete'}
+        title={t('common.bulkDelete')}
+        message={t('common.bulkConfirm').replace('{count}', selectedIds.length)}
+        confirmText={t('common.delete')}
+        onConfirm={() => {
+          const deletableIds = selectedIds.filter(id => {
+            const cat = categories.find(c => c.id === id);
+            return cat && cat.parentId;
+          });
+          if (deletableIds.length === 0) {
+            toast.error(t('common.topLevelNoDelete'));
+            setBulkConfirmAction(null);
+            return;
+          }
+          // Use deletableIds instead of selectedIds for the API call
+          api.post('/admin/categories/bulk-action', { ids: deletableIds, action: 'delete' })
+            .then(() => {
+              toast.success(t('common.bulkSuccess'));
+              setSelectedIds([]);
+              setBulkConfirmAction(null);
+              fetchCategories();
+            })
+            .catch(() => {
+              toast.error(t('common.saveFailed'));
+              setBulkConfirmAction(null);
+            });
+        }}
+        onCancel={() => setBulkConfirmAction(null)}
       />
     </motion.div>
   );

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiChevronUp, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 export default function Inventory() {
@@ -20,6 +21,7 @@ export default function Inventory() {
   const [summary, setSummary] = useState(null);
   const [invSearch, setInvSearch] = useState(searchParams.get('q') || '');
   const [alertMinimized, setAlertMinimized] = useState(true);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
@@ -36,6 +38,7 @@ export default function Inventory() {
       setInventory(invRes.data.data || invRes.data);
       setPagination(invRes.data.pagination || null);
       setLowStock(lowRes.data.data || lowRes.data);
+      setSelectedIds([]);
     } catch (err) {
       toast.error(t('inventory.failedFetch'));
     } finally {
@@ -81,6 +84,26 @@ export default function Inventory() {
       toast.error(err.response?.data?.message || t('inventory.failedRestock'));
     } finally {
       setRestocking(false);
+    }
+  };
+
+  const filteredInventory = inventory.filter((item) => !invSearch || (item.title || item.book?.title || '').toLowerCase().includes(invSearch.toLowerCase()));
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id || i.bookId);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id || i.bookId));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/books/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      fetchInventory();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
     }
   };
 
@@ -144,7 +167,7 @@ export default function Inventory() {
             </div>
             <button
               onClick={() => setAlertMinimized(!alertMinimized)}
-              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+              className="p-1.5 3xl:p-2 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
             >
               <FiChevronUp size={16} className={`transition-transform ${alertMinimized ? 'rotate-180' : ''}`} />
             </button>
@@ -174,12 +197,26 @@ export default function Inventory() {
         </div>
       )}
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <button onClick={() => handleBulkAction('markInStock')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkMarkInStock')}</button>
+          <button onClick={() => handleBulkAction('markOutOfStock')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkMarkOutOfStock')}</button>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Inventory Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={isAllSelected(filteredInventory)} onChange={() => toggleSelectAll(filteredInventory)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
@@ -196,19 +233,19 @@ export default function Inventory() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6} className="px-4 py-4">
+                    <td colSpan={7} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : inventory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={7} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
               ) : (
-                inventory.filter((item) => !invSearch || (item.title || item.book?.title || '').toLowerCase().includes(invSearch.toLowerCase())).map((item) => {
+                filteredInventory.map((item) => {
                   const bookId = item.id || item.bookId;
                   const stock = item.stock ?? item.currentStock ?? 0;
                   const isLow = stock <= 5;
@@ -216,8 +253,11 @@ export default function Inventory() {
                   return (
                     <tr
                       key={bookId}
-                      className="border-b border-admin-border hover:bg-gray-50 transition-colors"
+                      className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(bookId) ? 'bg-blue-50' : ''}`}
                     >
+                      <td className="px-4 py-3">
+                        <input type="checkbox" checked={selectedIds.includes(bookId)} onChange={() => toggleSelect(bookId)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                      </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <p className="font-medium text-admin-text">
                           {item.title || item.book?.title}
@@ -247,7 +287,7 @@ export default function Inventory() {
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <button
                           onClick={() => handleToggleOutOfStock(bookId, item.isOutOfStock)}
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-pointer transition-colors ${
+                          className={`px-2 py-0.5 3xl:px-3 3xl:py-1 text-[10px] 3xl:text-sm font-semibold rounded-full cursor-pointer transition-colors ${
                             item.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'
                           }`}
                         >
@@ -278,7 +318,7 @@ export default function Inventory() {
                             </button>
                             <button
                               onClick={() => { setRestockId(null); setRestockQty(''); }}
-                              className="p-1.5 text-admin-muted hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                              className="p-1.5 3xl:p-2 text-admin-muted hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                             >
                               <FiX size={16} />
                             </button>
@@ -303,8 +343,8 @@ export default function Inventory() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
-            <span className="text-xs text-admin-muted">
+          <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
+            <span className="text-xs 3xl:text-sm text-admin-muted">
               {t('common.showing')} {inventory.length} {t('common.of')} {pagination.total}
             </span>
             <div className="flex gap-1">

@@ -291,3 +291,59 @@ exports.deleteImage = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bulkAction = async (req, res, next) => {
+  try {
+    const { ids, action, categoryId } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
+
+    switch (action) {
+      case 'delete':
+        await prisma.book.deleteMany({ where: { id: { in: ids } } });
+        break;
+      case 'activate':
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isActive: true } });
+        break;
+      case 'deactivate':
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isActive: false } });
+        break;
+      case 'moveCategory': {
+        if (!categoryId) return res.status(400).json({ message: 'Category ID required.' });
+        // Set primary category
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: { categoryId } });
+        // Replace additional categories
+        const additionalCategoryIds = req.body.additionalCategoryIds || [];
+        if (additionalCategoryIds.length > 0) {
+          // Remove old additional categories for these books
+          await prisma.bookCategory.deleteMany({ where: { bookId: { in: ids } } });
+          // Add new additional categories
+          const records = ids.flatMap(bookId => additionalCategoryIds.map(catId => ({ bookId, categoryId: catId })));
+          await prisma.bookCategory.createMany({ data: records, skipDuplicates: true });
+        } else {
+          // No additional categories — just clear old ones
+          await prisma.bookCategory.deleteMany({ where: { bookId: { in: ids } } });
+        }
+        break;
+      }
+      case 'markInStock':
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isOutOfStock: false } });
+        break;
+      case 'markOutOfStock':
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isOutOfStock: true } });
+        break;
+      case 'setSection': {
+        const sectionData = {};
+        ['isFeatured','isBestseller','isNewArrival','isTrending','isComingSoon'].forEach(f => {
+          if (req.body[f] !== undefined) sectionData[f] = req.body[f] === true || req.body[f] === 'true';
+        });
+        if (Object.keys(sectionData).length > 0) {
+          await prisma.book.updateMany({ where: { id: { in: ids } }, data: sectionData });
+        }
+        break;
+      }
+      default:
+        return res.status(400).json({ message: 'Invalid action.' });
+    }
+    res.json({ message: 'Bulk action completed.', count: ids.length });
+  } catch (error) { next(error); }
+};

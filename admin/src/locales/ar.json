@@ -59,7 +59,21 @@
     "savedSuccess": "تم الحفظ بنجاح",
     "saveFailed": "فشل في الحفظ",
     "exportFailed": "فشل التصدير",
-    "free": "مجاني"
+    "free": "مجاني",
+    "bulkDelete": "حذف المحدد",
+    "bulkActivate": "تفعيل",
+    "bulkDeactivate": "إلغاء التفعيل",
+    "bulkConfirm": "هل أنت متأكد من تنفيذ هذا الإجراء على {count} عنصر؟",
+    "bulkSuccess": "تم تنفيذ الإجراء الجماعي",
+    "bulkBlock": "حظر المحدد",
+    "bulkUnblock": "إلغاء حظر المحدد",
+    "bulkShow": "إظهار",
+    "bulkHide": "إخفاء",
+    "bulkMarkInStock": "تعيين كمتوفر",
+    "bulkMarkOutOfStock": "تعيين كغير متوفر",
+    "bulkUpdateStatus": "تحديث الحالة",
+    "apply": "تطبيق",
+    "topLevelNoDelete": "لا يمكن حذف التصنيفات الرئيسية"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -171,7 +185,11 @@
     "productCreated": "تم إنشاء المنتج",
     "failedLoadProduct": "فشل في تحميل المنتج",
     "imageRemoved": "تم إزالة الصورة",
-    "failedRemoveImage": "فشل في إزالة الصورة"
+    "failedRemoveImage": "فشل في إزالة الصورة",
+    "moveCategory": "نقل إلى تصنيف",
+    "setSection": "تعيين القسم",
+    "failedCreate": "فشل في إنشاء المنتج",
+    "failedUpdate": "فشل في التحديث"
   },
   "categories": {
     "title": "التصنيفات",

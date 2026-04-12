@@ -63,3 +63,22 @@ exports.updateRole = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bulkAction = async (req, res, next) => {
+  try {
+    const { ids, action } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
+
+    switch (action) {
+      case 'block':
+        await prisma.user.updateMany({ where: { id: { in: ids }, role: { not: 'ADMIN' } }, data: { isBlocked: true } });
+        break;
+      case 'unblock':
+        await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isBlocked: false } });
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid action.' });
+    }
+    res.json({ message: 'Bulk action completed.', count: ids.length });
+  } catch (error) { next(error); }
+};

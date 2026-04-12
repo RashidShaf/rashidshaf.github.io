@@ -19,6 +19,8 @@ export default function Reviews() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, avgRating: 0, visible: 0 });
   const [deleteId, setDeleteId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
 
   // Fetch stats
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function Reviews() {
       const res = await api.get(`/admin/reviews?${params}`);
       setReviews(res.data.data || []);
       setPagination(res.data.pagination || null);
+      setSelectedIds([]);
     } catch (err) {
       toast.error(t('reviews.failedFetch'));
     } finally {
@@ -93,6 +96,26 @@ export default function Reviews() {
     } catch (err) {
       toast.error(t('reviews.failedDelete'));
       setDeleteId(null);
+    }
+  };
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/reviews/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      setBulkConfirmAction(null);
+      fetchReviews();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
+      setBulkConfirmAction(null);
     }
   };
 
@@ -159,12 +182,27 @@ export default function Reviews() {
         </select>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <button onClick={() => setBulkConfirmAction('delete')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkDelete')}</button>
+          <button onClick={() => handleBulkAction('show')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkShow')}</button>
+          <button onClick={() => handleBulkAction('hide')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">{t('common.bulkHide')}</button>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={isAllSelected(reviews)} onChange={() => toggleSelectAll(reviews)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.customer')}</th>
@@ -180,20 +218,23 @@ export default function Reviews() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={9} className="px-4 py-4">
+                    <td colSpan={10} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : reviews.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={10} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
               ) : (
                 reviews.map((review, index) => (
-                  <tr key={review.id} className="border-b border-admin-border hover:bg-gray-50 transition-colors">
+                  <tr key={review.id} className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(review.id) ? 'bg-blue-50' : ''}`}>
+                    <td className="px-4 py-3">
+                      <input type="checkbox" checked={selectedIds.includes(review.id)} onChange={() => toggleSelect(review.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                    </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
                       {(page - 1) * limit + index + 1}
                     </td>
@@ -223,7 +264,7 @@ export default function Reviews() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <button
                         onClick={() => handleToggleVisibility(review)}
-                        className={`px-2.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-colors ${
+                        className={`px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full cursor-pointer transition-colors ${
                           review.isVisible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
                         }`}
                       >
@@ -236,7 +277,7 @@ export default function Reviews() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
                       <button
                         onClick={() => setDeleteId(review.id)}
-                        className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"
+                        className="p-1.5 3xl:p-2 text-admin-muted hover:text-red-500 transition-colors"
                       >
                         <FiTrash2 size={15} />
                       </button>
@@ -249,9 +290,9 @@ export default function Reviews() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
+        <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-admin-muted">
+            <span className="text-xs 3xl:text-sm text-admin-muted">
               {t('common.showing')} {reviews.length} {t('common.of')} {pagination?.total || reviews.length}
             </span>
             <select
@@ -321,6 +362,15 @@ export default function Reviews() {
         confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmModal
+        open={bulkConfirmAction === 'delete'}
+        title={t('common.bulkDelete')}
+        message={t('common.bulkConfirm').replace('{count}', selectedIds.length)}
+        confirmText={t('common.delete')}
+        onConfirm={() => handleBulkAction('delete')}
+        onCancel={() => setBulkConfirmAction(null)}
       />
     </motion.div>
   );

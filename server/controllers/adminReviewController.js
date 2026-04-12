@@ -98,3 +98,25 @@ exports.remove = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bulkAction = async (req, res, next) => {
+  try {
+    const { ids, action } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
+
+    switch (action) {
+      case 'delete':
+        await prisma.review.deleteMany({ where: { id: { in: ids } } });
+        break;
+      case 'show':
+        await prisma.review.updateMany({ where: { id: { in: ids } }, data: { isVisible: true } });
+        break;
+      case 'hide':
+        await prisma.review.updateMany({ where: { id: { in: ids } }, data: { isVisible: false } });
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid action.' });
+    }
+    res.json({ message: 'Bulk action completed.', count: ids.length });
+  } catch (error) { next(error); }
+};

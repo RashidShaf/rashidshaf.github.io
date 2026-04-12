@@ -59,7 +59,21 @@
     "savedSuccess": "Saved successfully",
     "saveFailed": "Failed to save",
     "exportFailed": "Export failed",
-    "free": "Free"
+    "free": "Free",
+    "bulkDelete": "Delete Selected",
+    "bulkActivate": "Activate",
+    "bulkDeactivate": "Deactivate",
+    "bulkConfirm": "Are you sure you want to perform this action on {count} items?",
+    "bulkSuccess": "Bulk action completed",
+    "bulkBlock": "Block Selected",
+    "bulkUnblock": "Unblock Selected",
+    "bulkShow": "Show",
+    "bulkHide": "Hide",
+    "bulkMarkInStock": "Mark In Stock",
+    "bulkMarkOutOfStock": "Mark Out of Stock",
+    "bulkUpdateStatus": "Update Status",
+    "apply": "Apply",
+    "topLevelNoDelete": "Top-level categories cannot be deleted"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -171,7 +185,11 @@
     "productCreated": "Product created",
     "failedLoadProduct": "Failed to load product",
     "imageRemoved": "Image removed",
-    "failedRemoveImage": "Failed to remove image"
+    "failedRemoveImage": "Failed to remove image",
+    "moveCategory": "Move to Category",
+    "setSection": "Set Section",
+    "failedUpdate": "Failed to update",
+    "failedCreate": "Failed to create product"
   },
   "categories": {
     "title": "Categories",

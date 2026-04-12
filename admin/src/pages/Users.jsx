@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 const roleColors = {
@@ -20,6 +21,8 @@ export default function Users() {
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
 
   useEffect(() => {
     api.get('/admin/dashboard/stats').then((res) => setTotalUsers(res.data.totalUsers || 0)).catch(() => {});
@@ -33,6 +36,7 @@ export default function Users() {
       const res = await api.get(`/admin/users?${params}`);
       setUsers(res.data.data || res.data);
       setPagination(res.data.pagination || null);
+      setSelectedIds([]);
     } catch (err) {
       toast.error(t('users.failedFetch'));
     } finally {
@@ -58,6 +62,26 @@ export default function Users() {
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  const toggleSelectAll = (items) => {
+    const allIds = items.map((i) => i.id);
+    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+  };
+  const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
+
+  const handleBulkAction = async (action, extra = {}) => {
+    try {
+      await api.post('/admin/users/bulk-action', { ids: selectedIds, action, ...extra });
+      toast.success(t('common.bulkSuccess'));
+      setSelectedIds([]);
+      setBulkConfirmAction(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error(t('common.saveFailed'));
+      setBulkConfirmAction(null);
+    }
+  };
 
   const handleToggleBlock = async (user) => {
     const action = user.isBlocked ? 'unblock' : 'block';
@@ -104,12 +128,26 @@ export default function Users() {
         </button>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+          <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
+          <div className="flex-1" />
+          <button onClick={() => handleBulkAction('block')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkBlock')}</button>
+          <button onClick={() => handleBulkAction('unblock')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkUnblock')}</button>
+          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-admin-card rounded-xl border border-admin-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input type="checkbox" checked={isAllSelected(users)} onChange={() => toggleSelectAll(users)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.name')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('users.email')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.phone')}</th>
@@ -124,14 +162,14 @@ export default function Users() {
               {loading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={8} className="px-4 py-4">
+                    <td colSpan={9} className="px-4 py-4">
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-admin-muted">
+                  <td colSpan={9} className="px-4 py-12 text-center text-admin-muted">
                     {t('common.noResults')}
                   </td>
                 </tr>
@@ -139,8 +177,11 @@ export default function Users() {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-admin-border hover:bg-gray-50 transition-colors"
+                    className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(user.id) ? 'bg-blue-50' : ''}`}
                   >
+                    <td className="px-4 py-3">
+                      <input type="checkbox" checked={selectedIds.includes(user.id)} onChange={() => toggleSelect(user.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                    </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <p className="font-medium text-admin-text">
                         {user.firstName} {user.lastName}
@@ -150,7 +191,7 @@ export default function Users() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted" dir="ltr">{user.phone || '-'}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span
-                        className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                        className={`inline-block px-2.5 py-0.5 3xl:px-3 3xl:py-1 text-xs 3xl:text-sm font-medium rounded-full ${
                           roleColors[user.role] || 'bg-gray-100 text-gray-700'
                         }`}
                       >
@@ -211,8 +252,8 @@ export default function Users() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-admin-border">
-            <span className="text-xs text-admin-muted">
+          <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
+            <span className="text-xs 3xl:text-sm text-admin-muted">
               {t('common.showing')} {users.length} {t('common.of')} {pagination.total}
             </span>
             <div className="flex gap-1">
@@ -248,6 +289,15 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={bulkConfirmAction === 'block'}
+        title={t('common.bulkBlock')}
+        message={t('common.bulkConfirm').replace('{count}', selectedIds.length)}
+        confirmText={t('users.block')}
+        onConfirm={() => handleBulkAction('block')}
+        onCancel={() => setBulkConfirmAction(null)}
+      />
     </motion.div>
   );
 }

@@ -80,3 +80,28 @@ exports.updateStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bulkAction = async (req, res, next) => {
+  try {
+    const { ids, action, status } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
+
+    switch (action) {
+      case 'delete':
+        await prisma.order.deleteMany({ where: { id: { in: ids } } });
+        break;
+      case 'updateStatus': {
+        const validStatuses = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+        if (!status || !validStatuses.includes(status)) return res.status(400).json({ message: 'Valid status required.' });
+        const updateData = { status };
+        if (status === 'DELIVERED') updateData.deliveredAt = new Date();
+        if (status === 'CANCELLED') updateData.cancelledAt = new Date();
+        await prisma.order.updateMany({ where: { id: { in: ids } }, data: updateData });
+        break;
+      }
+      default:
+        return res.status(400).json({ message: 'Invalid action.' });
+    }
+    res.json({ message: 'Bulk action completed.', count: ids.length });
+  } catch (error) { next(error); }
+};
