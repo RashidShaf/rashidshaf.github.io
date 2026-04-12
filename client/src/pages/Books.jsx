@@ -264,7 +264,7 @@ const Books = () => {
         setBooks(res.data.data || res.data);
         setPagination(res.data.pagination || null);
       } catch (err) {
-        console.error('Failed to load books:', err);
+        // silently handle error
       } finally {
         setLoading(false);
       }
@@ -297,7 +297,7 @@ const Books = () => {
       setPagination(res.data.pagination || null);
       setCurrentPage(nextPage);
     } catch (err) {
-      console.error('Failed to load more books:', err);
+      // silently handle error
     } finally {
       setLoadingMore(false);
     }
@@ -687,7 +687,7 @@ const Books = () => {
                   }}
                   className="w-full py-2 text-sm text-red-500 hover:text-red-600 transition-colors"
                 >
-                  {language === 'ar' ? 'مسح الفلاتر' : 'Clear all filters'}
+                  {t('books.clearFilters')}
                 </button>
               )}
             </div>
@@ -847,7 +847,7 @@ const Books = () => {
                     className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 text-sm text-red-500 hover:text-red-600 transition-colors"
                   >
                     <FiX size={14} />
-                    {language === 'ar' ? 'مسح' : 'Clear'}
+                    {t('books.clearFilters')}
                   </button>
                 )}
             </div>

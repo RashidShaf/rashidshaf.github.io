@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  FiShoppingCart, FiHeart, FiStar, FiBook, FiArrowLeft,
-  FiPackage, FiDownload, FiEye, FiShare2,
-} from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';

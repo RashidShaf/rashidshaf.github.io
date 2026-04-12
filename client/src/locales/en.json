@@ -60,6 +60,7 @@
     "browse": "Browse",
     "search": "Search for products...",
     "filters": "Filters",
+    "clearFilters": "Clear all filters",
     "category": "Category",
     "priceRange": "Price Range",
     "author": "Author",
