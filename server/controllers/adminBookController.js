@@ -7,7 +7,7 @@ const path = require('path');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search, category } = req.query;
+    const { search, category, hasImage, hasDesc, hasDescAr, duplicateBarcode, similarNames } = req.query;
 
     const where = { AND: [] };
     if (search) {
@@ -23,18 +23,16 @@ exports.list = async (req, res, next) => {
       });
     }
 
-    // Filter by category (includes sub-categories and grandchildren — 3 levels)
+    // Filter by category (includes sub-categories — 4 levels)
     if (category) {
-      const children = await prisma.category.findMany({
-        where: { parentId: category },
-        select: { id: true },
-      });
-      const childIds = children.map((c) => c.id);
-      const grandchildren = await prisma.category.findMany({
-        where: { parentId: { in: childIds } },
-        select: { id: true },
-      });
-      const categoryIds = [category, ...childIds, ...grandchildren.map((c) => c.id)];
+      const collectIds = async (parentIds) => {
+        const children = await prisma.category.findMany({ where: { parentId: { in: parentIds } }, select: { id: true } });
+        if (children.length === 0) return [];
+        const childIds = children.map((c) => c.id);
+        const deeper = await collectIds(childIds);
+        return [...childIds, ...deeper];
+      };
+      const categoryIds = [category, ...(await collectIds([category]))];
       where.AND.push({
         OR: [
           { categoryId: { in: categoryIds } },
@@ -43,9 +41,56 @@ exports.list = async (req, res, next) => {
       });
     }
 
+    // Quality filters
+    if (hasImage === 'true') where.AND.push({ coverImage: { not: null } });
+    if (hasImage === 'false') where.AND.push({ coverImage: null });
+    if (hasDesc === 'true') where.AND.push({ description: { not: null } });
+    if (hasDesc === 'false') where.AND.push({ OR: [{ description: null }, { description: '' }] });
+    if (hasDescAr === 'true') where.AND.push({ descriptionAr: { not: null } });
+    if (hasDescAr === 'false') where.AND.push({ OR: [{ descriptionAr: null }, { descriptionAr: '' }] });
+
+    // Duplicate barcodes — find SKUs that appear more than once
+    if (duplicateBarcode === 'true') {
+      const dupes = await prisma.$queryRaw`
+        SELECT sku FROM books WHERE sku IS NOT NULL AND sku != '' GROUP BY sku HAVING COUNT(*) > 1
+      `;
+      const dupeSKUs = dupes.map((d) => d.sku);
+      if (dupeSKUs.length > 0) {
+        where.AND.push({ sku: { in: dupeSKUs } });
+      } else {
+        where.AND.push({ id: 'no-results' }); // force empty
+      }
+    }
+
+    // Similar names — find books with titles that match first 3 words of another book
+    if (similarNames === 'true') {
+      const allBooks = await prisma.book.findMany({ select: { id: true, title: true } });
+      const getWords = (t) => t.toLowerCase().replace(/[^a-zA-Z0-9\u0600-\u06FF\s]/g, '').split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
+      const groups = {};
+      allBooks.forEach((b) => {
+        const key = getWords(b.title);
+        if (key.length < 3) return;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(b.id);
+      });
+      const similarIds = Object.values(groups).filter((ids) => ids.length > 1).flat();
+      if (similarIds.length > 0) {
+        where.AND.push({ id: { in: similarIds } });
+      } else {
+        where.AND.push({ id: 'no-results' });
+      }
+    }
+
+    if (where.AND.length === 0) delete where.AND;
+
+    // Sort by title for similar names, by sku for duplicate barcodes
+    let orderBy = { createdAt: 'desc' };
+    if (similarNames === 'true') orderBy = { title: 'asc' };
+    if (duplicateBarcode === 'true') orderBy = { sku: 'asc' };
+
     const [books, total] = await Promise.all([
       prisma.book.findMany({
-        where, orderBy: { createdAt: 'desc' }, skip, take: limit,
+        where, orderBy, skip, take: limit,
         include: {
           category: { select: { id: true, name: true, nameAr: true, parentId: true } },
           bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },

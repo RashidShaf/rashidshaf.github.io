@@ -163,7 +163,7 @@ export default function BookCreate() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title) { toast.error('Title is required'); return; }
+    if (!form.title) { toast.error(t('books.titleRequired')); return; }
     setSaving(true);
     try {
       const payload = { ...form };
@@ -218,11 +218,11 @@ export default function BookCreate() {
         });
       }
 
-      toast.success('Product created');
+      toast.success(t('books.productCreated'));
       const tab = form.parentCategoryId || '';
       navigate(`/books${tab ? `?tab=${tab}` : ''}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create product');
+      toast.error(err.response?.data?.message || t('books.failedCreate'));
     } finally {
       setSaving(false);
     }
@@ -232,7 +232,7 @@ export default function BookCreate() {
   const labelClass = 'block text-sm 3xl:text-base font-medium text-admin-text mb-1.5';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div>
       <div className="flex items-center gap-3 mb-6 3xl:mb-8">
         <Link to="/books" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
@@ -627,6 +627,6 @@ export default function BookCreate() {
           </div>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

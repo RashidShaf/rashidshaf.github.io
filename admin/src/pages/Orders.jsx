@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -20,12 +20,13 @@ const statusColors = {
 export default function Orders() {
   const t = useLanguageStore((s) => s.t);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [customerFilter, setCustomerFilter] = useState('ALL');
-  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
+  const [customerFilter, setCustomerFilter] = useState(searchParams.get('customer') || 'ALL');
+  const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pending: 0, delivered: 0 });
 
@@ -57,12 +58,18 @@ export default function Orders() {
       setOrders(res.data.data || res.data);
       setPagination(res.data.pagination || null);
     } catch (err) {
-      toast.error('Failed to fetch orders');
-      console.error(err);
+      toast.error(t('orders.failedFetch'));
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-orders-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-orders-scroll');
+      }
     }
   };
+
+  const saveScroll = () => sessionStorage.setItem('admin-orders-scroll', window.scrollY.toString());
 
   useEffect(() => { fetchOrders(); }, [page, statusFilter, customerFilter]);
 
@@ -71,13 +78,20 @@ export default function Orders() {
     const timer = setTimeout(() => {
       setPage(1);
       fetchOrders();
+      const p = new URLSearchParams(searchParams);
+      if (search) p.set('q', search); else p.delete('q');
+      setSearchParams(p, { replace: true });
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
   const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+    const val = e.target.value;
+    setStatusFilter(val);
     setPage(1);
+    const params = new URLSearchParams(searchParams);
+    if (val && val !== 'ALL') params.set('status', val); else params.delete('status');
+    setSearchParams(params, { replace: true });
   };
 
   return (
@@ -116,7 +130,7 @@ export default function Orders() {
         </button>
         <select
           value={customerFilter}
-          onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
+          onChange={(e) => { const val = e.target.value; setCustomerFilter(val); setPage(1); const p = new URLSearchParams(searchParams); if (val && val !== 'ALL') p.set('customer', val); else p.delete('customer'); setSearchParams(p, { replace: true }); }}
           className="px-3 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[130px]"
         >
           <option value="ALL">{t('orders.allCustomers')}</option>
@@ -173,7 +187,7 @@ export default function Orders() {
                 orders.map((order) => (
                   <tr
                     key={order.id}
-                    onClick={() => navigate(`/orders/${order.id}`)}
+                    onClick={() => { saveScroll(); navigate(`/orders/${order.id}`); }}
                     className="border-b border-admin-border hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
@@ -223,14 +237,32 @@ export default function Orders() {
             <div className="flex gap-1">
               <button
                 disabled={!pagination.hasPrev}
-                onClick={() => setPage(page - 1)}
+                onClick={() => {
+                  const newPage = page - 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (statusFilter && statusFilter !== 'ALL') params.set('status', statusFilter);
+                  if (customerFilter && customerFilter !== 'ALL') params.set('customer', customerFilter);
+                  if (search) params.set('q', search);
+                  if (newPage > 1) params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronLeft size={16} />
               </button>
               <button
                 disabled={!pagination.hasNext}
-                onClick={() => setPage(page + 1)}
+                onClick={() => {
+                  const newPage = page + 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (statusFilter && statusFilter !== 'ALL') params.set('status', statusFilter);
+                  if (customerFilter && customerFilter !== 'ALL') params.set('customer', customerFilter);
+                  if (search) params.set('q', search);
+                  params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronRight size={16} />

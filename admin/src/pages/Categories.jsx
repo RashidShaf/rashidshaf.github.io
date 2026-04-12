@@ -11,11 +11,11 @@ const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
 export default function Categories() {
   const { t, language } = useLanguageStore();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState(null);
-  const [catSearch, setCatSearch] = useState('');
+  const [catSearch, setCatSearch] = useState(searchParams.get('q') || '');
   const [selectedParent, setSelectedParent] = useState(searchParams.get('tab') || '');
   const [selectedLevel2, setSelectedLevel2] = useState(searchParams.get('sub') || '');
   const [selectedLevel3, setSelectedLevel3] = useState(searchParams.get('sub2') || '');
@@ -30,8 +30,15 @@ export default function Categories() {
       toast.error(t('categories.failedFetch'));
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-categories-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-categories-scroll');
+      }
     }
   };
+
+  const saveScroll = () => sessionStorage.setItem('admin-categories-scroll', window.scrollY.toString());
 
   useEffect(() => { fetchCategories(); }, []);
 
@@ -41,6 +48,16 @@ export default function Categories() {
       setSelectedParent('top');
     }
   }, [categories]);
+
+  // Debounced URL sync for search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const p = new URLSearchParams(searchParams);
+      if (catSearch) p.set('q', catSearch); else p.delete('q');
+      setSearchParams(p, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [catSearch]);
 
   const handleToggleActive = async (cat) => {
     if (!cat.parentId && cat.slug === 'books') {
@@ -82,7 +99,7 @@ export default function Categories() {
       await api.put('/admin/categories/reorder', { orderedIds: reordered.map((c) => c.id) });
       fetchCategories();
     } catch {
-      toast.error('Failed to reorder');
+      toast.error(t('categories.failedReorder'));
     }
   };
 
@@ -198,15 +215,15 @@ export default function Categories() {
       {/* Level 1 Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         <button
-          onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); setSelectedLevel3(''); }}
+          onClick={() => { setSelectedParent('top'); setSelectedLevel2(''); setSelectedLevel3(''); setSearchParams({ tab: 'top' }, { replace: true }); }}
           className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === 'top' ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
         >
-          Top Level
+          {t('categories.topLevel')}
         </button>
         {parentCategories.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); setSelectedLevel3(''); }}
+            onClick={() => { setSelectedParent(cat.id); setSelectedLevel2(''); setSelectedLevel3(''); setSearchParams({ tab: cat.id }, { replace: true }); }}
             className={`px-5 py-2.5 3xl:px-6 3xl:py-3 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedParent === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             {getName(cat)}
@@ -218,7 +235,7 @@ export default function Categories() {
       {level2Categories.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
           <button
-            onClick={() => { setSelectedLevel2(''); setSelectedLevel3(''); }}
+            onClick={() => { setSelectedLevel2(''); setSelectedLevel3(''); setSearchParams({ tab: selectedParent }, { replace: true }); }}
             className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             All {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
@@ -226,7 +243,7 @@ export default function Categories() {
           {level2Categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => { setSelectedLevel2(cat.id); setSelectedLevel3(''); }}
+              onClick={() => { setSelectedLevel2(cat.id); setSelectedLevel3(''); setSearchParams({ tab: selectedParent, sub: cat.id }, { replace: true }); }}
               className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${selectedLevel2 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
             >
               {getName(cat)}
@@ -239,7 +256,7 @@ export default function Categories() {
       {level3Categories.length > 0 && (
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 ps-4" style={{ scrollbarWidth: 'none' }}>
           <button
-            onClick={() => setSelectedLevel3('')}
+            onClick={() => { setSelectedLevel3(''); setSearchParams({ tab: selectedParent, sub: selectedLevel2 }, { replace: true }); }}
             className={`px-4 py-1.5 3xl:px-5 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${!selectedLevel3 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
             All {getName(level2Categories.find((c) => c.id === selectedLevel2) || {})}
@@ -247,7 +264,7 @@ export default function Categories() {
           {level3Categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedLevel3(cat.id)}
+              onClick={() => { setSelectedLevel3(cat.id); setSearchParams({ tab: selectedParent, sub: selectedLevel2, sub2: cat.id }, { replace: true }); }}
               className={`px-4 py-1.5 3xl:px-5 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${selectedLevel3 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
             >
               {getName(cat)}
@@ -363,7 +380,7 @@ export default function Categories() {
                           <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
                             <FiArrowDown size={15} />
                           </button>
-                          <Link to={`/categories/${rowCat.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
+                          <Link to={`/categories/${rowCat.id}/edit`} onClick={saveScroll} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
                             <FiEdit2 size={15} />
                           </Link>
                           {rowCat.parentId && (

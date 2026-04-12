@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { FiStar, FiSearch, FiTrash2, FiEye, FiEyeOff, FiRefreshCw, FiChevronLeft, FiChevronRight, FiMessageSquare, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -8,12 +9,13 @@ import api from '../utils/api';
 
 export default function Reviews() {
   const { t, language } = useLanguageStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [reviews, setReviews] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
-  const [visibilityFilter, setVisibilityFilter] = useState('');
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [limit, setLimit] = useState(parseInt(searchParams.get('limit')) || 10);
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [visibilityFilter, setVisibilityFilter] = useState(searchParams.get('visibility') || '');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, avgRating: 0, visible: 0 });
   const [deleteId, setDeleteId] = useState(null);
@@ -47,27 +49,37 @@ export default function Reviews() {
       setReviews(res.data.data || []);
       setPagination(res.data.pagination || null);
     } catch (err) {
-      toast.error('Failed to fetch reviews');
-      console.error(err);
+      toast.error(t('reviews.failedFetch'));
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-reviews-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-reviews-scroll');
+      }
     }
   };
 
   useEffect(() => { fetchReviews(); }, [page, limit, visibilityFilter]);
 
   useEffect(() => {
-    const timer = setTimeout(() => { setPage(1); fetchReviews(); }, 300);
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchReviews();
+      const p = new URLSearchParams(searchParams);
+      if (search) p.set('q', search); else p.delete('q');
+      setSearchParams(p, { replace: true });
+    }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
   const handleToggleVisibility = async (review) => {
     try {
       await api.put(`/admin/reviews/${review.id}/visibility`);
-      toast.success(review.isVisible ? 'Review hidden' : 'Review visible');
+      toast.success(review.isVisible ? t('reviews.hidden') : t('reviews.shown'));
       fetchReviews();
     } catch (err) {
-      toast.error('Failed to update visibility');
+      toast.error(t('reviews.failedVisibility'));
     }
   };
 
@@ -75,11 +87,11 @@ export default function Reviews() {
     if (!deleteId) return;
     try {
       await api.delete(`/admin/reviews/${deleteId}`);
-      toast.success('Review deleted');
+      toast.success(t('reviews.reviewDeleted'));
       setDeleteId(null);
       fetchReviews();
     } catch (err) {
-      toast.error('Failed to delete review');
+      toast.error(t('reviews.failedDelete'));
       setDeleteId(null);
     }
   };
@@ -138,7 +150,7 @@ export default function Reviews() {
         </button>
         <select
           value={visibilityFilter}
-          onChange={(e) => { setVisibilityFilter(e.target.value); setPage(1); }}
+          onChange={(e) => { const val = e.target.value; setVisibilityFilter(val); setPage(1); const p = new URLSearchParams(searchParams); if (val) p.set('visibility', val); else p.delete('visibility'); setSearchParams(p, { replace: true }); }}
           className="px-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent appearance-none cursor-pointer min-w-[140px]"
         >
           <option value="">{t('common.all')}</option>
@@ -215,7 +227,7 @@ export default function Reviews() {
                           review.isVisible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
                         }`}
                       >
-                        {review.isVisible ? 'Active' : 'Inactive'}
+                        {review.isVisible ? t('common.active') : t('common.inactive')}
                       </button>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
@@ -244,7 +256,17 @@ export default function Reviews() {
             </span>
             <select
               value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              onChange={(e) => {
+                const newLimit = Number(e.target.value);
+                setLimit(newLimit);
+                setPage(1);
+                const params = new URLSearchParams();
+                if (visibilityFilter) params.set('visibility', visibilityFilter);
+                if (search) params.set('q', search);
+                params.set('page', '1');
+                if (newLimit !== 10) params.set('limit', String(newLimit));
+                setSearchParams(params, { replace: true });
+              }}
               className="px-2 py-1 bg-admin-bg border border-admin-input-border rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
             >
               <option value={10}>10</option>
@@ -257,14 +279,32 @@ export default function Reviews() {
             <div className="flex gap-1">
               <button
                 disabled={!pagination.hasPrev}
-                onClick={() => setPage(page - 1)}
+                onClick={() => {
+                  const newPage = page - 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (visibilityFilter) params.set('visibility', visibilityFilter);
+                  if (search) params.set('q', search);
+                  if (newPage > 1) params.set('page', String(newPage));
+                  if (limit !== 10) params.set('limit', String(limit));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronLeft size={16} />
               </button>
               <button
                 disabled={!pagination.hasNext}
-                onClick={() => setPage(page + 1)}
+                onClick={() => {
+                  const newPage = page + 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (visibilityFilter) params.set('visibility', visibilityFilter);
+                  if (search) params.set('q', search);
+                  params.set('page', String(newPage));
+                  if (limit !== 10) params.set('limit', String(limit));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronRight size={16} />
@@ -278,7 +318,7 @@ export default function Reviews() {
         open={!!deleteId}
         title={t('reviews.deleteReview')}
         message={t('reviews.deleteReviewConfirm')}
-        confirmText="Delete"
+        confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

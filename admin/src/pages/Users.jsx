@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -12,10 +13,11 @@ const roleColors = {
 
 export default function Users() {
   const t = useLanguageStore((s) => s.t);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
 
@@ -32,10 +34,14 @@ export default function Users() {
       setUsers(res.data.data || res.data);
       setPagination(res.data.pagination || null);
     } catch (err) {
-      toast.error('Failed to fetch users');
-      console.error(err);
+      toast.error(t('users.failedFetch'));
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-users-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-users-scroll');
+      }
     }
   };
 
@@ -46,6 +52,9 @@ export default function Users() {
     const timer = setTimeout(() => {
       setPage(1);
       fetchUsers();
+      const p = new URLSearchParams(searchParams);
+      if (search) p.set('q', search); else p.delete('q');
+      setSearchParams(p, { replace: true });
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
@@ -54,10 +63,10 @@ export default function Users() {
     const action = user.isBlocked ? 'unblock' : 'block';
     try {
       await api.put(`/admin/users/${user.id}/block`, { blocked: !user.isBlocked });
-      toast.success(`User ${action}ed successfully`);
+      toast.success(action === 'block' ? t('users.userBlocked') : t('users.userUnblocked'));
       fetchUsers();
     } catch (err) {
-      toast.error(`Failed to ${action} user`);
+      toast.error(t('users.failedUpdate'));
     }
   };
 
@@ -155,7 +164,7 @@ export default function Users() {
                         }`}
                       />
                       <span className="ml-2 text-xs text-admin-muted">
-                        {user.isBlocked ? t('users.blocked') : 'Active'}
+                        {user.isBlocked ? t('users.blocked') : t('common.active')}
                       </span>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
@@ -209,14 +218,28 @@ export default function Users() {
             <div className="flex gap-1">
               <button
                 disabled={!pagination.hasPrev}
-                onClick={() => setPage(page - 1)}
+                onClick={() => {
+                  const newPage = page - 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (search) params.set('q', search);
+                  if (newPage > 1) params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronLeft size={16} />
               </button>
               <button
                 disabled={!pagination.hasNext}
-                onClick={() => setPage(page + 1)}
+                onClick={() => {
+                  const newPage = page + 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (search) params.set('q', search);
+                  params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronRight size={16} />

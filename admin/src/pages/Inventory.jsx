@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiChevronUp, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -7,17 +8,18 @@ import api from '../utils/api';
 
 export default function Inventory() {
   const t = useLanguageStore((s) => s.t);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [loading, setLoading] = useState(true);
   const [restockId, setRestockId] = useState(null);
   const [restockQty, setRestockQty] = useState('');
   const [restocking, setRestocking] = useState(false);
   const [summary, setSummary] = useState(null);
-  const [invSearch, setInvSearch] = useState('');
-  const [alertMinimized, setAlertMinimized] = useState(false);
+  const [invSearch, setInvSearch] = useState(searchParams.get('q') || '');
+  const [alertMinimized, setAlertMinimized] = useState(true);
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
@@ -35,10 +37,14 @@ export default function Inventory() {
       setPagination(invRes.data.pagination || null);
       setLowStock(lowRes.data.data || lowRes.data);
     } catch (err) {
-      toast.error('Failed to fetch inventory');
-      console.error(err);
+      toast.error(t('inventory.failedFetch'));
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-inventory-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-inventory-scroll');
+      }
     }
   };
 
@@ -46,10 +52,20 @@ export default function Inventory() {
     fetchInventory();
   }, [page]);
 
+  // Debounced URL sync for search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const p = new URLSearchParams(searchParams);
+      if (invSearch) p.set('q', invSearch); else p.delete('q');
+      setSearchParams(p, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [invSearch]);
+
   const handleRestock = async (bookId) => {
     const qty = parseInt(restockQty);
     if (!qty || qty <= 0) {
-      toast.error('Enter a valid quantity');
+      toast.error(t('inventory.enterValidQty'));
       return;
     }
     setRestocking(true);
@@ -57,12 +73,12 @@ export default function Inventory() {
       await api.post(`/admin/inventory/${bookId}/restock`, {
         quantity: qty,
       });
-      toast.success('Restocked successfully');
+      toast.success(t('inventory.restocked'));
       setRestockId(null);
       setRestockQty('');
       fetchInventory();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to restock');
+      toast.error(err.response?.data?.message || t('inventory.failedRestock'));
     } finally {
       setRestocking(false);
     }
@@ -71,10 +87,10 @@ export default function Inventory() {
   const handleToggleOutOfStock = async (bookId, currentValue) => {
     try {
       await api.put(`/admin/books/${bookId}`, { isOutOfStock: !currentValue });
-      toast.success(currentValue ? 'Marked as In Stock' : 'Marked as Out of Stock');
+      toast.success(currentValue ? t('inventory.markedInStock') : t('inventory.markedOutOfStock'));
       fetchInventory();
     } catch (err) {
-      toast.error('Failed to update');
+      toast.error(t('inventory.failedUpdate'));
     }
   };
 
@@ -294,14 +310,28 @@ export default function Inventory() {
             <div className="flex gap-1">
               <button
                 disabled={!pagination.hasPrev}
-                onClick={() => setPage(page - 1)}
+                onClick={() => {
+                  const newPage = page - 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (invSearch) params.set('q', invSearch);
+                  if (newPage > 1) params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronLeft size={16} />
               </button>
               <button
                 disabled={!pagination.hasNext}
-                onClick={() => setPage(page + 1)}
+                onClick={() => {
+                  const newPage = page + 1;
+                  setPage(newPage);
+                  const params = new URLSearchParams();
+                  if (invSearch) params.set('q', invSearch);
+                  params.set('page', String(newPage));
+                  setSearchParams(params, { replace: true });
+                }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
               >
                 <FiChevronRight size={16} />

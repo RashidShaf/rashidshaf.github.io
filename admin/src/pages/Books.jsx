@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -9,21 +9,25 @@ import api from '../utils/api';
 
 export default function Books() {
   const { t, language } = useLanguageStore();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [books, setBooks] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [limit, setLimit] = useState(parseInt(searchParams.get('limit')) || 10);
+  const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, featured: 0, lowStock: 0 });
   const [deleteId, setDeleteId] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
-  const [selectedSub, setSelectedSub] = useState('');
-  const [selectedL3, setSelectedL3] = useState('');
-  const [selectedL4, setSelectedL4] = useState('');
+  const [selectedSub, setSelectedSub] = useState(searchParams.get('sub') || '');
+  const [selectedL3, setSelectedL3] = useState(searchParams.get('l3') || '');
+  const [selectedL4, setSelectedL4] = useState(searchParams.get('l4') || '');
+  const [imageFilter, setImageFilter] = useState(searchParams.get('img') || '');
+  const [descFilter, setDescFilter] = useState(searchParams.get('desc') || '');
+  const [issueFilter, setIssueFilter] = useState(searchParams.get('issue') || '');
+  const [openFilterMenu, setOpenFilterMenu] = useState(null);
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
@@ -55,20 +59,47 @@ export default function Books() {
       else if (selectedL3) params.set('category', selectedL3);
       else if (selectedSub) params.set('category', selectedSub);
       else if (selectedTab) params.set('category', selectedTab);
+      // Quality filters
+      if (imageFilter === 'hasImage') params.set('hasImage', 'true');
+      if (imageFilter === 'noImage') params.set('hasImage', 'false');
+      if (descFilter === 'noDesc') params.set('hasDesc', 'false');
+      if (descFilter === 'noDescAr') params.set('hasDescAr', 'false');
+      if (issueFilter === 'duplicateBarcode') params.set('duplicateBarcode', 'true');
+      if (issueFilter === 'similarNames') params.set('similarNames', 'true');
       const res = await api.get(`/admin/books?${params}`);
       setBooks(res.data.data);
       setPagination(res.data.pagination);
     } catch (err) {
-      console.error(err);
+      // silently handle error
     } finally {
       setLoading(false);
+      const savedScroll = sessionStorage.getItem('admin-books-scroll');
+      if (savedScroll) {
+        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+        sessionStorage.removeItem('admin-books-scroll');
+      }
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4]);
+  const saveScroll = () => sessionStorage.setItem('admin-books-scroll', window.scrollY.toString());
+
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter]);
 
   useEffect(() => {
-    const timer = setTimeout(() => { setPage(1); fetchBooks(); }, 300);
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchBooks();
+      const params = new URLSearchParams();
+      if (selectedTab) params.set('tab', selectedTab);
+      if (selectedSub) params.set('sub', selectedSub);
+      if (selectedL3) params.set('l3', selectedL3);
+      if (selectedL4) params.set('l4', selectedL4);
+      if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+      if (search) params.set('q', search);
+      setSearchParams(params, { replace: true });
+    }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -77,7 +108,14 @@ export default function Books() {
     setSelectedSub('');
     setSelectedL3('');
     setSelectedL4('');
+    setImageFilter('');
+    setDescFilter('');
+    setIssueFilter('');
     setPage(1);
+    const params = new URLSearchParams();
+    if (tabId) params.set('tab', tabId);
+    if (search) params.set('q', search);
+    setSearchParams(params, { replace: true });
   };
 
   const handleSubChange = (subId) => {
@@ -85,17 +123,44 @@ export default function Books() {
     setSelectedL3('');
     setSelectedL4('');
     setPage(1);
+    const params = new URLSearchParams();
+    if (selectedTab) params.set('tab', selectedTab);
+    if (subId) params.set('sub', subId);
+    if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+    if (search) params.set('q', search);
+    setSearchParams(params, { replace: true });
   };
 
   const handleL3Change = (l3Id) => {
     setSelectedL3(l3Id);
     setSelectedL4('');
     setPage(1);
+    const params = new URLSearchParams();
+    if (selectedTab) params.set('tab', selectedTab);
+    if (selectedSub) params.set('sub', selectedSub);
+    if (l3Id) params.set('l3', l3Id);
+    if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+    if (search) params.set('q', search);
+    setSearchParams(params, { replace: true });
   };
 
   const handleL4Change = (l4Id) => {
     setSelectedL4(l4Id);
     setPage(1);
+    const params = new URLSearchParams();
+    if (selectedTab) params.set('tab', selectedTab);
+    if (selectedSub) params.set('sub', selectedSub);
+    if (selectedL3) params.set('l3', selectedL3);
+    if (l4Id) params.set('l4', l4Id);
+    if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+    if (search) params.set('q', search);
+    setSearchParams(params, { replace: true });
   };
 
   // Get sub-categories for selected parent tab
@@ -111,11 +176,11 @@ export default function Books() {
     if (!deleteId) return;
     try {
       await api.delete(`/admin/books/${deleteId}`);
-      toast.success('Book deleted');
+      toast.success(t('books.deleted'));
       setDeleteId(null);
       fetchBooks();
     } catch (err) {
-      toast.error('Failed to delete');
+      toast.error(t('books.failedDelete'));
       setDeleteId(null);
     }
   };
@@ -123,20 +188,20 @@ export default function Books() {
   const handleToggleActive = async (book) => {
     try {
       await api.put(`/admin/books/${book.id}`, { isActive: !book.isActive });
-      toast.success(book.isActive ? 'Book deactivated' : 'Book activated');
+      toast.success(book.isActive ? t('books.deactivated') : t('books.activated'));
       fetchBooks();
     } catch (err) {
-      toast.error('Failed to update');
+      toast.error(t('books.failedUpdate'));
     }
   };
 
   const handleToggleOutOfStock = async (book) => {
     try {
       await api.put(`/admin/books/${book.id}`, { isOutOfStock: !book.isOutOfStock });
-      toast.success(book.isOutOfStock ? 'Marked as In Stock' : 'Marked as Out of Stock');
+      toast.success(book.isOutOfStock ? t('inventory.markedInStock') : t('inventory.markedOutOfStock'));
       fetchBooks();
     } catch (err) {
-      toast.error('Failed to update');
+      toast.error(t('books.failedUpdate'));
     }
   };
 
@@ -260,7 +325,7 @@ export default function Books() {
 
       {/* Search + Refresh + Add Product */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 max-w-xl">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
@@ -268,6 +333,68 @@ export default function Books() {
         <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
+        {/* Quality Filters — 3 dropdowns */}
+        {[
+          { id: 'img', value: imageFilter, setter: setImageFilter, label: t('categories.image'), options: [
+            { key: '', label: t('common.all') },
+            { key: 'hasImage', label: t('books.hasImage') },
+            { key: 'noImage', label: t('books.noImage') },
+          ]},
+          { id: 'desc', value: descFilter, setter: setDescFilter, label: t('books.descEn').replace(' *', ''), options: [
+            { key: '', label: t('common.all') },
+            { key: 'noDesc', label: t('books.noDesc') },
+            { key: 'noDescAr', label: t('books.noDescAr') },
+          ]},
+          { id: 'issue', value: issueFilter, setter: setIssueFilter, label: t('common.status'), options: [
+            { key: '', label: t('common.all') },
+            { key: 'duplicateBarcode', label: t('books.duplicateBarcode') },
+            { key: 'similarNames', label: t('books.similarNames') },
+          ]},
+        ].map((filter) => (
+          <div key={filter.id} className="relative">
+            <button
+              onClick={() => setOpenFilterMenu(openFilterMenu === filter.id ? null : filter.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 border rounded-lg text-xs 3xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                filter.value ? 'border-admin-accent text-admin-accent bg-blue-50' : 'border-admin-input-border text-admin-muted hover:text-admin-accent hover:bg-gray-100'
+              }`}
+            >
+              <FiFilter size={12} />
+              {filter.value ? filter.options.find((o) => o.key === filter.value)?.label || filter.label : filter.label}
+            </button>
+            {openFilterMenu === filter.id && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
+                {filter.options.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => {
+                      filter.setter(opt.key);
+                      setOpenFilterMenu(null);
+                      setPage(1);
+                      const params = new URLSearchParams();
+                      if (selectedTab) params.set('tab', selectedTab);
+                      if (selectedSub) params.set('sub', selectedSub);
+                      if (selectedL3) params.set('l3', selectedL3);
+                      if (selectedL4) params.set('l4', selectedL4);
+                      const newImg = filter.id === 'img' ? opt.key : imageFilter;
+                      const newDesc = filter.id === 'desc' ? opt.key : descFilter;
+                      const newIssue = filter.id === 'issue' ? opt.key : issueFilter;
+                      if (newImg) params.set('img', newImg);
+                      if (newDesc) params.set('desc', newDesc);
+                      if (newIssue) params.set('issue', newIssue);
+                      if (search) params.set('q', search);
+                      setSearchParams(params, { replace: true });
+                    }}
+                    className={`w-full text-start px-4 py-2 text-sm transition-colors ${
+                      filter.value === opt.key ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
         <Link
           to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
           className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
@@ -350,7 +477,7 @@ export default function Books() {
                         >
                           {book.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
                         </button>
-                        <Link to={`/books/${book.id}/edit`} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} /></Link>
+                        <Link to={`/books/${book.id}/edit`} onClick={saveScroll} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors"><FiEdit2 size={15} /></Link>
                         <button onClick={() => setDeleteId(book.id)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors"><FiTrash2 size={15} /></button>
                       </div>
                     </td>
@@ -366,7 +493,23 @@ export default function Books() {
             <span className="text-xs text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total || books.length}</span>
             <select
               value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              onChange={(e) => {
+                const newLimit = Number(e.target.value);
+                setLimit(newLimit);
+                setPage(1);
+                const params = new URLSearchParams();
+                if (selectedTab) params.set('tab', selectedTab);
+                if (selectedSub) params.set('sub', selectedSub);
+                if (selectedL3) params.set('l3', selectedL3);
+                if (selectedL4) params.set('l4', selectedL4);
+                if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+                if (search) params.set('q', search);
+                params.set('page', '1');
+                if (newLimit !== 10) params.set('limit', String(newLimit));
+                setSearchParams(params, { replace: true });
+              }}
               className="px-2 py-1 bg-admin-bg border border-admin-input-border rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
             >
               <option value={10}>10</option>
@@ -377,8 +520,38 @@ export default function Books() {
           </div>
           {pagination && pagination.totalPages > 1 && (
             <div className="flex gap-1">
-              <button disabled={!pagination.hasPrev} onClick={() => setPage(page - 1)} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronLeft size={16} /></button>
-              <button disabled={!pagination.hasNext} onClick={() => setPage(page + 1)} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronRight size={16} /></button>
+              <button disabled={!pagination.hasPrev} onClick={() => {
+                const newPage = page - 1;
+                setPage(newPage);
+                const params = new URLSearchParams();
+                if (selectedTab) params.set('tab', selectedTab);
+                if (selectedSub) params.set('sub', selectedSub);
+                if (selectedL3) params.set('l3', selectedL3);
+                if (selectedL4) params.set('l4', selectedL4);
+                if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+                if (search) params.set('q', search);
+                if (newPage > 1) params.set('page', String(newPage));
+                if (limit !== 10) params.set('limit', String(limit));
+                setSearchParams(params, { replace: true });
+              }} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronLeft size={16} /></button>
+              <button disabled={!pagination.hasNext} onClick={() => {
+                const newPage = page + 1;
+                setPage(newPage);
+                const params = new URLSearchParams();
+                if (selectedTab) params.set('tab', selectedTab);
+                if (selectedSub) params.set('sub', selectedSub);
+                if (selectedL3) params.set('l3', selectedL3);
+                if (selectedL4) params.set('l4', selectedL4);
+                if (imageFilter) params.set('img', imageFilter);
+      if (descFilter) params.set('desc', descFilter);
+      if (issueFilter) params.set('issue', issueFilter);
+                if (search) params.set('q', search);
+                params.set('page', String(newPage));
+                if (limit !== 10) params.set('limit', String(limit));
+                setSearchParams(params, { replace: true });
+              }} className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"><FiChevronRight size={16} /></button>
             </div>
           )}
         </div>
@@ -388,7 +561,7 @@ export default function Books() {
         open={!!deleteId}
         title={t('books.deleteProduct')}
         message={t('books.deleteProductConfirm')}
-        confirmText="Delete"
+        confirmText={t('common.delete')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion } from 'framer-motion';
+
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -161,7 +161,7 @@ export default function BookEdit() {
         if (book.coverImage) setCoverPreview(`${API_BASE}/${book.coverImage}`);
         if (book.images && book.images.length > 0) setExistingImages(book.images);
       } catch (err) {
-        toast.error('Failed to load product');
+        toast.error(t('books.failedLoadProduct'));
         navigate('/books');
       } finally {
         setLoading(false);
@@ -213,8 +213,8 @@ export default function BookEdit() {
     try {
       await api.delete(`/admin/books/${id}/images`, { data: { imageUrl } });
       setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
-      toast.success('Image removed');
-    } catch { toast.error('Failed to remove image'); }
+      toast.success(t('books.imageRemoved'));
+    } catch { toast.error(t('books.failedRemoveImage')); }
   };
 
   const removeNewImage = (index) => {
@@ -258,7 +258,7 @@ export default function BookEdit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title) { toast.error('Title is required'); return; }
+    if (!form.title) { toast.error(t('books.titleRequired')); return; }
     setSaving(true);
     try {
       const payload = { ...form };
@@ -320,11 +320,10 @@ export default function BookEdit() {
         });
       }
 
-      toast.success('Product updated');
-      const tab = form.parentCategoryId || '';
-      navigate(`/books${tab ? `?tab=${tab}` : ''}`);
+      toast.success(t('books.productUpdated'));
+      navigate(-1);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update product');
+      toast.error(err.response?.data?.message || t('books.failedUpdate'));
     } finally {
       setSaving(false);
     }
@@ -342,11 +341,11 @@ export default function BookEdit() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div>
       <div className="flex items-center gap-3 mb-6 3xl:mb-8">
-        <Link to="/books" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
-        </Link>
+        </button>
         <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">{t('books.editBook')}</h2>
       </div>
 
@@ -641,9 +640,9 @@ export default function BookEdit() {
               <button type="submit" disabled={saving} className="px-8 py-3 3xl:px-10 3xl:py-3.5 bg-admin-accent text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 text-sm 3xl:text-base">
                 {saving ? t('common.loading') : t('common.save')}
               </button>
-              <Link to="/books" className="px-8 py-3 3xl:px-10 3xl:py-3.5 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm 3xl:text-base font-medium">
+              <button onClick={() => navigate(-1)} className="px-8 py-3 3xl:px-10 3xl:py-3.5 text-center border border-admin-border text-admin-muted rounded-xl hover:bg-gray-50 transition-colors text-sm 3xl:text-base font-medium">
                 {t('common.cancel')}
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -751,6 +750,6 @@ export default function BookEdit() {
           </div>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

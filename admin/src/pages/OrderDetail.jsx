@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiUser, FiPhone, FiMapPin, FiFileText } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -26,6 +26,7 @@ const statusIcons = {
 
 export default function OrderDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const t = useLanguageStore((s) => s.t);
   const isRTL = useLanguageStore((s) => s.isRTL);
   const [order, setOrder] = useState(null);
@@ -53,10 +54,10 @@ export default function OrderDetail() {
     setUpdating(true);
     try {
       await api.put(`/admin/orders/${id}/status`, { status: newStatus });
-      toast.success('Status updated');
+      toast.success(t('orders.statusUpdated'));
       setOrder((prev) => ({ ...prev, status: newStatus }));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update');
+      toast.error(err.response?.data?.message || t('orders.failedUpdate'));
     } finally {
       setUpdating(false);
     }
@@ -73,29 +74,29 @@ export default function OrderDetail() {
   };
 
   if (loading) {
-    return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}><div className="text-admin-muted text-sm py-12 text-center">{t('common.loading')}</div></motion.div>;
+    return <div className="text-admin-muted text-sm py-12 text-center">{t('common.loading')}</div>;
   }
 
   if (!order) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div>
         <div className="flex items-center gap-3 mb-6">
-          <Link to="/orders" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100"><FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} /></Link>
+          <button onClick={() => navigate(-1)} className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100"><FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} /></button>
           <h2 className="text-2xl font-bold text-admin-text">{t('orders.orderNotFound')}</h2>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   const timeline = getTimeline();
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 3xl:mb-8">
-        <Link to="/orders" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
-        </Link>
+        </button>
         <div className="flex-1">
           <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">{t('orders.orderNumber')}{order.orderNumber}</h2>
           <p className="text-sm text-admin-muted">{new Date(order.createdAt).toLocaleString()}</p>
@@ -115,7 +116,7 @@ export default function OrderDetail() {
               <div>
                 <span className="text-admin-muted">{t('orders.customer')}</span>
                 <p className="font-medium text-admin-text mt-1">
-                  {order.user ? `${order.user.firstName} ${order.user.lastName}` : <span className="text-amber-600">Guest</span>}
+                  {order.user ? `${order.user.firstName} ${order.user.lastName}` : <span className="text-amber-600">{t('common.guest')}</span>}
                 </p>
               </div>
               <div>
@@ -128,7 +129,7 @@ export default function OrderDetail() {
               </div>
               <div>
                 <span className="text-admin-muted">{t('orders.shipping')}</span>
-                <p className="font-medium text-admin-text mt-1">{parseFloat(order.shippingCost) === 0 ? 'Free' : `QAR ${parseFloat(order.shippingCost || 0).toFixed(2)}`}</p>
+                <p className="font-medium text-admin-text mt-1">{parseFloat(order.shippingCost) === 0 ? t('common.free') : `QAR ${parseFloat(order.shippingCost || 0).toFixed(2)}`}</p>
               </div>
               <div>
                 <span className="text-admin-muted">{t('common.total')}</span>
@@ -252,6 +253,6 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

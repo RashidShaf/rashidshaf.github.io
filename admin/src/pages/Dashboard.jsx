@@ -27,7 +27,7 @@ export default function Dashboard() {
         setTopBooks(booksRes.data);
         setRecentOrders(ordersRes.data);
       } catch (err) {
-        console.error('Dashboard fetch error:', err);
+        // silently handle error
       } finally {
         setLoading(false);
       }
@@ -87,7 +87,7 @@ export default function Dashboard() {
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-admin-border last:border-0">
                   <div>
                     <p className="text-sm 3xl:text-base font-medium text-admin-text">{order.orderNumber}</p>
-                    <p className="text-xs 3xl:text-sm text-admin-muted">{order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}</p>
+                    <p className="text-xs 3xl:text-sm text-admin-muted">{order.user ? `${order.user.firstName} ${order.user.lastName}` : t('common.guest')}</p>
                   </div>
                   <div className="text-end">
                     <p className="text-sm 3xl:text-base font-semibold text-admin-text">QAR {parseFloat(order.total).toFixed(2)}</p>

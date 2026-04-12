@@ -124,25 +124,7 @@ export default function CategoryEdit() {
 
       await api.put(`/admin/categories/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success(t('categories.updated'));
-      // Navigate back to the correct tab
-      const allCats = categories;
-      const getAncestorChain = (parentId) => {
-        const chain = [];
-        let cur = allCats.find((c) => c.id === parentId);
-        while (cur) {
-          chain.unshift(cur.id);
-          cur = cur.parentId ? allCats.find((c) => c.id === cur.parentId) : null;
-        }
-        return chain;
-      };
-      if (!form.parentId) {
-        navigate('/categories?tab=top');
-      } else {
-        const chain = getAncestorChain(form.parentId);
-        if (chain.length >= 3) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}&sub2=${chain[2]}`);
-        else if (chain.length === 2) navigate(`/categories?tab=${chain[0]}&sub=${chain[1]}`);
-        else navigate(`/categories?tab=${form.parentId}`);
-      }
+      navigate(-1);
     } catch (err) {
       toast.error(err.response?.data?.message || t('categories.failedUpdate'));
     } finally {
@@ -158,7 +140,7 @@ export default function CategoryEdit() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div>
       <div className="flex items-center gap-3 mb-6 3xl:mb-8">
         <Link to={backUrl} className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
@@ -384,6 +366,6 @@ export default function CategoryEdit() {
         }}
         onCancel={() => setDeleteFieldIdx(null)}
       />
-    </motion.div>
+    </div>
   );
 }

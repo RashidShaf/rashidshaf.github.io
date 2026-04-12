@@ -58,7 +58,8 @@
     "saving": "Saving...",
     "savedSuccess": "Saved successfully",
     "saveFailed": "Failed to save",
-    "exportFailed": "Export failed"
+    "exportFailed": "Export failed",
+    "free": "Free"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -143,6 +144,12 @@
     "uploadMultiple": "Upload multiple product images",
     "maxImages": "Max 3 images",
     "outOfStock": "Out of Stock",
+    "noImage": "No Image",
+    "hasImage": "Has Image",
+    "noDesc": "No Description (EN)",
+    "noDescAr": "No Description (AR)",
+    "duplicateBarcode": "Duplicate Barcodes",
+    "similarNames": "Similar Names",
     "showInSections": "Show in Sections",
     "comingSoon": "Coming Soon",
     "bestseller": "Bestseller",
@@ -154,7 +161,17 @@
     "deleteProduct": "Delete Product",
     "deleteProductConfirm": "This will permanently delete this product. This action cannot be undone.",
     "noProducts": "No products found",
-    "addFirst": "Add your first product to get started."
+    "addFirst": "Add your first product to get started.",
+    "deleted": "Product deleted",
+    "failedDelete": "Failed to delete",
+    "activated": "Product activated",
+    "deactivated": "Product deactivated",
+    "titleRequired": "Title is required",
+    "productUpdated": "Product updated",
+    "productCreated": "Product created",
+    "failedLoadProduct": "Failed to load product",
+    "imageRemoved": "Image removed",
+    "failedRemoveImage": "Failed to remove image"
   },
   "categories": {
     "title": "Categories",
@@ -196,7 +213,9 @@
     "created": "Category created",
     "totalCategories": "Total Categories",
     "deleteCategory": "Delete Category",
-    "deleteCategoryConfirm": "This will permanently delete this category. This action cannot be undone."
+    "deleteCategoryConfirm": "This will permanently delete this category. This action cannot be undone.",
+    "topLevel": "Top Level",
+    "failedReorder": "Failed to reorder"
   },
   "orders": {
     "title": "Orders",
@@ -226,7 +245,10 @@
       "SHIPPED": "Shipped",
       "DELIVERED": "Delivered",
       "CANCELLED": "Cancelled"
-    }
+    },
+    "statusUpdated": "Status updated",
+    "failedFetch": "Failed to fetch orders",
+    "failedUpdate": "Failed to update"
   },
   "users": {
     "title": "Users",
@@ -239,7 +261,11 @@
     "totalUsers": "Total Users",
     "activeUsers": "Active Users",
     "orders": "Orders",
-    "admin": "Admin"
+    "admin": "Admin",
+    "failedFetch": "Failed to fetch users",
+    "userBlocked": "User blocked",
+    "userUnblocked": "User unblocked",
+    "failedUpdate": "Failed to update user"
   },
   "inventory": {
     "title": "Inventory",
@@ -250,7 +276,14 @@
     "currentStock": "Current Stock",
     "totalBooks": "Total Books",
     "totalStock": "Total Stock",
-    "totalValue": "Total Value"
+    "totalValue": "Total Value",
+    "failedFetch": "Failed to fetch inventory",
+    "restocked": "Restocked successfully",
+    "failedRestock": "Failed to restock",
+    "enterValidQty": "Enter a valid quantity",
+    "markedInStock": "Marked as In Stock",
+    "markedOutOfStock": "Marked as Out of Stock",
+    "failedUpdate": "Failed to update"
   },
   "reviews": {
     "title": "Reviews",
@@ -258,7 +291,13 @@
     "averageRating": "Average Rating",
     "visibleReviews": "Visible Reviews",
     "deleteReview": "Delete Review",
-    "deleteReviewConfirm": "This will permanently delete this review. This action cannot be undone."
+    "deleteReviewConfirm": "This will permanently delete this review. This action cannot be undone.",
+    "failedFetch": "Failed to fetch reviews",
+    "hidden": "Review hidden",
+    "shown": "Review visible",
+    "failedVisibility": "Failed to update visibility",
+    "reviewDeleted": "Review deleted",
+    "failedDelete": "Failed to delete review"
   },
   "banners": {
     "title": "Banners",

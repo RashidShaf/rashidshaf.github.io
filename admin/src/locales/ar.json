@@ -58,7 +58,8 @@
     "saving": "جاري الحفظ...",
     "savedSuccess": "تم الحفظ بنجاح",
     "saveFailed": "فشل في الحفظ",
-    "exportFailed": "فشل التصدير"
+    "exportFailed": "فشل التصدير",
+    "free": "مجاني"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -143,6 +144,12 @@
     "uploadMultiple": "رفع صور متعددة للمنتج",
     "maxImages": "حد أقصى 3 صور",
     "outOfStock": "نفذ من المخزون",
+    "noImage": "بدون صورة",
+    "hasImage": "مع صورة",
+    "noDesc": "بدون وصف (إنجليزي)",
+    "noDescAr": "بدون وصف (عربي)",
+    "duplicateBarcode": "باركود مكرر",
+    "similarNames": "أسماء متشابهة",
     "showInSections": "عرض في الأقسام",
     "comingSoon": "قريباً",
     "bestseller": "الأكثر مبيعاً",
@@ -154,7 +161,17 @@
     "deleteProduct": "حذف المنتج",
     "deleteProductConfirm": "سيتم حذف هذا المنتج نهائياً. لا يمكن التراجع عن هذا الإجراء.",
     "noProducts": "لا توجد منتجات",
-    "addFirst": "أضف أول منتج للبدء."
+    "addFirst": "أضف أول منتج للبدء.",
+    "deleted": "تم حذف المنتج",
+    "failedDelete": "فشل في الحذف",
+    "activated": "تم تفعيل المنتج",
+    "deactivated": "تم إلغاء تفعيل المنتج",
+    "titleRequired": "العنوان مطلوب",
+    "productUpdated": "تم تحديث المنتج",
+    "productCreated": "تم إنشاء المنتج",
+    "failedLoadProduct": "فشل في تحميل المنتج",
+    "imageRemoved": "تم إزالة الصورة",
+    "failedRemoveImage": "فشل في إزالة الصورة"
   },
   "categories": {
     "title": "التصنيفات",
@@ -196,7 +213,9 @@
     "created": "تم إنشاء التصنيف",
     "totalCategories": "إجمالي التصنيفات",
     "deleteCategory": "حذف التصنيف",
-    "deleteCategoryConfirm": "سيتم حذف هذا التصنيف نهائياً. لا يمكن التراجع عن هذا الإجراء."
+    "deleteCategoryConfirm": "سيتم حذف هذا التصنيف نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "topLevel": "المستوى الأعلى",
+    "failedReorder": "فشل في إعادة الترتيب"
   },
   "orders": {
     "title": "الطلبات",
@@ -226,7 +245,10 @@
       "SHIPPED": "تم الشحن",
       "DELIVERED": "تم التوصيل",
       "CANCELLED": "ملغي"
-    }
+    },
+    "statusUpdated": "تم تحديث الحالة",
+    "failedFetch": "فشل في جلب الطلبات",
+    "failedUpdate": "فشل في التحديث"
   },
   "users": {
     "title": "المستخدمون",
@@ -239,7 +261,11 @@
     "totalUsers": "إجمالي المستخدمين",
     "activeUsers": "المستخدمون النشطون",
     "orders": "الطلبات",
-    "admin": "مدير"
+    "admin": "مدير",
+    "failedFetch": "فشل في جلب المستخدمين",
+    "userBlocked": "تم حظر المستخدم",
+    "userUnblocked": "تم إلغاء حظر المستخدم",
+    "failedUpdate": "فشل في تحديث المستخدم"
   },
   "inventory": {
     "title": "المخزون",
@@ -250,7 +276,14 @@
     "currentStock": "المخزون الحالي",
     "totalBooks": "إجمالي الكتب",
     "totalStock": "إجمالي المخزون",
-    "totalValue": "إجمالي القيمة"
+    "totalValue": "إجمالي القيمة",
+    "failedFetch": "فشل في جلب المخزون",
+    "restocked": "تم إعادة التخزين",
+    "failedRestock": "فشل في إعادة التخزين",
+    "enterValidQty": "أدخل كمية صحيحة",
+    "markedInStock": "تم التعيين كمتوفر",
+    "markedOutOfStock": "تم التعيين كغير متوفر",
+    "failedUpdate": "فشل في التحديث"
   },
   "reviews": {
     "title": "المراجعات",
@@ -258,7 +291,13 @@
     "averageRating": "متوسط التقييم",
     "visibleReviews": "المراجعات المرئية",
     "deleteReview": "حذف المراجعة",
-    "deleteReviewConfirm": "سيتم حذف هذه المراجعة نهائياً. لا يمكن التراجع عن هذا الإجراء."
+    "deleteReviewConfirm": "سيتم حذف هذه المراجعة نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+    "failedFetch": "فشل في جلب المراجعات",
+    "hidden": "تم إخفاء المراجعة",
+    "shown": "تم إظهار المراجعة",
+    "failedVisibility": "فشل في تحديث الرؤية",
+    "reviewDeleted": "تم حذف المراجعة",
+    "failedDelete": "فشل في حذف المراجعة"
   },
   "banners": {
     "title": "البانرات",

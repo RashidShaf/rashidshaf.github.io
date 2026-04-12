@@ -74,7 +74,7 @@ export default function CategoryCreate() {
   const labelClass = 'block text-sm 3xl:text-base font-medium text-admin-text mb-1.5';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div>
       <div className="flex items-center gap-3 mb-6 3xl:mb-8">
         <Link to="/categories" className="p-2 rounded-lg text-admin-muted hover:text-admin-text hover:bg-gray-100 transition-colors">
           <FiArrowLeft size={18} className={isRTL ? 'rotate-180' : ''} />
@@ -234,6 +234,6 @@ export default function CategoryCreate() {
           </div>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }
