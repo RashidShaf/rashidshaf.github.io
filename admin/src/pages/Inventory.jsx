@@ -23,22 +23,32 @@ export default function Inventory() {
   const [alertMinimized, setAlertMinimized] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
   const [selectedSub, setSelectedSub] = useState(searchParams.get('sub') || '');
-  const [selectedL3, setSelectedL3] = useState(searchParams.get('l3') || '');
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
-    api.get('/admin/categories').then((res) => setAllCategories(res.data.data || res.data)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    api.get('/admin/categories').then((res) => {
+      const all = res.data.data || res.data;
+      setAllCategories(all);
+      setCategories(all.filter((c) => !c.parentId));
+    }).catch(() => {});
+  }, []);
+
+  const subCategories = selectedTab ? allCategories.filter((c) => c.parentId === selectedTab) : [];
+  const getTabName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
   const fetchInventory = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: 10 });
       if (invSearch) params.set('search', invSearch);
-      const activeCat = selectedL3 || selectedSub || selectedTab;
-      if (activeCat) params.set('category', activeCat);
+      if (selectedSub) params.set('category', selectedSub);
+      else if (selectedTab) params.set('category', selectedTab);
       const [invRes, lowRes] = await Promise.all([
         api.get(`/admin/inventory?${params}`),
         api.get('/admin/inventory/low-stock'),
@@ -61,18 +71,17 @@ export default function Inventory() {
 
   useEffect(() => {
     fetchInventory();
-  }, [page, selectedTab, selectedSub, selectedL3]);
+  }, [page, selectedTab, selectedSub]);
 
-  // Debounced search — sync to URL + refetch
+  // Debounced URL sync for search + server fetch
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
       fetchInventory();
-      const p = new URLSearchParams(searchParams);
-      if (invSearch) p.set('q', invSearch); else p.delete('q');
+      const p = new URLSearchParams();
       if (selectedTab) p.set('tab', selectedTab);
       if (selectedSub) p.set('sub', selectedSub);
-      if (selectedL3) p.set('l3', selectedL3);
+      if (invSearch) p.set('q', invSearch);
       setSearchParams(p, { replace: true });
     }, 300);
     return () => clearTimeout(timer);
@@ -100,7 +109,25 @@ export default function Inventory() {
     }
   };
 
-  const filteredInventory = inventory;
+  const handleTabChange = (tabId) => {
+    setSelectedTab(tabId);
+    setSelectedSub('');
+    setPage(1);
+    const params = new URLSearchParams();
+    if (tabId) params.set('tab', tabId);
+    if (invSearch) params.set('q', invSearch);
+    setSearchParams(params, { replace: true });
+  };
+
+  const handleSubChange = (subId) => {
+    setSelectedSub(subId);
+    setPage(1);
+    const params = new URLSearchParams();
+    if (selectedTab) params.set('tab', selectedTab);
+    if (subId) params.set('sub', subId);
+    if (invSearch) params.set('q', invSearch);
+    setSearchParams(params, { replace: true });
+  };
 
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   const toggleSelectAll = (items) => {
@@ -140,7 +167,7 @@ export default function Inventory() {
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
           {[
-            { icon: FiBook, label: t('inventory.totalBooks'), value: summary.totalStock !== undefined ? (inventory.length || '-') : '-', bg: 'bg-blue-600' },
+            { icon: FiBook, label: t('inventory.totalBooks'), value: summary.totalStock !== undefined ? (pagination?.total || inventory.length || '-') : '-', bg: 'bg-blue-600' },
             { icon: FiLayers, label: t('inventory.totalStock'), value: summary.totalStock ?? 0, bg: 'bg-emerald-600' },
             { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: summary.lowStockCount ?? 0, bg: 'bg-amber-500' },
             { icon: FiDollarSign, label: t('inventory.totalValue'), value: `QAR ${parseFloat(summary.totalValue ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
@@ -156,97 +183,7 @@ export default function Inventory() {
         </div>
       )}
 
-      {/* Category Tabs — L1 */}
-      {(() => {
-        const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
-        const parentCategories = allCategories.filter((c) => !c.parentId);
-        const subCategories = selectedTab ? allCategories.filter((c) => c.parentId === selectedTab) : [];
-        const l3Categories = selectedSub ? allCategories.filter((c) => c.parentId === selectedSub) : [];
-        const syncURL = (tab, sub, l3) => {
-          const p = new URLSearchParams();
-          if (tab) p.set('tab', tab);
-          if (sub) p.set('sub', sub);
-          if (l3) p.set('l3', l3);
-          if (invSearch) p.set('q', invSearch);
-          setSearchParams(p, { replace: true });
-        };
-        return (
-          <>
-            {parentCategories.length > 0 && (
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                <button
-                  onClick={() => { setSelectedTab(''); setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL('', '', ''); }}
-                  className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${!selectedTab ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                >
-                  {t('common.all')}
-                </button>
-                {parentCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedTab(cat.id); setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL(cat.id, '', ''); }}
-                    className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedTab === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                  >
-                    {getName(cat)}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* L2 Sub-tabs */}
-            {subCategories.length > 0 && (
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
-                <button
-                  onClick={() => { setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL(selectedTab, '', ''); }}
-                  className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedSub ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                >
-                  {t('common.all')} {getName(parentCategories.find((c) => c.id === selectedTab) || {})}
-                </button>
-                {subCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedSub(cat.id); setSelectedL3(''); setPage(1); syncURL(selectedTab, cat.id, ''); }}
-                    className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${selectedSub === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                  >
-                    {getName(cat)}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* L3 Sub-tabs */}
-            {l3Categories.length > 0 && (
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 ps-4" style={{ scrollbarWidth: 'none' }}>
-                <button
-                  onClick={() => { setSelectedL3(''); setPage(1); syncURL(selectedTab, selectedSub, ''); }}
-                  className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${!selectedL3 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                >
-                  {t('common.all')} {getName(subCategories.find((c) => c.id === selectedSub) || {})}
-                </button>
-                {l3Categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedL3(cat.id); setPage(1); syncURL(selectedTab, selectedSub, cat.id); }}
-                    className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${selectedL3 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
-                  >
-                    {getName(cat)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        );
-      })()}
-
-      {/* Search */}
-      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
-        <div className="relative flex-1 max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder={t('common.searchInventory')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
-        </div>
-        <div className="flex-1" />
-        <button onClick={fetchInventory} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
-          <FiRefreshCw size={14} /> {t('common.refresh')}
-        </button>
-      </div>
-
+      {/* Low Stock Alerts */}
       {lowStock.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 3xl:p-6 mb-6 3xl:mb-8">
           <div className="flex items-center justify-between">
@@ -266,27 +203,81 @@ export default function Inventory() {
           {!alertMinimized && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3">
               {lowStock.slice(0, 6).map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100"
-                >
+                <div key={item.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-admin-text truncate">
-                      {item.title || item.book?.title}
-                    </p>
-                    <p className="text-xs text-admin-muted">
-                      {item.author || item.book?.author}
-                    </p>
+                    <p className="text-sm font-medium text-admin-text truncate">{item.title || item.book?.title}</p>
+                    <p className="text-xs text-admin-muted">{item.author || item.book?.author}</p>
                   </div>
-                  <span className="text-sm font-bold text-red-600 ml-3">
-                    {item.stock ?? item.currentStock} {t('common.left')}
-                  </span>
+                  <span className="text-sm font-bold text-red-600 ml-3">{item.stock ?? item.currentStock} {t('common.left')}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+
+      {/* Category Tabs */}
+      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <button
+          onClick={() => handleTabChange('')}
+          className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+            selectedTab === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+          }`}
+        >
+          {t('common.all')}
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleTabChange(cat.id)}
+            className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+              selectedTab === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+            }`}
+          >
+            {getTabName(cat)}
+          </button>
+        ))}
+      </div>
+
+      {/* Sub-category Filters */}
+      {subCategories.length > 0 && (
+        <div className="mb-4 bg-admin-card border border-admin-border rounded-xl px-4 py-3 3xl:px-5 3xl:py-4">
+          <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => handleSubChange('')}
+              className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                selectedSub === '' ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+              }`}
+            >
+              {t('common.all')} {getTabName(categories.find((c) => c.id === selectedTab) || {})}
+            </button>
+            {subCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleSubChange(cat.id)}
+                className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-colors ${
+                  selectedSub === cat.id ? 'bg-admin-accent text-white' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:bg-gray-50'
+                }`}
+              >
+                {getTabName(cat)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+        <div className="relative flex-1 max-w-sm">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder={t('common.searchInventory')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+        </div>
+        <div className="flex-1" />
+        <button onClick={fetchInventory} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
+          <FiRefreshCw size={14} /> {t('common.refresh')}
+        </button>
+      </div>
+
 
       {/* Bulk Action Bar */}
       {selectedIds.length > 0 && (
@@ -306,7 +297,7 @@ export default function Inventory() {
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
                 <th className="px-4 py-3 w-10">
-                  <input type="checkbox" checked={isAllSelected(filteredInventory)} onChange={() => toggleSelectAll(filteredInventory)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
+                  <input type="checkbox" checked={isAllSelected(inventory)} onChange={() => toggleSelectAll(inventory)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
                 </th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
                 <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
@@ -336,7 +327,7 @@ export default function Inventory() {
                   </td>
                 </tr>
               ) : (
-                filteredInventory.map((item) => {
+                inventory.map((item) => {
                   const bookId = item.id || item.bookId;
                   const stock = item.stock ?? item.currentStock ?? 0;
                   const isLow = stock <= 5;
@@ -445,6 +436,8 @@ export default function Inventory() {
                   const newPage = page - 1;
                   setPage(newPage);
                   const params = new URLSearchParams();
+                  if (selectedTab) params.set('tab', selectedTab);
+                  if (selectedSub) params.set('sub', selectedSub);
                   if (invSearch) params.set('q', invSearch);
                   if (newPage > 1) params.set('page', String(newPage));
                   setSearchParams(params, { replace: true });
@@ -459,6 +452,8 @@ export default function Inventory() {
                   const newPage = page + 1;
                   setPage(newPage);
                   const params = new URLSearchParams();
+                  if (selectedTab) params.set('tab', selectedTab);
+                  if (selectedSub) params.set('sub', selectedSub);
                   if (invSearch) params.set('q', invSearch);
                   params.set('page', String(newPage));
                   setSearchParams(params, { replace: true });
