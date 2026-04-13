@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiUpload, FiX, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiArrowLeft, FiUpload, FiX, FiTrash2, FiPlus, FiEdit2, FiCheck } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../components/ConfirmModal';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -39,9 +39,12 @@ export default function CategoryEdit() {
   ];
   const [form, setForm] = useState({ name: '', nameAr: '', parentId: '' });
   const [detailFields, setDetailFields] = useState(ALL_DETAIL_FIELDS.map((f) => f.key));
+  const [filterFields, setFilterFields] = useState(FILTERABLE_KEYS);
   const [customFields, setCustomFields] = useState([]);
   const [newCustomField, setNewCustomField] = useState({ name: '', nameAr: '' });
   const [deleteFieldIdx, setDeleteFieldIdx] = useState(null);
+  const [editFieldIdx, setEditFieldIdx] = useState(null);
+  const [editFieldForm, setEditFieldForm] = useState({ name: '', nameAr: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,7 +63,18 @@ export default function CategoryEdit() {
           });
           if (cat.image) setImagePreview(`${API_BASE}/${cat.image}`);
           if (!cat.parentId) {
-            if (cat.detailFields) { try { setDetailFields(JSON.parse(cat.detailFields)); } catch {} }
+            if (cat.detailFields) {
+              try {
+                const parsed = JSON.parse(cat.detailFields);
+                if (Array.isArray(parsed)) {
+                  setDetailFields(parsed);
+                  setFilterFields(parsed.filter((k) => FILTERABLE_KEYS.includes(k) || k.startsWith('cf_')));
+                } else if (parsed.detail) {
+                  setDetailFields(parsed.detail);
+                  setFilterFields(parsed.filters || []);
+                }
+              } catch {}
+            }
             if (cat.customFields) { try { setCustomFields(JSON.parse(cat.customFields)); } catch {} }
           }
           // Compute back URL based on hierarchy
@@ -117,7 +131,7 @@ export default function CategoryEdit() {
       if (form.nameAr) fd.append('nameAr', form.nameAr);
       if (!isTopLevel) fd.append('parentId', form.parentId || '');
       if (isTopLevel) {
-        fd.append('detailFields', JSON.stringify(detailFields));
+        fd.append('detailFields', JSON.stringify({ detail: detailFields, filters: filterFields }));
         fd.append('customFields', JSON.stringify(customFields));
       }
       if (imageFile) fd.append('image', imageFile);
@@ -212,16 +226,60 @@ export default function CategoryEdit() {
                             setDetailFields([...detailFields, field.key]);
                           } else {
                             setDetailFields(detailFields.filter((f) => f !== field.key));
+                            setFilterFields((prev) => prev.filter((f) => f !== field.key));
                           }
                         }}
                         className="w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent"
                       />
                       <span className="text-sm 3xl:text-base text-admin-text group-hover:text-admin-accent transition-colors">{field.label}</span>
                       {FILTERABLE_KEYS.includes(field.key) && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">{t('categories.browseFilter')}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setFilterFields((prev) => prev.includes(field.key) ? prev.filter((f) => f !== field.key) : [...prev, field.key]);
+                          }}
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-medium transition-colors ${filterFields.includes(field.key) ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                        >
+                          {t('categories.browseFilter')}
+                        </button>
                       )}
                     </label>
                   ))}
+                  {/* Custom fields shown alongside built-in fields */}
+                  {customFields.map((cf) => {
+                    const cfKey = `cf_${cf.key}`;
+                    return (
+                      <label key={cfKey} className="flex items-center gap-2.5 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={detailFields.includes(cfKey)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setDetailFields([...detailFields, cfKey]);
+                            } else {
+                              setDetailFields(detailFields.filter((f) => f !== cfKey));
+                              setFilterFields((prev) => prev.filter((f) => f !== cfKey));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent"
+                        />
+                        <span className="text-sm 3xl:text-base text-admin-text group-hover:text-admin-accent transition-colors">{isRTL && cf.nameAr ? cf.nameAr : cf.name}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setFilterFields((prev) => prev.includes(cfKey) ? prev.filter((f) => f !== cfKey) : [...prev, cfKey]);
+                          }}
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-medium transition-colors ${filterFields.includes(cfKey) ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                        >
+                          {t('categories.browseFilter')}
+                        </button>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -229,90 +287,138 @@ export default function CategoryEdit() {
             {/* Custom Fields — only for top-level */}
             {isTopLevel && (
               <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.customFieldsTitle')}</h3>
-                    <p className="text-xs text-admin-muted mt-1">{t('categories.customFieldsHelp')}</p>
-                  </div>
+                <div>
+                  <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('categories.customFieldsTitle')}</h3>
+                  <p className="text-xs text-admin-muted mt-1">{t('categories.customFieldsHelp')}</p>
                 </div>
 
-                {/* Existing custom fields table */}
-                {customFields.length > 0 && (
-                  <div className="border border-admin-border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-[1fr_1fr_auto] bg-gray-50 border-b border-admin-border px-4 py-2">
-                      <span className="text-xs font-medium text-admin-muted uppercase tracking-wider">{t('categories.fieldNameEn')}</span>
-                      <span className="text-xs font-medium text-admin-muted uppercase tracking-wider">{t('categories.fieldNameAr')}</span>
-                      <span className="text-xs font-medium text-admin-muted uppercase tracking-wider w-8"></span>
-                    </div>
-                    {customFields.map((cf, i) => (
-                      <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-center px-4 py-2.5 border-b border-admin-border last:border-b-0 hover:bg-gray-50/50">
-                        <span className="text-sm text-admin-text font-medium">{cf.name}</span>
-                        <span className="text-sm text-admin-muted" dir="rtl">{cf.nameAr || '—'}</span>
-                        <button type="button" onClick={() => setDeleteFieldIdx(i)} className="p-1.5 text-admin-muted hover:text-red-500 transition-colors">
-                          <FiTrash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="border border-admin-border rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50/80 border-b border-admin-border">
+                      <tr>
+                        <th className="text-start ps-4 pe-2 py-3 text-[10px] 3xl:text-xs font-semibold text-admin-muted uppercase tracking-wider w-10">#</th>
+                        <th className="text-start px-3 py-3 text-[10px] 3xl:text-xs font-semibold text-admin-muted uppercase tracking-wider">{t('categories.fieldNameEn')}</th>
+                        <th className="text-start px-3 py-3 text-[10px] 3xl:text-xs font-semibold text-admin-muted uppercase tracking-wider">{t('categories.fieldNameAr')}</th>
+                        <th className="text-end pe-4 ps-2 py-3 text-[10px] 3xl:text-xs font-semibold text-admin-muted uppercase tracking-wider w-24">{t('common.actions')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customFields.map((cf, i) => {
+                        return (
+                          <tr key={cf.key} className={`border-b border-admin-border last:border-b-0 transition-colors ${editFieldIdx === i ? 'bg-blue-50/30' : 'hover:bg-gray-50/50'}`}>
+                            {editFieldIdx === i ? (
+                              <>
+                                <td className="ps-4 pe-2 py-2.5 text-xs text-admin-muted">{i + 1}</td>
+                                <td className="px-3 py-2">
+                                  <input type="text" value={editFieldForm.name} onChange={(e) => setEditFieldForm({ ...editFieldForm, name: e.target.value })} className="w-full px-2.5 py-1.5 bg-white border border-admin-accent/40 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" autoFocus />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input type="text" dir="rtl" value={editFieldForm.nameAr} onChange={(e) => setEditFieldForm({ ...editFieldForm, nameAr: e.target.value })} className="w-full px-2.5 py-1.5 bg-white border border-admin-accent/40 rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+                                </td>
+                                <td className="pe-4 ps-2 py-2 text-end">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button type="button" disabled={!editFieldForm.name.trim() || !editFieldForm.nameAr.trim()} onClick={() => { setCustomFields(customFields.map((c, j) => j === i ? { ...c, name: editFieldForm.name.trim(), nameAr: editFieldForm.nameAr.trim() } : c)); setEditFieldIdx(null); }} className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-30">
+                                      <FiCheck size={14} />
+                                    </button>
+                                    <button type="button" onClick={() => setEditFieldIdx(null)} className="p-1.5 rounded-md bg-gray-50 text-admin-muted hover:bg-gray-100 transition-colors">
+                                      <FiX size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="ps-4 pe-2 py-3 text-xs text-admin-muted font-medium">{i + 1}</td>
+                                <td className="px-3 py-3 font-medium text-admin-text">{cf.name}</td>
+                                <td className="px-3 py-3 text-admin-muted" dir="rtl">{cf.nameAr || '—'}</td>
+                                <td className="pe-4 ps-2 py-3 text-end">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button type="button" onClick={() => { setEditFieldIdx(i); setEditFieldForm({ name: cf.name, nameAr: cf.nameAr || '' }); }} className="p-1.5 rounded-md text-admin-muted hover:text-admin-accent hover:bg-gray-100 transition-colors" title={t('common.edit')}>
+                                      <FiEdit2 size={14} />
+                                    </button>
+                                    <button type="button" onClick={() => setDeleteFieldIdx(i)} className="p-1.5 rounded-md text-admin-muted hover:text-red-500 hover:bg-red-50 transition-colors" title={t('common.delete')}>
+                                      <FiTrash2 size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        );
+                      })}
+                      {/* Add row */}
+                      <tr className="bg-gray-50/40">
+                        <td className="ps-4 pe-2 py-2.5 text-xs text-admin-muted">
+                          <FiPlus size={12} className="text-admin-accent" />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="text"
+                            value={newCustomField.name}
+                            onChange={(e) => setNewCustomField({ ...newCustomField, name: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!newCustomField.name.trim() || !newCustomField.nameAr.trim()) return;
+                                const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
+                                if (customFields.some((cf) => cf.key === key)) return;
+                                setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
+                                setDetailFields((prev) => [...prev, `cf_${key}`]);
+                                setFilterFields((prev) => [...prev, `cf_${key}`]);
+                                setNewCustomField({ name: '', nameAr: '' });
+                              }
+                            }}
+                            placeholder="e.g. Size"
+                            className="w-full px-2.5 py-1.5 bg-white border border-dashed border-admin-input-border rounded-lg text-sm text-admin-text placeholder:text-admin-muted/50 focus:outline-none focus:border-admin-accent"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="text"
+                            value={newCustomField.nameAr}
+                            onChange={(e) => setNewCustomField({ ...newCustomField, nameAr: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!newCustomField.name.trim() || !newCustomField.nameAr.trim()) return;
+                                const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
+                                if (customFields.some((cf) => cf.key === key)) return;
+                                setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
+                                setDetailFields((prev) => [...prev, `cf_${key}`]);
+                                setFilterFields((prev) => [...prev, `cf_${key}`]);
+                                setNewCustomField({ name: '', nameAr: '' });
+                              }
+                            }}
+                            placeholder="مثال: الحجم"
+                            dir="rtl"
+                            className="w-full px-2.5 py-1.5 bg-white border border-dashed border-admin-input-border rounded-lg text-sm text-admin-text placeholder:text-admin-muted/50 focus:outline-none focus:border-admin-accent"
+                          />
+                        </td>
+                        <td className="pe-4 ps-2 py-2 text-end">
+                          <button
+                            type="button"
+                            disabled={!newCustomField.name.trim() || !newCustomField.nameAr.trim()}
+                            onClick={() => {
+                              if (!newCustomField.name.trim() || !newCustomField.nameAr.trim()) return;
+                              const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
+                              if (customFields.some((cf) => cf.key === key)) return;
+                              setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
+                              setDetailFields((prev) => [...prev, `cf_${key}`]);
+                              setFilterFields((prev) => [...prev, `cf_${key}`]);
+                              setNewCustomField({ name: '', nameAr: '' });
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-admin-accent text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-40"
+                          >
+                            <FiPlus size={12} /> {t('common.add')}
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                {customFields.length === 0 && (
+                  <p className="text-xs text-admin-muted text-center py-1">{t('common.noItems')}</p>
                 )}
-
-                {/* Add new custom field */}
-                <div className="flex items-end gap-2 pt-1">
-                  <div className="flex-1">
-                    <label className="block text-xs text-admin-muted mb-1">{t('categories.fieldNameEn')}</label>
-                    <input
-                      type="text"
-                      value={newCustomField.name}
-                      onChange={(e) => setNewCustomField({ ...newCustomField, name: e.target.value })}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (!newCustomField.name.trim()) return;
-                          const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
-                          if (customFields.some((cf) => cf.key === key)) return;
-                          setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
-                          setNewCustomField({ name: '', nameAr: '' });
-                        }
-                      }}
-                      placeholder="e.g. Size"
-                      className="w-full px-3 py-2 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs text-admin-muted mb-1">{t('categories.fieldNameAr')}</label>
-                    <input
-                      type="text"
-                      value={newCustomField.nameAr}
-                      onChange={(e) => setNewCustomField({ ...newCustomField, nameAr: e.target.value })}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (!newCustomField.name.trim()) return;
-                          const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
-                          if (customFields.some((cf) => cf.key === key)) return;
-                          setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
-                          setNewCustomField({ name: '', nameAr: '' });
-                        }
-                      }}
-                      placeholder="مثال: الحجم"
-                      dir="rtl"
-                      className="w-full px-3 py-2 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newCustomField.name.trim()) return;
-                      const key = newCustomField.name.trim().toLowerCase().replace(/\s+/g, '_');
-                      if (customFields.some((cf) => cf.key === key)) return;
-                      setCustomFields([...customFields, { key, name: newCustomField.name.trim(), nameAr: newCustomField.nameAr.trim() }]);
-                      setNewCustomField({ name: '', nameAr: '' });
-                    }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-admin-accent text-white text-sm rounded-lg hover:bg-blue-600 transition-colors whitespace-nowrap"
-                  >
-                    <FiPlus size={14} /> {t('common.add')}
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -361,7 +467,10 @@ export default function CategoryEdit() {
         message={t('common.deleteConfirmText')}
         confirmText={t('common.delete')}
         onConfirm={() => {
+          const deletedKey = `cf_${customFields[deleteFieldIdx].key}`;
           setCustomFields(customFields.filter((_, j) => j !== deleteFieldIdx));
+          setDetailFields((prev) => prev.filter((f) => f !== deletedKey));
+          setFilterFields((prev) => prev.filter((f) => f !== deletedKey));
           setDeleteFieldIdx(null);
         }}
         onCancel={() => setDeleteFieldIdx(null)}

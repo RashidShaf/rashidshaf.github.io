@@ -185,7 +185,7 @@ export default function BookEdit() {
   // Dynamic detail fields based on category config
   const visibleFields = useMemo(() => {
     if (!selectedParent?.detailFields) return null;
-    try { return JSON.parse(selectedParent.detailFields); } catch { return null; }
+    try { const parsed = JSON.parse(selectedParent.detailFields); return Array.isArray(parsed) ? parsed : parsed.detail || null; } catch { return null; }
   }, [selectedParent]);
   const show = (key) => !visibleFields || visibleFields.includes(key);
 
@@ -584,7 +584,7 @@ export default function BookEdit() {
                     return (
                       <div key={cf.key} className="sm:col-span-2 grid sm:grid-cols-2 gap-4 3xl:gap-6">
                         <div>
-                          <label className={labelClass}>{cf.name}</label>
+                          <label className={labelClass}>{language === 'ar' && cf.nameAr ? cf.nameAr : cf.name}</label>
                           <AutocompleteInput
                             name={`cf_${cf.key}`}
                             value={customFieldValues[cf.key]?.value || ''}
@@ -594,7 +594,7 @@ export default function BookEdit() {
                           />
                         </div>
                         <div>
-                          <label className={labelClass}>{cf.nameAr || `${cf.name} (AR)`}</label>
+                          <label className={labelClass}>{language === 'ar' && cf.nameAr ? cf.nameAr : cf.name} ({t('books.langArabic')})</label>
                           <AutocompleteInput
                             name={`cf_${cf.key}_ar`}
                             value={customFieldValues[cf.key]?.valueAr || ''}

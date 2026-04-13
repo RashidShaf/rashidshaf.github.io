@@ -318,7 +318,7 @@ const BookDetail = () => {
             {(() => {
               const rawFields = book.category?.parent?.parent?.parent?.detailFields || book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
               let allowed = null;
-              if (rawFields) { try { allowed = JSON.parse(rawFields); } catch {} }
+              if (rawFields) { try { const parsed = JSON.parse(rawFields); allowed = Array.isArray(parsed) ? parsed : parsed.detail || null; } catch {} }
               const show = (key) => !allowed || allowed.includes(key);
 
               const items = [
@@ -381,7 +381,7 @@ const BookDetail = () => {
           {(() => {
             const rawFields = book.category?.parent?.parent?.parent?.detailFields || book.category?.parent?.parent?.detailFields || book.category?.parent?.detailFields || book.category?.detailFields;
             let allowed = null;
-            if (rawFields) { try { allowed = JSON.parse(rawFields); } catch {} }
+            if (rawFields) { try { const parsed = JSON.parse(rawFields); allowed = Array.isArray(parsed) ? parsed : parsed.detail || null; } catch {} }
             const show = (key) => !allowed || allowed.includes(key);
 
             const items = [

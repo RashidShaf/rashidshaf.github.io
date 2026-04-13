@@ -47,6 +47,7 @@ const Books = () => {
   const [openFilter, setOpenFilter] = useState(null);
   const [categoryBanners, setCategoryBanners] = useState([]);
   const [filterConfig, setFilterConfig] = useState(null);
+  const [availableCustomFields, setAvailableCustomFields] = useState({});
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
   const filterDropdownRef = useRef(null);
@@ -83,6 +84,8 @@ const Books = () => {
   const selectedColors = colorFilter ? colorFilter.split(',').filter(Boolean) : [];
   const materialFilter = searchParams.get('material') || '';
   const selectedMaterials = materialFilter ? materialFilter.split(',').filter(Boolean) : [];
+  // Collect all custom field filters as a single string for dependency tracking
+  const customFieldParams = Array.from(searchParams.entries()).filter(([k]) => k.startsWith('cf_')).map(([k, v]) => `${k}=${v}`).join('&');
 
   const updateParam = (key, value) => {
     const params = new URLSearchParams(searchParams);
@@ -235,6 +238,7 @@ const Books = () => {
       setAvailableBrands(res.data.brands || []);
       setAvailableColors(res.data.colors || []);
       setAvailableMaterials(res.data.materials || []);
+      setAvailableCustomFields(res.data.customFieldValues || {});
     }).catch(() => {});
   }, [category]);
 
@@ -259,6 +263,8 @@ const Books = () => {
         if (brandFilter) params.set('brand', brandFilter);
         if (colorFilter) params.set('color', colorFilter);
         if (materialFilter) params.set('material', materialFilter);
+        // Custom field filters
+        searchParams.forEach((val, key) => { if (key.startsWith('cf_') && val) params.set(key, val); });
 
         const res = await api.get(`/books?${params}`);
         setBooks(res.data.data || res.data);
@@ -270,7 +276,7 @@ const Books = () => {
       }
     };
     fetchBooks();
-  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter]);
+  }, [search, category, sort, bookLang, section, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter, customFieldParams]);
 
   // Load more books (next page)
   const loadMore = useCallback(async () => {
@@ -291,6 +297,8 @@ const Books = () => {
       if (brandFilter) params.set('brand', brandFilter);
       if (colorFilter) params.set('color', colorFilter);
       if (materialFilter) params.set('material', materialFilter);
+      // Custom field filters
+      searchParams.forEach((val, key) => { if (key.startsWith('cf_') && val) params.set(key, val); });
 
       const res = await api.get(`/books?${params}`);
       setBooks((prev) => [...prev, ...(res.data.data || res.data)]);
@@ -498,6 +506,30 @@ const Books = () => {
         hasItems: availableMaterials.filter((item) => typeof item === 'string' || !language.startsWith('ar') || item.valueAr).length > 0,
       },
     };
+
+    // Add custom field filter definitions dynamically
+    if (filterConfig && filterConfig.length > 0) {
+      filterConfig.filter((fc) => fc.fieldKey.startsWith('cf_')).forEach((fc) => {
+        const cfKey = fc.fieldKey.slice(3); // remove "cf_" prefix
+        const values = availableCustomFields[cfKey] || [];
+        const selectedParam = searchParams.get(fc.fieldKey) || '';
+        const selectedValues = selectedParam ? selectedParam.split(',').filter(Boolean) : [];
+        filterDefs[fc.fieldKey] = {
+          key: fc.fieldKey,
+          label: language === 'ar' && fc.nameAr ? fc.nameAr : fc.name,
+          items: values.map((v) => ({
+            value: v.value,
+            label: language === 'ar' && v.valueAr ? v.valueAr : v.value,
+          })),
+          selected: selectedValues,
+          onToggle: (val) => {
+            const next = selectedValues.includes(val) ? selectedValues.filter((v) => v !== val) : [...selectedValues, val];
+            updateParam(fc.fieldKey, next.join(','));
+          },
+          hasItems: values.length > 0,
+        };
+      });
+    }
 
     // If filterConfig is an empty array, show no filters
     if (Array.isArray(filterConfig) && filterConfig.length === 0) {

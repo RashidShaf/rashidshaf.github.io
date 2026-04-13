@@ -365,6 +365,44 @@ exports.bulkAction = async (req, res, next) => {
         await prisma.book.updateMany({ where: { id: { in: ids } }, data: authData });
         break;
       }
+      case 'setBrand': {
+        if (!req.body.brand && !req.body.brandAr) return res.status(400).json({ message: 'Brand required.' });
+        const brandData = {};
+        if (req.body.brand) brandData.brand = req.body.brand;
+        if (req.body.brandAr) brandData.brandAr = req.body.brandAr;
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: brandData });
+        break;
+      }
+      case 'setColor': {
+        if (!req.body.color && !req.body.colorAr) return res.status(400).json({ message: 'Color required.' });
+        const colorData = {};
+        if (req.body.color) colorData.color = req.body.color;
+        if (req.body.colorAr) colorData.colorAr = req.body.colorAr;
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: colorData });
+        break;
+      }
+      case 'setMaterial': {
+        if (!req.body.material && !req.body.materialAr) return res.status(400).json({ message: 'Material required.' });
+        const matData = {};
+        if (req.body.material) matData.material = req.body.material;
+        if (req.body.materialAr) matData.materialAr = req.body.materialAr;
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: matData });
+        break;
+      }
+      case 'setCustomField': {
+        const { fieldKey, value, valueAr } = req.body;
+        if (!fieldKey || (!value && !valueAr)) return res.status(400).json({ message: 'Field value required.' });
+        const books = await prisma.book.findMany({ where: { id: { in: ids } }, select: { id: true, customFields: true } });
+        await Promise.all(books.map((book) => {
+          let cf = {};
+          if (book.customFields) { try { cf = JSON.parse(book.customFields); } catch {} }
+          cf[fieldKey] = { ...cf[fieldKey] };
+          if (value) cf[fieldKey].value = value;
+          if (valueAr) cf[fieldKey].valueAr = valueAr;
+          return prisma.book.update({ where: { id: book.id }, data: { customFields: JSON.stringify(cf) } });
+        }));
+        break;
+      }
       default:
         return res.status(400).json({ message: 'Invalid action.' });
     }
