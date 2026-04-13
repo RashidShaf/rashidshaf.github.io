@@ -224,7 +224,6 @@ export default function Inventory() {
                 <div key={item.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-red-100">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-admin-text truncate">{language === 'ar' && item.titleAr ? item.titleAr : (item.title || item.book?.title)}</p>
-                    <p className="text-xs text-admin-muted">{item.author || item.book?.author}</p>
                   </div>
                   <span className="text-sm font-bold text-red-600 ml-3">{item.stock ?? item.currentStock} {t('common.left')}</span>
                 </div>
@@ -361,9 +360,6 @@ export default function Inventory() {
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         <p className="font-medium text-admin-text">
                           {language === 'ar' && item.titleAr ? item.titleAr : (item.title || item.book?.title)}
-                        </p>
-                        <p className="text-xs text-admin-muted">
-                          {item.author || item.book?.author}
                         </p>
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
