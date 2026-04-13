@@ -18,6 +18,7 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [limit, setLimit] = useState(parseInt(searchParams.get('limit')) || 10);
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -31,7 +32,7 @@ export default function Users() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit: 10 });
+      const params = new URLSearchParams({ page, limit });
       if (search) params.set('search', search);
       const res = await api.get(`/admin/users?${params}`);
       setUsers(res.data.data || res.data);
@@ -49,7 +50,7 @@ export default function Users() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [page]);
+  useEffect(() => { fetchUsers(); }, [page, limit]);
 
   // Live search with debounce
   useEffect(() => {
@@ -64,9 +65,24 @@ export default function Users() {
   }, [search]);
 
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
-  const toggleSelectAll = (items) => {
+  const toggleSelectAll = async (items) => {
     const allIds = items.map((i) => i.id);
-    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+    const allSelected = allIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds([]);
+    } else if (pagination && pagination.total > items.length) {
+      try {
+        const params = new URLSearchParams({ page: 1, limit: 1000 });
+        if (search) params.set('search', search);
+        const res = await api.get(`/admin/users?${params}`);
+        const data = res.data.data || res.data;
+        setSelectedIds(data.map((u) => u.id));
+      } catch {
+        setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+      }
+    } else {
+      setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+    }
   };
   const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
 
@@ -251,11 +267,33 @@ export default function Users() {
         </div>
 
         {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
+        {pagination && (
           <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
-            <span className="text-xs 3xl:text-sm text-admin-muted">
-              {t('common.showing')} {users.length} {t('common.of')} {pagination.total}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs 3xl:text-sm text-admin-muted">
+                {t('common.showing')} {users.length} {t('common.of')} {pagination.total}
+              </span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  const newLimit = Number(e.target.value);
+                  setLimit(newLimit);
+                  setPage(1);
+                  const params = new URLSearchParams();
+                  if (search) params.set('q', search);
+                  if (newLimit !== 10) params.set('limit', String(newLimit));
+                  setSearchParams(params, { replace: true });
+                }}
+                className="px-2 py-1 bg-admin-bg border border-admin-input-border rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={1000}>{t('common.all')}</option>
+              </select>
+            </div>
+            {pagination.totalPages > 1 && (
             <div className="flex gap-1">
               <button
                 disabled={!pagination.hasPrev}
@@ -265,6 +303,7 @@ export default function Users() {
                   const params = new URLSearchParams();
                   if (search) params.set('q', search);
                   if (newPage > 1) params.set('page', String(newPage));
+                  if (limit !== 10) params.set('limit', String(limit));
                   setSearchParams(params, { replace: true });
                 }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
@@ -279,6 +318,7 @@ export default function Users() {
                   const params = new URLSearchParams();
                   if (search) params.set('q', search);
                   params.set('page', String(newPage));
+                  if (limit !== 10) params.set('limit', String(limit));
                   setSearchParams(params, { replace: true });
                 }}
                 className="p-1.5 rounded border border-admin-border text-admin-muted disabled:opacity-30 hover:bg-gray-50"
@@ -286,6 +326,7 @@ export default function Users() {
                 <FiChevronRight size={16} />
               </button>
             </div>
+            )}
           </div>
         )}
       </div>

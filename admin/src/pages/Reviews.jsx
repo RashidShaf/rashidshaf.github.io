@@ -100,9 +100,25 @@ export default function Reviews() {
   };
 
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
-  const toggleSelectAll = (items) => {
+  const toggleSelectAll = async (items) => {
     const allIds = items.map((i) => i.id);
-    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+    const allSelected = allIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds([]);
+    } else if (pagination && pagination.total > items.length) {
+      try {
+        const params = new URLSearchParams({ page: 1, limit: 1000 });
+        if (search) params.set('search', search);
+        if (visibilityFilter) params.set('isVisible', visibilityFilter);
+        const res = await api.get(`/admin/reviews?${params}`);
+        const data = res.data.data || res.data;
+        setSelectedIds(data.map((r) => r.id));
+      } catch {
+        setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+      }
+    } else {
+      setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+    }
   };
   const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
 
@@ -313,7 +329,8 @@ export default function Reviews() {
               <option value={10}>10</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
-              <option value={100}>All</option>
+              <option value={100}>100</option>
+              <option value={1000}>{t('common.all')}</option>
             </select>
           </div>
           {pagination && pagination.totalPages > 1 && (

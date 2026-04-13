@@ -111,9 +111,34 @@ export default function Books() {
   const saveScroll = () => sessionStorage.setItem('admin-books-scroll', window.scrollY.toString());
 
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
-  const toggleSelectAll = (items) => {
+  const toggleSelectAll = async (items) => {
     const allIds = items.map((i) => i.id);
-    setSelectedIds((prev) => allIds.every((id) => prev.includes(id)) ? prev.filter((id) => !allIds.includes(id)) : [...new Set([...prev, ...allIds])]);
+    const allSelected = allIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds([]);
+    } else if (pagination && pagination.total > items.length) {
+      // Fetch ALL matching IDs with current filters
+      try {
+        const params = new URLSearchParams({ page: 1, limit: 1000 });
+        if (search) params.set('search', search);
+        if (selectedL4) params.set('category', selectedL4);
+        else if (selectedL3) params.set('category', selectedL3);
+        else if (selectedSub) params.set('category', selectedSub);
+        else if (selectedTab) params.set('category', selectedTab);
+        if (imageFilter === 'hasImage') params.set('hasImage', 'true');
+        if (imageFilter === 'noImage') params.set('hasImage', 'false');
+        if (descFilter === 'noDesc') params.set('hasDesc', 'false');
+        if (descFilter === 'noDescAr') params.set('hasDescAr', 'false');
+        if (issueFilter === 'duplicateBarcode') params.set('duplicateBarcode', 'true');
+        if (issueFilter === 'similarNames') params.set('similarNames', 'true');
+        const res = await api.get(`/admin/books?${params}`);
+        setSelectedIds(res.data.data.map((b) => b.id));
+      } catch {
+        setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+      }
+    } else {
+      setSelectedIds((prev) => [...new Set([...prev, ...allIds])]);
+    }
   };
   const isAllSelected = (items) => items.length > 0 && items.every((i) => selectedIds.includes(i.id));
 
@@ -759,7 +784,8 @@ export default function Books() {
               <option value={10}>10</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
-              <option value={100}>All</option>
+              <option value={100}>100</option>
+              <option value={1000}>{t('common.all')}</option>
             </select>
           </div>
           {pagination && pagination.totalPages > 1 && (
