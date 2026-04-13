@@ -57,10 +57,10 @@ export default function Books() {
 
   useEffect(() => {
     api.get('/books/filters').then((res) => {
-      setSuggestedPublishers((res.data.publishers || []).map((p) => typeof p === 'string' ? p : p.value));
-      setSuggestedPublishersAr((res.data.publishers || []).map((p) => typeof p === 'string' ? null : p.valueAr).filter(Boolean));
-      setSuggestedAuthors((res.data.authors || []).map((a) => typeof a === 'string' ? a : a.value));
-      setSuggestedAuthorsAr((res.data.authors || []).map((a) => typeof a === 'string' ? null : a.valueAr).filter(Boolean));
+      setSuggestedPublishers([...new Set((res.data.publishers || []).map((p) => typeof p === 'string' ? p : p.value).filter(Boolean))]);
+      setSuggestedPublishersAr([...new Set((res.data.publishers || []).map((p) => typeof p === 'string' ? null : p.valueAr).filter(Boolean))]);
+      setSuggestedAuthors([...new Set((res.data.authors || []).map((a) => typeof a === 'string' ? a : a.value).filter(Boolean))]);
+      setSuggestedAuthorsAr([...new Set((res.data.authors || []).map((a) => typeof a === 'string' ? null : a.valueAr).filter(Boolean))]);
     }).catch(() => {});
   }, []);
 
