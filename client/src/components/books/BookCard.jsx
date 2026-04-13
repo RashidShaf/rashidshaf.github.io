@@ -108,7 +108,7 @@ const BookCard = ({ book, comingSoon = false }) => {
           <h3 className="text-[13px] sm:text-[15px] 3xl:text-lg font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
             {title}
           </h3>
-          <p className="text-[11px] sm:text-[13px] 3xl:text-base text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>
+          {author && author !== 'Unknown' && author.trim() !== '' && <p className="text-[11px] sm:text-[13px] 3xl:text-base text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>}
 
           {!comingSoon && (
             <div className="mt-1.5 sm:mt-2">

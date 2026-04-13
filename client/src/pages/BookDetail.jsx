@@ -221,7 +221,7 @@ const BookDetail = () => {
             </h1>
 
             {/* Author */}
-            <p className="text-sm sm:text-lg 3xl:text-2xl text-foreground/60 mt-1 sm:mt-2">{author}</p>
+            {author && author !== 'Unknown' && author.trim() !== '' && <p className="text-sm sm:text-lg 3xl:text-2xl text-foreground/60 mt-1 sm:mt-2">{author}</p>}
 
             {/* Rating — clickable to open reviews */}
             <button onClick={() => setReviewModalOpen(true)} className="flex items-center gap-2 mt-3 sm:mt-5 3xl:mt-6 cursor-pointer hover:opacity-80 transition-opacity">

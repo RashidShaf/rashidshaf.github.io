@@ -129,7 +129,7 @@ exports.create = async (req, res, next) => {
     if (existingSlug) slug = `${slug}-${Date.now()}`;
     data.slug = slug;
     data.price = data.price ? parseFloat(data.price) : 0;
-    if (!data.author) data.author = 'Unknown';
+    if (!data.author) data.author = '';
     data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     data.stock = data.stock ? parseInt(data.stock) : 0;
     data.pages = data.pages ? parseInt(data.pages) : null;
