@@ -2,12 +2,65 @@ const prisma = require('../config/database');
 
 exports.overview = async (req, res, next) => {
   try {
-    const books = await prisma.book.findMany({
-      where: { isActive: true },
-      orderBy: { stock: 'asc' },
-      select: { id: true, title: true, titleAr: true, author: true, stock: true, lowStockThreshold: true, sku: true, salesCount: true, price: true, isOutOfStock: true },
+    const { search, category } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const where = { isActive: true };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { titleAr: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (category) {
+      // Collect all child category IDs recursively
+      const collectIds = async (parentIds) => {
+        const children = await prisma.category.findMany({ where: { parentId: { in: parentIds } }, select: { id: true } });
+        if (children.length === 0) return [];
+        const childIds = children.map((c) => c.id);
+        return [...childIds, ...(await collectIds(childIds))];
+      };
+      const categoryIds = [category, ...(await collectIds([category]))];
+      where.OR = where.OR ? [{ AND: [{ OR: where.OR }, { OR: [{ categoryId: { in: categoryIds } }, { bookCategories: { some: { categoryId: { in: categoryIds } } } }] }] }]
+        : undefined;
+      if (!where.OR) {
+        where.OR = [
+          { categoryId: { in: categoryIds } },
+          { bookCategories: { some: { categoryId: { in: categoryIds } } } },
+        ];
+      } else {
+        // Combine search + category
+        const searchOr = where.OR;
+        where.AND = [
+          { OR: searchOr },
+          { OR: [{ categoryId: { in: categoryIds } }, { bookCategories: { some: { categoryId: { in: categoryIds } } } }] },
+        ];
+        delete where.OR;
+      }
+    }
+
+    const [books, total] = await Promise.all([
+      prisma.book.findMany({
+        where,
+        orderBy: { stock: 'asc' },
+        skip,
+        take: limit,
+        select: { id: true, title: true, titleAr: true, author: true, stock: true, lowStockThreshold: true, sku: true, salesCount: true, price: true, isOutOfStock: true,
+          category: { select: { id: true, name: true, nameAr: true } },
+        },
+      }),
+      prisma.book.count({ where }),
+    ]);
+
+    res.json({
+      data: books,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-    res.json(books);
   } catch (error) {
     next(error);
   }

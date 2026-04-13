@@ -8,7 +8,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 export default function Inventory() {
-  const t = useLanguageStore((s) => s.t);
+  const { t, language } = useLanguageStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
@@ -22,15 +22,23 @@ export default function Inventory() {
   const [invSearch, setInvSearch] = useState(searchParams.get('q') || '');
   const [alertMinimized, setAlertMinimized] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
+  const [selectedSub, setSelectedSub] = useState(searchParams.get('sub') || '');
+  const [selectedL3, setSelectedL3] = useState(searchParams.get('l3') || '');
 
   useEffect(() => {
     api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
+    api.get('/admin/categories').then((res) => setAllCategories(res.data.data || res.data)).catch(() => {});
   }, []);
 
   const fetchInventory = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: 10 });
+      if (invSearch) params.set('search', invSearch);
+      const activeCat = selectedL3 || selectedSub || selectedTab;
+      if (activeCat) params.set('category', activeCat);
       const [invRes, lowRes] = await Promise.all([
         api.get(`/admin/inventory?${params}`),
         api.get('/admin/inventory/low-stock'),
@@ -53,13 +61,18 @@ export default function Inventory() {
 
   useEffect(() => {
     fetchInventory();
-  }, [page]);
+  }, [page, selectedTab, selectedSub, selectedL3]);
 
-  // Debounced URL sync for search
+  // Debounced search — sync to URL + refetch
   useEffect(() => {
     const timer = setTimeout(() => {
+      setPage(1);
+      fetchInventory();
       const p = new URLSearchParams(searchParams);
       if (invSearch) p.set('q', invSearch); else p.delete('q');
+      if (selectedTab) p.set('tab', selectedTab);
+      if (selectedSub) p.set('sub', selectedSub);
+      if (selectedL3) p.set('l3', selectedL3);
       setSearchParams(p, { replace: true });
     }, 300);
     return () => clearTimeout(timer);
@@ -87,7 +100,7 @@ export default function Inventory() {
     }
   };
 
-  const filteredInventory = inventory.filter((item) => !invSearch || (item.title || item.book?.title || '').toLowerCase().includes(invSearch.toLowerCase()));
+  const filteredInventory = inventory;
 
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   const toggleSelectAll = (items) => {
@@ -143,7 +156,85 @@ export default function Inventory() {
         </div>
       )}
 
-      {/* Low Stock Alerts */}
+      {/* Category Tabs — L1 */}
+      {(() => {
+        const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
+        const parentCategories = allCategories.filter((c) => !c.parentId);
+        const subCategories = selectedTab ? allCategories.filter((c) => c.parentId === selectedTab) : [];
+        const l3Categories = selectedSub ? allCategories.filter((c) => c.parentId === selectedSub) : [];
+        const syncURL = (tab, sub, l3) => {
+          const p = new URLSearchParams();
+          if (tab) p.set('tab', tab);
+          if (sub) p.set('sub', sub);
+          if (l3) p.set('l3', l3);
+          if (invSearch) p.set('q', invSearch);
+          setSearchParams(p, { replace: true });
+        };
+        return (
+          <>
+            {parentCategories.length > 0 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                <button
+                  onClick={() => { setSelectedTab(''); setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL('', '', ''); }}
+                  className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${!selectedTab ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                >
+                  {t('common.all')}
+                </button>
+                {parentCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedTab(cat.id); setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL(cat.id, '', ''); }}
+                    className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-xl text-sm 3xl:text-base font-semibold whitespace-nowrap transition-all ${selectedTab === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-admin-card border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                  >
+                    {getName(cat)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* L2 Sub-tabs */}
+            {subCategories.length > 0 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 ps-2" style={{ scrollbarWidth: 'none' }}>
+                <button
+                  onClick={() => { setSelectedSub(''); setSelectedL3(''); setPage(1); syncURL(selectedTab, '', ''); }}
+                  className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedSub ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                >
+                  {t('common.all')} {getName(parentCategories.find((c) => c.id === selectedTab) || {})}
+                </button>
+                {subCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedSub(cat.id); setSelectedL3(''); setPage(1); syncURL(selectedTab, cat.id, ''); }}
+                    className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${selectedSub === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                  >
+                    {getName(cat)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* L3 Sub-tabs */}
+            {l3Categories.length > 0 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 ps-4" style={{ scrollbarWidth: 'none' }}>
+                <button
+                  onClick={() => { setSelectedL3(''); setPage(1); syncURL(selectedTab, selectedSub, ''); }}
+                  className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${!selectedL3 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                >
+                  {t('common.all')} {getName(subCategories.find((c) => c.id === selectedSub) || {})}
+                </button>
+                {l3Categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedL3(cat.id); setPage(1); syncURL(selectedTab, selectedSub, cat.id); }}
+                    className={`px-3 py-1.5 3xl:px-4 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${selectedL3 === cat.id ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
+                  >
+                    {getName(cat)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
+
       {/* Search */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
