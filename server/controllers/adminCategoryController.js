@@ -112,10 +112,25 @@ exports.update = async (req, res, next) => {
   }
 };
 
+// Recursively collect all descendant category IDs
+const collectDescendantIds = async (parentIds) => {
+  if (parentIds.length === 0) return [];
+  const children = await prisma.category.findMany({ where: { parentId: { in: parentIds } }, select: { id: true } });
+  if (children.length === 0) return [];
+  const childIds = children.map((c) => c.id);
+  const deeper = await collectDescendantIds(childIds);
+  return [...childIds, ...deeper];
+};
+
 exports.remove = async (req, res, next) => {
   try {
     const category = await prisma.category.findUnique({ where: { id: req.params.id } });
     if (!category) return res.status(404).json({ message: 'Category not found.' });
+    // Delete all descendants first, then the category itself
+    const descendantIds = await collectDescendantIds([req.params.id]);
+    if (descendantIds.length > 0) {
+      await prisma.category.deleteMany({ where: { id: { in: descendantIds } } });
+    }
     await prisma.category.delete({ where: { id: req.params.id } });
     // Clean up image file
     if (category.image) {
@@ -134,9 +149,13 @@ exports.bulkAction = async (req, res, next) => {
     if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
 
     switch (action) {
-      case 'delete':
-        await prisma.category.deleteMany({ where: { id: { in: ids } } });
+      case 'delete': {
+        // Collect all descendants of selected categories
+        const descendantIds = await collectDescendantIds(ids);
+        const allIds = [...new Set([...ids, ...descendantIds])];
+        await prisma.category.deleteMany({ where: { id: { in: allIds } } });
         break;
+      }
       case 'activate':
         await prisma.category.updateMany({ where: { id: { in: ids } }, data: { isActive: true } });
         break;
