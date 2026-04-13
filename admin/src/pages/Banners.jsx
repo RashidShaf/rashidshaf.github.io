@@ -50,7 +50,7 @@ export default function Banners() {
       const res = await api.get('/admin/banners');
       setBanners(res.data);
     } catch {
-      toast.error('Failed to fetch banners');
+      toast.error(t('banners.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function Banners() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editingId && !desktopFile) {
-      toast.error('Desktop image is required');
+      toast.error(t('banners.desktopRequired'));
       return;
     }
 
@@ -141,10 +141,10 @@ export default function Banners() {
 
       if (editingId) {
         await api.put(`/admin/banners/${editingId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        toast.success('Banner updated');
+        toast.success(t('banners.bannerUpdated'));
       } else {
         await api.post('/admin/banners', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        toast.success('Banner created');
+        toast.success(t('banners.bannerCreated'));
       }
       setFormOpen(false);
       fetchBanners();
@@ -159,11 +159,11 @@ export default function Banners() {
     if (!deleteId) return;
     try {
       await api.delete(`/admin/banners/${deleteId}`);
-      toast.success('Banner deleted');
+      toast.success(t('banners.bannerDeleted'));
       setDeleteId(null);
       fetchBanners();
     } catch {
-      toast.error('Failed to delete banner');
+      toast.error(t('banners.deleteFailed'));
       setDeleteId(null);
     }
   };
@@ -171,10 +171,10 @@ export default function Banners() {
   const handleToggleActive = async (banner) => {
     try {
       await api.put(`/admin/banners/${banner.id}/toggle`);
-      toast.success(banner.isActive ? 'Banner deactivated' : 'Banner activated');
+      toast.success(banner.isActive ? t('banners.deactivated') : t('banners.activated'));
       fetchBanners();
     } catch {
-      toast.error('Failed to toggle status');
+      toast.error(t('banners.toggleFailed'));
     }
   };
 
@@ -188,7 +188,7 @@ export default function Banners() {
       await api.put('/admin/banners/reorder', { orderedIds: sorted.map((b) => b.id) });
       fetchBanners();
     } catch {
-      toast.error('Failed to reorder');
+      toast.error(t('banners.reorderFailed'));
     }
   };
 
@@ -262,15 +262,15 @@ export default function Banners() {
           <table className="w-full text-sm 3xl:text-base">
             <thead className="bg-gray-50 border-b border-admin-border">
               <tr>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Preview</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleEn')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleAr')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.link')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.logo')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.order')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.preview')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleEn')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.titleAr')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.link')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.logo')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('banners.order')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
+                <th className="text-end px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -304,7 +304,7 @@ export default function Banners() {
                       {banner.showLogo !== false ? (
                         <span className="text-xs font-medium text-green-700">{(banner.logoPosition || 'center-left').toUpperCase().replace('-', ' ')}</span>
                       ) : (
-                        <span className="text-xs text-gray-400">Off</span>
+                        <span className="text-xs text-gray-400">{t('banners.logoOff')}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{banner.sortOrder}</td>
@@ -316,12 +316,12 @@ export default function Banners() {
                         {banner.isActive ? t('common.active') : t('common.inactive')}
                       </button>
                     </td>
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleReorder(banner, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
+                        <button onClick={() => handleReorder(banner, 'up')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('categories.moveUp')}>
                           <FiArrowUp size={15} />
                         </button>
-                        <button onClick={() => handleReorder(banner, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
+                        <button onClick={() => handleReorder(banner, 'down')} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('categories.moveDown')}>
                           <FiArrowDown size={15} />
                         </button>
                         <button onClick={() => openEdit(banner)} className="p-1.5 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>
@@ -353,11 +353,11 @@ export default function Banners() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.titleEn')}</label>
-                  <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="Optional title" />
+                  <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder={t('banners.optionalTitle')} />
                 </div>
                 <div>
                   <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.titleAr')}</label>
-                  <input type="text" dir="rtl" value={form.titleAr} onChange={(e) => setForm((f) => ({ ...f, titleAr: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="عنوان اختياري" />
+                  <input type="text" dir="rtl" value={form.titleAr} onChange={(e) => setForm((f) => ({ ...f, titleAr: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder={t('banners.optionalTitleAr')} />
                 </div>
               </div>
 
@@ -403,7 +403,7 @@ export default function Banners() {
               {/* Link */}
               <div>
                 <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('banners.linkUrl')}</label>
-                <input type="text" value={form.link} onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder="https://... (optional)" />
+                <input type="text" value={form.link} onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))} className="w-full px-4 py-2.5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" placeholder={t('banners.optionalLink')} />
               </div>
 
               {/* Desktop Image */}
@@ -417,7 +417,7 @@ export default function Banners() {
                   <div className="relative group">
                     <img src={desktopPreview} alt="Desktop preview" className="w-full h-32 3xl:h-40 object-cover rounded-lg border border-admin-border" />
                     <button type="button" onClick={() => desktopRef.current?.click()} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center text-white text-sm font-medium">
-                      Change Image
+                      {t('banners.changeImage')}
                     </button>
                   </div>
                 ) : (
@@ -438,7 +438,7 @@ export default function Banners() {
                     <img src={mobilePreview} alt="Mobile preview" className="w-48 h-32 3xl:h-40 object-cover rounded-lg border border-admin-border" />
                     <div className="absolute inset-0 w-48">
                       <button type="button" onClick={() => mobileRef.current?.click()} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center text-white text-sm font-medium">
-                        Change
+                        {t('banners.change')}
                       </button>
                     </div>
                   </div>

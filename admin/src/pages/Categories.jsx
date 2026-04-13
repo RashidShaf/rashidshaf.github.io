@@ -262,7 +262,7 @@ export default function Categories() {
             onClick={() => { setSelectedLevel2(''); setSelectedLevel3(''); setSearchParams({ tab: selectedParent }, { replace: true }); }}
             className={`px-4 py-2 3xl:px-5 3xl:py-2.5 rounded-lg text-sm 3xl:text-base font-medium whitespace-nowrap transition-all ${!selectedLevel2 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
-            All {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
+            {t('common.all')} {getName(parentCategories.find((c) => c.id === selectedParent) || {})}
           </button>
           {level2Categories.map((cat) => (
             <button
@@ -283,7 +283,7 @@ export default function Categories() {
             onClick={() => { setSelectedLevel3(''); setSearchParams({ tab: selectedParent, sub: selectedLevel2 }, { replace: true }); }}
             className={`px-4 py-1.5 3xl:px-5 3xl:py-2 rounded-lg text-xs 3xl:text-sm font-medium whitespace-nowrap transition-all ${!selectedLevel3 ? 'bg-admin-accent text-white shadow-md' : 'bg-white border border-admin-border text-admin-muted hover:text-admin-text hover:shadow-sm'}`}
           >
-            All {getName(level2Categories.find((c) => c.id === selectedLevel2) || {})}
+            {t('common.all')} {getName(level2Categories.find((c) => c.id === selectedLevel2) || {})}
           </button>
           {level3Categories.map((cat) => (
             <button
@@ -300,8 +300,8 @@ export default function Categories() {
       {/* Search + Create */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder={t('common.searchCategories')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder={t('common.searchCategories')} className="w-full ps-10 pe-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchCategories} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
@@ -338,15 +338,15 @@ export default function Categories() {
                 <th className="px-4 py-3 w-10">
                   <input type="checkbox" checked={isAllSelected(sortedFilteredCategories)} onChange={() => toggleSelectAll(sortedFilteredCategories)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
                 </th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Image</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (EN)</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Name (AR)</th>
-                {!isTopLevel && !selectedLevel2 && selectedParent && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Sub-categories</th>}
-                {!isTopLevel && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Parent</th>}
-                {isTopLevel && <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">Sub-categories</th>}
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{isTopLevel ? 'Total Items' : 'Items'}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.image')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.nameEnShort')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.nameArShort')}</th>
+                {!isTopLevel && !selectedLevel2 && selectedParent && <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.subCategories')}</th>}
+                {!isTopLevel && <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.parent')}</th>}
+                {isTopLevel && <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('categories.subCategories')}</th>}
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{isTopLevel ? t('categories.totalItems') : t('categories.items')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.status')}</th>
+                <th className="text-end px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -409,17 +409,17 @@ export default function Categories() {
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {hasChildren && !isChild && (
                             <button onClick={() => setExpandedRows((prev) => ({ ...prev, [cat.id]: !prev[cat.id] }))} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.expand')}>
                               <FiChevronDown size={15} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}
-                          <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title="Move up">
+                          <button onClick={() => handleReorder(rowCat, 'up')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('categories.moveUp')}>
                             <FiArrowUp size={15} />
                           </button>
-                          <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title="Move down">
+                          <button onClick={() => handleReorder(rowCat, 'down')} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('categories.moveDown')}>
                             <FiArrowDown size={15} />
                           </button>
                           <Link to={`/categories/${rowCat.id}/edit`} onClick={saveScroll} className="p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-colors" title={t('common.edit')}>

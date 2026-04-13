@@ -92,7 +92,7 @@ const TrackOrder = () => {
         {orders && orders.length > 0 && (
           <div className="max-w-4xl 3xl:max-w-5xl mx-auto space-y-4">
             <p className="text-sm text-foreground/50 mb-2">
-              {orders.length} {orders.length === 1 ? (isRTL ? 'طلب' : 'order') : (isRTL ? 'طلبات' : 'orders')}
+              {orders.length} {orders.length === 1 ? t('trackOrder.orderCount_one') : t('trackOrder.orderCount_other')}
             </p>
 
             {orders.map((order) => {
@@ -127,7 +127,7 @@ const TrackOrder = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-foreground/50">
-                        <span>{order.items?.length || 0} {isRTL ? 'منتجات' : 'items'}</span>
+                        <span>{order.items?.length || 0} {t('trackOrder.items')}</span>
                         <span className="flex items-center gap-1"><FiCalendar size={10} /> {isRTL ? formatDateAr(order.createdAt) : formatDate(order.createdAt)}</span>
                       </div>
                     </div>

@@ -374,8 +374,8 @@ export default function Books() {
       {/* Search + Refresh + Add Product */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-xl">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full ps-10 pe-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
@@ -410,7 +410,7 @@ export default function Books() {
               {filter.value ? filter.options.find((o) => o.key === filter.value)?.label || filter.label : filter.label}
             </button>
             {openFilterMenu === filter.id && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
                 {filter.options.map((opt) => (
                   <button
                     key={opt.key}
@@ -453,9 +453,9 @@ export default function Books() {
 
       {/* Bulk Action Bar */}
       {selectedIds.length > 0 && (
-        <div className="flex items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
+        <div className="flex flex-wrap items-center gap-3 mb-3 bg-admin-accent/5 border border-admin-accent/20 rounded-lg px-4 py-2.5 3xl:px-6 3xl:py-3">
           <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
-          <div className="flex-1" />
+          <div className="flex-1 min-w-0" />
           <button onClick={() => setBulkConfirmAction('delete')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkDelete')}</button>
           <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors">{t('common.bulkActivate')}</button>
           <button onClick={() => handleBulkAction('deactivate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-muted hover:bg-gray-50 transition-colors">{t('common.bulkDeactivate')}</button>
@@ -467,7 +467,7 @@ export default function Books() {
             {bulkCatOpen && (() => {
               const l1Cats = allCategories.filter(c => !c.parentId);
               return (
-                <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[320px] 3xl:w-[400px]">
+                <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[320px] 3xl:w-[400px]">
                   <div className="max-h-72 overflow-y-auto p-2" style={{ scrollbarWidth: 'thin' }}>
                     {l1Cats.map(l1 => {
                       const isL1Selected = bulkSelectedL1 === l1.id;
@@ -552,7 +552,7 @@ export default function Books() {
               {t('books.setSection')}
             </button>
             {bulkSectionOpen && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[220px] 3xl:w-[280px] p-3 space-y-2">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[220px] 3xl:w-[280px] p-3 space-y-2">
                 {[
                   { key: 'isFeatured', label: t('books.featured') },
                   { key: 'isBestseller', label: t('books.bestseller') },
@@ -577,7 +577,7 @@ export default function Books() {
               {t('books.publisher')}
             </button>
             {bulkPubOpen && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
                 {/* EN input */}
                 <div className="relative">
                   <input type="text" value={bulkPublisher} onChange={(e) => setBulkPublisher(e.target.value)} placeholder={t('books.publisherEn')} className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" autoFocus />
@@ -610,7 +610,7 @@ export default function Books() {
               {t('books.author')}
             </button>
             {bulkAuthorOpen && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
                 {/* EN input */}
                 <div className="relative">
                   <input type="text" value={bulkAuthor} onChange={(e) => setBulkAuthor(e.target.value)} placeholder={t('books.authorEn')} className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" autoFocus />
@@ -650,13 +650,13 @@ export default function Books() {
                 <th className="px-4 py-3 3xl:px-5 3xl:py-4 w-10 3xl:w-12">
                   <input type="checkbox" checked={isAllSelected(books)} onChange={() => toggleSelectAll(books)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
                 </th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.stock')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.active')}</th>
-                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted w-12">#</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.category')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.stock')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.active')}</th>
+                <th className="text-end px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -711,7 +711,7 @@ export default function Books() {
                         {book.isActive ? t('common.active') : t('common.inactive')}
                       </button>
                     </td>
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleToggleOutOfStock(book)}

@@ -87,11 +87,11 @@ export default function CategoryEdit() {
             }
           }
         } else {
-          toast.error('Category not found');
+          toast.error(t('categories.notFound'));
           navigate('/categories');
         }
       } catch {
-        toast.error('Failed to load');
+        toast.error(t('categories.failedLoad'));
         navigate('/categories');
       } finally {
         setLoading(false);
@@ -109,7 +109,7 @@ export default function CategoryEdit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast.error('Name is required'); return; }
+    if (!form.name.trim()) { toast.error(t('categories.nameRequired')); return; }
     setSaving(true);
     try {
       const fd = new FormData();

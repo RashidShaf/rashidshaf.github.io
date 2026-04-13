@@ -91,7 +91,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-end">
                     <p className="text-sm 3xl:text-base font-semibold text-admin-text">QAR {parseFloat(order.total).toFixed(2)}</p>
-                    <p className={`text-xs 3xl:text-sm font-medium ${statusColor[order.status] || 'text-admin-muted'}`}>{order.status}</p>
+                    <p className={`text-xs 3xl:text-sm font-medium ${statusColor[order.status] || 'text-admin-muted'}`}>{t(`orders.statuses.${order.status}`) || order.status}</p>
                   </div>
                 </div>
               ))}
@@ -113,7 +113,7 @@ export default function Dashboard() {
                     <p className="text-sm 3xl:text-base font-medium text-admin-text truncate">{book.title}</p>
                     <p className="text-xs 3xl:text-sm text-admin-muted">{book.author}</p>
                   </div>
-                  <span className="text-sm 3xl:text-base font-semibold text-admin-text">{book.salesCount} sold</span>
+                  <span className="text-sm 3xl:text-base font-semibold text-admin-text">{book.salesCount} {t('dashboard.sold')}</span>
                 </div>
               ))}
             </div>

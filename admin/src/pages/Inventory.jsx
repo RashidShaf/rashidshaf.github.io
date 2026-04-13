@@ -269,8 +269,8 @@ export default function Inventory() {
       {/* Search */}
       <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder={t('common.searchInventory')} className="w-full pl-10 pr-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
+          <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
+          <input type="text" value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder={t('common.searchInventory')} className="w-full ps-10 pe-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
         </div>
         <div className="flex-1" />
         <button onClick={fetchInventory} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
@@ -299,14 +299,14 @@ export default function Inventory() {
                 <th className="px-4 py-3 w-10">
                   <input type="checkbox" checked={isAllSelected(inventory)} onChange={() => toggleSelectAll(inventory)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
                 </th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.bookTitle')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
                   {t('inventory.currentStock')}
                 </th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.value')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.sales')}</th>
-                <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.availability')}</th>
-                <th className="text-right px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.value')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.sales')}</th>
+                <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.availability')}</th>
+                <th className="text-end px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">
                   {t('common.actions')}
                 </th>
               </tr>
@@ -376,7 +376,7 @@ export default function Inventory() {
                           {item.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
                         </button>
                       </td>
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-right">
+                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end">
                         {restockId === bookId ? (
                           <div className="flex items-center gap-3 justify-end">
                             <div className="flex items-center gap-1.5">

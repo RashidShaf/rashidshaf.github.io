@@ -95,7 +95,7 @@ const Contact = () => {
             {socialLinks.length > 0 && (
               <div className="bg-surface rounded-xl p-4 border border-muted/10">
                 <p className="text-xs text-foreground/70 uppercase tracking-wider font-medium mb-3">
-                  {language === 'ar' ? 'تابعنا' : 'Follow Us'}
+                  {t('footer.followUs')}
                 </p>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   {socialLinks.map((s) => {

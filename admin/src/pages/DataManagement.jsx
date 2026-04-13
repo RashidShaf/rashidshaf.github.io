@@ -26,16 +26,16 @@ export default function DataManagement() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(`${type} exported`);
+      toast.success(`${type} ${t('data.exported')}`);
     } catch {
-      toast.error(`Failed to export ${type}`);
+      toast.error(`${t('data.failedExport')} ${type}`);
     }
   };
 
   const handlePreview = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.endsWith('.csv')) { toast.error('Please upload a CSV file'); return; }
+    if (!file.name.endsWith('.csv')) { toast.error(t('data.uploadCsvOnly')); return; }
 
     setImporting(true);
     setPreview(null);
@@ -49,7 +49,7 @@ export default function DataManagement() {
       });
       setPreview(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to parse file');
+      toast.error(err.response?.data?.message || t('data.failedParse'));
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -57,7 +57,7 @@ export default function DataManagement() {
   };
 
   const handleConfirm = async () => {
-    if (!password.trim()) { toast.error('Password is required'); return; }
+    if (!password.trim()) { toast.error(t('data.passwordRequired')); return; }
     if (!preview?.valid?.length) return;
 
     setConfirming(true);
@@ -71,7 +71,7 @@ export default function DataManagement() {
       setPassword('');
       toast.success(res.data.message);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Import failed');
+      toast.error(err.response?.data?.message || t('data.importFailed'));
     } finally {
       setConfirming(false);
     }
@@ -106,7 +106,7 @@ export default function DataManagement() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      toast.error('Failed to download template');
+      toast.error(t('data.failedTemplate'));
     }
   };
 
@@ -182,7 +182,7 @@ export default function DataManagement() {
               <div className="bg-green-50 border border-green-200 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <FiCheck className="w-5 h-5 text-green-600" />
-                  <h3 className="text-sm font-semibold text-green-800">{preview.valid.length} products ready to import</h3>
+                  <h3 className="text-sm font-semibold text-green-800">{preview.valid.length} {t('data.productsReady')}</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
@@ -210,7 +210,7 @@ export default function DataManagement() {
                     </tbody>
                   </table>
                   {preview.valid.length > 20 && (
-                    <p className="text-xs text-green-600 mt-2">...and {preview.valid.length - 20} more</p>
+                    <p className="text-xs text-green-600 mt-2">...{preview.valid.length - 20} {t('data.andMore')}</p>
                   )}
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function DataManagement() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <FiAlertCircle className="w-5 h-5 text-red-600" />
-                    <h3 className="text-sm font-semibold text-red-800">{preview.duplicates.length} duplicate barcodes found</h3>
+                    <h3 className="text-sm font-semibold text-red-800">{preview.duplicates.length} {t('data.duplicatesFound')}</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -249,10 +249,10 @@ export default function DataManagement() {
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
                     >
-                      Generate New Barcodes
+                      {t('data.generateBarcodes')}
                     </button>
                     <button onClick={exportDuplicates} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors">
-                      <FiDownload size={14} /> Export Duplicates
+                      <FiDownload size={14} /> {t('data.exportDuplicates')}
                     </button>
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export default function DataManagement() {
                         <th className="pb-2 pe-3">{t('books.barcode')}</th>
                         <th className="pb-2 pe-3">{t('books.titleEn')}</th>
                         <th className="pb-2 pe-3">{t('books.price')}</th>
-                        <th className="pb-2">Reason</th>
+                        <th className="pb-2">{t('data.reason')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -274,8 +274,8 @@ export default function DataManagement() {
                           <td className="py-1.5 pe-3">{d.sellingPrice}</td>
                           <td className="py-1.5 text-red-600">
                             {d.duplicateReason === 'exists'
-                              ? <span>Already exists: <strong>{d.existingProduct}</strong></span>
-                              : <span>Duplicate in file</span>
+                              ? <span>{t('data.alreadyExists')} <strong>{d.existingProduct}</strong></span>
+                              : <span>{t('data.duplicateInFile')}</span>
                             }
                           </td>
                         </tr>
@@ -291,7 +291,7 @@ export default function DataManagement() {
               <div className="bg-red-50 border border-red-200 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <FiX className="w-5 h-5 text-red-600" />
-                  <h3 className="text-sm font-semibold text-red-800">{preview.errors.length} rows with errors</h3>
+                  <h3 className="text-sm font-semibold text-red-800">{preview.errors.length} {t('data.rowsWithErrors')}</h3>
                 </div>
                 <div className="max-h-40 overflow-y-auto space-y-1">
                   {preview.errors.map((err, i) => (
@@ -309,20 +309,20 @@ export default function DataManagement() {
               <div className="bg-admin-bg border border-admin-border rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <FiLock className="w-5 h-5 text-admin-muted" />
-                  <h3 className="text-sm font-semibold text-admin-text">Confirm Import</h3>
+                  <h3 className="text-sm font-semibold text-admin-text">{t('data.confirmImport')}</h3>
                 </div>
-                <p className="text-xs text-admin-muted mb-3">Enter your admin password to confirm adding {preview.valid.length} products.</p>
+                <p className="text-xs text-admin-muted mb-3">{t('data.confirmImportDesc')} {preview.valid.length} {t('data.products').toLowerCase()}.</p>
                 <div className="flex items-center gap-3">
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Admin password"
+                    placeholder={t('data.adminPassword')}
                     className="w-64 px-3 py-2.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
                     onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
                   />
                   <button onClick={handleConfirm} disabled={confirming || !password.trim()} className="px-6 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
-                    {confirming ? t('common.loading') : `Confirm (${preview.valid.length})`}
+                    {confirming ? t('common.loading') : `${t('data.confirmBtn')} (${preview.valid.length})`}
                   </button>
                   <button onClick={() => { setPreview(null); setPassword(''); }} className="px-4 py-2.5 border border-admin-border text-admin-muted text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
                     {t('common.cancel')}
@@ -334,9 +334,9 @@ export default function DataManagement() {
             {/* No valid products */}
             {preview.valid.length === 0 && (
               <div className="text-center py-4">
-                <p className="text-sm text-admin-muted">No valid products to import.</p>
+                <p className="text-sm text-admin-muted">{t('data.noValidProducts')}</p>
                 <button onClick={() => setPreview(null)} className="mt-2 px-4 py-2 text-sm text-admin-accent hover:underline">
-                  Try another file
+                  {t('data.tryAnotherFile')}
                 </button>
               </div>
             )}
@@ -352,7 +352,7 @@ export default function DataManagement() {
               </div>
               <div>
                 <p className="text-sm 3xl:text-base font-semibold text-admin-text">{importResult.message}</p>
-                <p className="text-xs text-admin-muted">{importResult.created} of {importResult.total} products imported</p>
+                <p className="text-xs text-admin-muted">{importResult.created} / {importResult.total} {t('data.productsImported')}</p>
               </div>
             </div>
             {importResult.errors.length > 0 && (
@@ -366,7 +366,7 @@ export default function DataManagement() {
               </div>
             )}
             <button onClick={() => setImportResult(null)} className="mt-3 text-sm text-admin-accent hover:underline">
-              Import more
+              {t('data.importMore')}
             </button>
           </div>
         )}

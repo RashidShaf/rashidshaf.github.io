@@ -26,9 +26,9 @@ const Profile = () => {
     try {
       const res = await api.put('/auth/me', form);
       updateUser(res.data.user);
-      toast.success(language === 'ar' ? 'تم تحديث الملف الشخصي' : 'Profile updated');
+      toast.success(t('profile.updateSuccess'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update');
+      toast.error(err.response?.data?.message || t('profile.updateFailed'));
     } finally { setLoading(false); }
   };
 
@@ -44,7 +44,7 @@ const Profile = () => {
         <form onSubmit={handleSubmit}>
           {/* Personal Info */}
           <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
-            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{t('profile.personalInfo')}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>{t('auth.firstName')}</label>
@@ -59,7 +59,7 @@ const Profile = () => {
 
           {/* Contact */}
           <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
-            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{t('profile.contactInfo')}</h3>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>{t('auth.email')}</label>
@@ -77,7 +77,7 @@ const Profile = () => {
 
           {/* Address */}
           <div className="bg-surface rounded-2xl border border-muted/10 shadow-sm p-4 sm:p-6 lg:p-8 3xl:p-10 mb-6">
-            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{language === 'ar' ? 'العنوان' : 'Address'}</h3>
+            <h3 className="text-base 3xl:text-lg font-bold text-foreground mb-5">{t('profile.address')}</h3>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>{t('checkout.city')}</label>

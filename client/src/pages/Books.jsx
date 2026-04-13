@@ -751,7 +751,7 @@ const Books = () => {
                   <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${sectionOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {sectionOpen && (
-                  <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                  <div className="absolute top-full mt-1 start-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
                     {sectionOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -777,7 +777,7 @@ const Books = () => {
                   <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {sortOpen && (
-                  <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
+                  <div className="absolute top-full mt-1 start-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[180px] py-1">
                     {sortOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -812,7 +812,7 @@ const Books = () => {
                         <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {isOpen && (
-                        <div className="absolute top-full mt-1 left-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[200px] py-1">
+                        <div className="absolute top-full mt-1 start-0 bg-surface border border-muted/15 rounded-xl shadow-xl z-50 min-w-[200px] py-1">
                           <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                             {filterDef.items.map((item) => {
                               const isSelected = filterDef.selected.includes(item.value);

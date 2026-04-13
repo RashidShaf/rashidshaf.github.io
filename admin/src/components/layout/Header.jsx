@@ -20,17 +20,17 @@ const pageTitles = {
   '/settings': 'nav.settings',
 };
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, t) {
   const now = new Date();
   const date = new Date(dateStr);
   const seconds = Math.floor((now - date) / 1000);
-  if (seconds < 60) return 'just now';
+  if (seconds < 60) return t('header.justNow');
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes}${t('header.minutesAgo')}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}${t('header.hoursAgo')}`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return `${days}${t('header.daysAgo')}`;
   return date.toLocaleDateString();
 }
 
@@ -218,7 +218,7 @@ export default function Header({ onMenuClick }) {
                               {notif.message}
                             </p>
                             <p className="text-[10px] 3xl:text-xs text-admin-muted mt-1">
-                              {timeAgo(notif.createdAt)}
+                              {timeAgo(notif.createdAt, t)}
                             </p>
                           </div>
                         </div>

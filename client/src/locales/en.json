@@ -184,7 +184,12 @@
     "newPassword": "New Password",
     "myOrders": "My Orders",
     "myWishlist": "My Wishlist",
-    "myReadingLists": "My Reading Lists"
+    "myReadingLists": "My Reading Lists",
+    "personalInfo": "Personal Information",
+    "contactInfo": "Contact Information",
+    "address": "Address",
+    "updateSuccess": "Profile updated",
+    "updateFailed": "Failed to update"
   },
   "orders": {
     "title": "My Orders",
@@ -218,14 +223,18 @@
     "subtitle": "Enter your phone number to check your orders",
     "phone": "Phone Number",
     "submit": "Track Order",
-    "notFound": "No orders found for this phone number."
+    "notFound": "No orders found for this phone number.",
+    "orderCount_one": "order",
+    "orderCount_other": "orders",
+    "items": "items"
   },
   "footer": {
     "about": "Arkaan Bookstore is your trusted destination for books in Qatar. We offer a curated collection of Arabic and English titles spanning literature, science, children's books, and more.",
     "quickLinks": "Quick Links",
     "contact": "Contact Us",
     "rights": "All rights reserved.",
-    "address": "Doha, Qatar"
+    "address": "Doha, Qatar",
+    "followUs": "Follow Us"
   },
   "about": {
     "title": "About Arkaan",

@@ -54,7 +54,7 @@ const Footer = () => {
             </p>
             {socialLinks.length > 0 && (
               <>
-                <p className="text-xs 3xl:text-base font-semibold uppercase tracking-wider text-background/90 mb-3">{language === 'ar' ? 'تابعنا' : 'Follow Us'}</p>
+                <p className="text-xs 3xl:text-base font-semibold uppercase tracking-wider text-background/90 mb-3">{t('footer.followUs')}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {socialLinks.map((s) => {
                     let href = settings[s.key];

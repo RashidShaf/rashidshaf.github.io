@@ -106,7 +106,7 @@ const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
           disabled={submitting}
           className="px-5 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50"
         >
-          {submitting ? '...' : (isEdit ? t('common.save') : t('common.submit'))}
+          {submitting ? t('common.loading') : (isEdit ? t('common.save') : t('common.submit'))}
         </button>
         {onCancel && (
           <button

@@ -176,10 +176,10 @@ export default function OrderDetail() {
               <table className="w-full text-sm 3xl:text-base">
                 <thead className="bg-gray-50 border-b border-admin-border">
                   <tr>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.item')}</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.qty')}</th>
-                    <th className="text-left px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.subtotal')}</th>
+                    <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.item')}</th>
+                    <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('books.price')}</th>
+                    <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('common.qty')}</th>
+                    <th className="text-start px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-muted">{t('orders.subtotal')}</th>
                   </tr>
                 </thead>
                 <tbody>
