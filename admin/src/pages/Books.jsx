@@ -701,9 +701,9 @@ export default function Books() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <div className="flex items-center gap-3 3xl:gap-4">
                         <div className="w-8 h-10 3xl:w-10 3xl:h-12 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                          {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] 3xl:text-xs font-bold text-admin-muted">{book.title.charAt(0)}</div>}
+                          {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] 3xl:text-xs font-bold text-admin-muted">{(language === 'ar' && book.titleAr ? book.titleAr : book.title).charAt(0)}</div>}
                         </div>
-                        <span className="font-medium text-admin-text truncate max-w-[200px] 3xl:max-w-[300px]">{book.title}</span>
+                        <span className="font-medium text-admin-text truncate max-w-[200px] 3xl:max-w-[300px]">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs 3xl:text-sm">

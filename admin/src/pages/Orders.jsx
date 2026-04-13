@@ -18,7 +18,7 @@ const statusColors = {
 };
 
 export default function Orders() {
-  const t = useLanguageStore((s) => s.t);
+  const { t, language } = useLanguageStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
@@ -267,7 +267,7 @@ export default function Orders() {
                       }
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
-                      {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
+                      {order.items?.slice(0, 2).map((item) => language === 'ar' && item.book?.titleAr ? item.book.titleAr : (item.book?.title || item.title)).join(', ')}
                       {order.items?.length > 2 && ` +${order.items.length - 2}`}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">

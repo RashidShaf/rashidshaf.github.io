@@ -6,7 +6,7 @@ import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
 export default function Dashboard() {
-  const t = useLanguageStore((s) => s.t);
+  const { t, language } = useLanguageStore();
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [topBooks, setTopBooks] = useState([]);
@@ -110,7 +110,7 @@ export default function Dashboard() {
                 <div key={book.id} className="flex items-center gap-3 py-2 border-b border-admin-border last:border-0">
                   <span className="text-xs font-bold text-admin-muted w-5">{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm 3xl:text-base font-medium text-admin-text truncate">{book.title}</p>
+                    <p className="text-sm 3xl:text-base font-medium text-admin-text truncate">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</p>
                     <p className="text-xs 3xl:text-sm text-admin-muted">{book.author}</p>
                   </div>
                   <span className="text-sm 3xl:text-base font-semibold text-admin-text">{book.salesCount} {t('dashboard.sold')}</span>

@@ -256,7 +256,7 @@ export default function Reviews() {
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className="font-medium text-admin-text truncate max-w-[200px] block">
-                        {review.book?.title || '—'}
+                        {language === 'ar' && review.book?.titleAr ? review.book.titleAr : (review.book?.title || '—')}
                       </span>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">

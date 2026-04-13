@@ -27,8 +27,7 @@ const statusIcons = {
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const t = useLanguageStore((s) => s.t);
-  const isRTL = useLanguageStore((s) => s.isRTL);
+  const { t, language, isRTL } = useLanguageStore();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState('');
@@ -188,7 +187,7 @@ export default function OrderDetail() {
                   ) : (order.items || []).map((item, idx) => (
                     <tr key={idx} className="border-b border-admin-border last:border-0">
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
-                        <p className="font-medium text-admin-text">{item.book?.title || item.title || 'Unknown'}</p>
+                        <p className="font-medium text-admin-text">{language === 'ar' && item.book?.titleAr ? item.book.titleAr : (item.book?.title || item.title || 'Unknown')}</p>
                         {item.book?.author && <p className="text-xs text-admin-muted">{item.book.author}</p>}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">QAR {parseFloat(item.price || 0).toFixed(2)}</td>

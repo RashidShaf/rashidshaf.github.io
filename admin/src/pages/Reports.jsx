@@ -6,7 +6,7 @@ import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
 export default function Reports() {
-  const t = useLanguageStore((s) => s.t);
+  const { t, language } = useLanguageStore();
 
   const [salesFrom, setSalesFrom] = useState('');
   const [salesTo, setSalesTo] = useState('');
@@ -118,7 +118,7 @@ export default function Reports() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">{order.orderNumber}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{order.user?.firstName} {order.user?.lastName}</td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted text-xs">
-                      {order.items?.slice(0, 2).map((item) => item.book?.title || item.title).join(', ')}
+                      {order.items?.slice(0, 2).map((item) => language === 'ar' && item.book?.titleAr ? item.book.titleAr : (item.book?.title || item.title)).join(', ')}
                       {order.items?.length > 2 && ` +${order.items.length - 2}`}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {parseFloat(order.total || 0).toFixed(2)}</td>

@@ -16,7 +16,7 @@ exports.sales = async (req, res, next) => {
         select: {
           orderNumber: true, total: true, status: true, createdAt: true,
           user: { select: { firstName: true, lastName: true } },
-          items: { select: { quantity: true, title: true, book: { select: { title: true } } } },
+          items: { select: { quantity: true, title: true, book: { select: { title: true, titleAr: true } } } },
         },
       }),
       prisma.order.aggregate({
