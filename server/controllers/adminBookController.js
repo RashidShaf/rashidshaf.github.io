@@ -350,16 +350,18 @@ exports.bulkAction = async (req, res, next) => {
         break;
       }
       case 'setPublisher': {
-        if (!req.body.publisher) return res.status(400).json({ message: 'Publisher required.' });
-        const pubData = { publisher: req.body.publisher };
-        if (req.body.publisherAr !== undefined) pubData.publisherAr = req.body.publisherAr || null;
+        if (!req.body.publisher && !req.body.publisherAr) return res.status(400).json({ message: 'Publisher required.' });
+        const pubData = {};
+        if (req.body.publisher) pubData.publisher = req.body.publisher;
+        if (req.body.publisherAr) pubData.publisherAr = req.body.publisherAr;
         await prisma.book.updateMany({ where: { id: { in: ids } }, data: pubData });
         break;
       }
       case 'setAuthor': {
-        if (!req.body.author) return res.status(400).json({ message: 'Author required.' });
-        const authData = { author: req.body.author };
-        if (req.body.authorAr !== undefined) authData.authorAr = req.body.authorAr || null;
+        if (!req.body.author && !req.body.authorAr) return res.status(400).json({ message: 'Author required.' });
+        const authData = {};
+        if (req.body.author) authData.author = req.body.author;
+        if (req.body.authorAr) authData.authorAr = req.body.authorAr;
         await prisma.book.updateMany({ where: { id: { in: ids } }, data: authData });
         break;
       }

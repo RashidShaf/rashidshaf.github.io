@@ -623,7 +623,7 @@ export default function Books() {
                     ))}
                   </div>
                 </div>
-                <button disabled={!bulkPublisher.trim()} onClick={() => { handleBulkAction('setPublisher', { publisher: bulkPublisher.trim(), publisherAr: bulkPublisherAr.trim() }); setBulkPubOpen(false); setBulkPublisher(''); setBulkPublisherAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                <button disabled={!bulkPublisher.trim() && !bulkPublisherAr.trim()} onClick={() => { handleBulkAction('setPublisher', { publisher: bulkPublisher.trim(), publisherAr: bulkPublisherAr.trim() }); setBulkPubOpen(false); setBulkPublisher(''); setBulkPublisherAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
                   {t('common.apply')}
                 </button>
               </div>
@@ -656,7 +656,7 @@ export default function Books() {
                     ))}
                   </div>
                 </div>
-                <button disabled={!bulkAuthor.trim()} onClick={() => { handleBulkAction('setAuthor', { author: bulkAuthor.trim(), authorAr: bulkAuthorAr.trim() }); setBulkAuthorOpen(false); setBulkAuthor(''); setBulkAuthorAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                <button disabled={!bulkAuthor.trim() && !bulkAuthorAr.trim()} onClick={() => { handleBulkAction('setAuthor', { author: bulkAuthor.trim(), authorAr: bulkAuthorAr.trim() }); setBulkAuthorOpen(false); setBulkAuthor(''); setBulkAuthorAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
                   {t('common.apply')}
                 </button>
               </div>
