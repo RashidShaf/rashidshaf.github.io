@@ -106,7 +106,7 @@ export default function Books() {
       setBulkConfirmAction(null);
       fetchBooks();
     } catch (err) {
-      toast.error(t('common.saveFailed'));
+      toast.error(err.response?.data?.message || t('common.saveFailed'));
       setBulkConfirmAction(null);
     }
   };

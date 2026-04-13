@@ -270,14 +270,14 @@ model Order {
 model OrderItem {
   id        String     @id @default(uuid())
   orderId   String     @map("order_id")
-  bookId    String     @map("book_id")
+  bookId    String?    @map("book_id")
   quantity  Int
   price     Decimal    @db.Decimal(10, 2)
   title     String
   createdAt DateTime   @default(now()) @map("created_at")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  book  Book  @relation(fields: [bookId], references: [id])
+  book  Book?  @relation(fields: [bookId], references: [id], onDelete: SetNull)
 
   @@map("order_items")
 }

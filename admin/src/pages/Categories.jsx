@@ -479,8 +479,8 @@ export default function Categories() {
               setBulkConfirmAction(null);
               fetchCategories();
             })
-            .catch(() => {
-              toast.error(t('common.saveFailed'));
+            .catch((err) => {
+              toast.error(err.response?.data?.message || t('common.saveFailed'));
               setBulkConfirmAction(null);
             });
         }}
