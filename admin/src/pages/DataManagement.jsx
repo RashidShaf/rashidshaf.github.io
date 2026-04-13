@@ -218,31 +218,66 @@ export default function DataManagement() {
 
             {/* Duplicate Products */}
             {preview.duplicates.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <FiAlertCircle className="w-5 h-5 text-amber-600" />
-                    <h3 className="text-sm font-semibold text-amber-800">{preview.duplicates.length} duplicate barcodes found</h3>
+                    <FiAlertCircle className="w-5 h-5 text-red-600" />
+                    <h3 className="text-sm font-semibold text-red-800">{preview.duplicates.length} duplicate barcodes found</h3>
                   </div>
-                  <button onClick={exportDuplicates} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors">
-                    <FiDownload size={14} /> Export Duplicates
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const generate13 = () => {
+                          const digits = Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                          return digits;
+                        };
+                        const existingBarcodes = new Set([
+                          ...preview.valid.map((v) => v.barcode),
+                          ...preview.duplicates.map((d) => d.barcode),
+                        ]);
+                        const fixed = preview.duplicates.map((d) => {
+                          let newBarcode;
+                          do { newBarcode = generate13(); } while (existingBarcodes.has(newBarcode));
+                          existingBarcodes.add(newBarcode);
+                          return { ...d, barcode: newBarcode, duplicateReason: undefined, existingProduct: undefined };
+                        });
+                        setPreview((prev) => ({
+                          ...prev,
+                          valid: [...prev.valid, ...fixed],
+                          duplicates: [],
+                        }));
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Generate New Barcodes
+                    </button>
+                    <button onClick={exportDuplicates} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors">
+                      <FiDownload size={14} /> Export Duplicates
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-left text-amber-700">
+                      <tr className="text-left text-red-700">
                         <th className="pb-2 pe-3">{t('books.barcode')}</th>
                         <th className="pb-2 pe-3">{t('books.titleEn')}</th>
-                        <th className="pb-2">{t('books.price')}</th>
+                        <th className="pb-2 pe-3">{t('books.price')}</th>
+                        <th className="pb-2">Reason</th>
                       </tr>
                     </thead>
                     <tbody>
                       {preview.duplicates.map((d, i) => (
-                        <tr key={i} className="border-t border-amber-200">
+                        <tr key={i} className="border-t border-red-200">
                           <td className="py-1.5 pe-3 font-mono">{d.barcode}</td>
                           <td className="py-1.5 pe-3">{d.nameEn}</td>
-                          <td className="py-1.5">{d.sellingPrice}</td>
+                          <td className="py-1.5 pe-3">{d.sellingPrice}</td>
+                          <td className="py-1.5 text-red-600">
+                            {d.duplicateReason === 'exists'
+                              ? <span>Already exists: <strong>{d.existingProduct}</strong></span>
+                              : <span>Duplicate in file</span>
+                            }
+                          </td>
                         </tr>
                       ))}
                     </tbody>

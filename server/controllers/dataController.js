@@ -421,9 +421,11 @@ exports.importPreview = async (req, res, next) => {
     });
     const existingBarcodes = await prisma.book.findMany({
       where: { sku: { not: null } },
-      select: { sku: true },
+      select: { sku: true, title: true },
     });
-    const barcodeSet = new Set(existingBarcodes.map((b) => b.sku));
+    const barcodeMap = {};
+    existingBarcodes.forEach((b) => { barcodeMap[b.sku] = b.title; });
+    const barcodeSet = new Set(Object.keys(barcodeMap));
 
     const valid = [];
     const duplicates = [];
@@ -476,10 +478,22 @@ exports.importPreview = async (req, res, next) => {
 
       // Check for duplicate barcode
       if (barcodeSet.has(product.barcode)) {
+        // Exists in database
+        product.duplicateReason = 'exists';
+        product.existingProduct = barcodeMap[product.barcode];
         duplicates.push(product);
       } else {
-        // Also check within the file itself for duplicate barcodes
-        if (valid.some((v) => v.barcode === product.barcode) || duplicates.some((d) => d.barcode === product.barcode)) {
+        // Check within the file itself for duplicate barcodes
+        const existingInValid = valid.findIndex((v) => v.barcode === product.barcode);
+        if (existingInValid !== -1) {
+          // Move the first one from valid to duplicates too
+          const first = valid.splice(existingInValid, 1)[0];
+          first.duplicateReason = 'file';
+          product.duplicateReason = 'file';
+          duplicates.push(first);
+          duplicates.push(product);
+        } else if (duplicates.some((d) => d.barcode === product.barcode)) {
+          product.duplicateReason = 'file';
           duplicates.push(product);
         } else {
           valid.push(product);

@@ -124,7 +124,10 @@ exports.getById = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const data = req.body;
-    data.slug = generateSlug(data.title);
+    let slug = generateSlug(data.title);
+    const existingSlug = await prisma.book.findFirst({ where: { slug } });
+    if (existingSlug) slug = `${slug}-${Date.now()}`;
+    data.slug = slug;
     data.price = data.price ? parseFloat(data.price) : 0;
     if (!data.author) data.author = 'Unknown';
     data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
@@ -178,7 +181,12 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const data = req.body;
-    if (data.title) data.slug = generateSlug(data.title);
+    if (data.title) {
+      let slug = generateSlug(data.title);
+      const existingSlug = await prisma.book.findFirst({ where: { slug, id: { not: req.params.id } } });
+      if (existingSlug) slug = `${slug}-${Date.now()}`;
+      data.slug = slug;
+    }
     if (data.price !== undefined) data.price = data.price ? parseFloat(data.price) : 0;
     data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     if (data.stock !== undefined) data.stock = data.stock ? parseInt(data.stock) : 0;
