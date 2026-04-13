@@ -309,7 +309,7 @@ const Books = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, pagination, currentPage, search, category, bookLang, section, sort, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter]);
+  }, [loadingMore, pagination, currentPage, search, category, bookLang, section, sort, authorFilter, publisherFilter, brandFilter, colorFilter, materialFilter, customFieldParams]);
 
   // Infinite scroll — trigger loadMore when near bottom
   const loadTriggerRef = useRef(null);

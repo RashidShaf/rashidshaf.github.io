@@ -120,12 +120,18 @@ exports.list = async (req, res, next) => {
     }
 
     // Custom field filters (cf_fieldkey=value1,value2)
+    // Match exact key+value pairs in JSON like: "fieldkey":{"value":"Red"}
     Object.keys(req.query).filter((k) => k.startsWith('cf_')).forEach((k) => {
       const values = req.query[k].split(',').map((v) => v.trim()).filter(Boolean);
       if (values.length > 0) {
         const cfKey = k.slice(3); // remove "cf_" prefix
         where.AND.push({
-          OR: values.map((v) => ({ customFields: { contains: v } })),
+          OR: values.map((v) => ({
+            OR: [
+              { customFields: { contains: `"${cfKey}":{"value":"${v}"` } },
+              { customFields: { contains: `"${cfKey}":{"valueAr":"${v}"` } },
+            ],
+          })),
         });
       }
     });
