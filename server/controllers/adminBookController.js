@@ -349,6 +349,20 @@ exports.bulkAction = async (req, res, next) => {
         }
         break;
       }
+      case 'setPublisher': {
+        if (!req.body.publisher) return res.status(400).json({ message: 'Publisher required.' });
+        const pubData = { publisher: req.body.publisher };
+        if (req.body.publisherAr !== undefined) pubData.publisherAr = req.body.publisherAr || null;
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: pubData });
+        break;
+      }
+      case 'setAuthor': {
+        if (!req.body.author) return res.status(400).json({ message: 'Author required.' });
+        const authData = { author: req.body.author };
+        if (req.body.authorAr !== undefined) authData.authorAr = req.body.authorAr || null;
+        await prisma.book.updateMany({ where: { id: { in: ids } }, data: authData });
+        break;
+      }
       default:
         return res.status(400).json({ message: 'Invalid action.' });
     }

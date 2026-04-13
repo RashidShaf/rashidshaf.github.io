@@ -35,12 +35,32 @@ export default function Books() {
   const [bulkSelectedCats, setBulkSelectedCats] = useState([]);
   const [bulkSectionOpen, setBulkSectionOpen] = useState(false);
   const [bulkSections, setBulkSections] = useState({});
+  const [bulkPubOpen, setBulkPubOpen] = useState(false);
+  const [bulkPublisher, setBulkPublisher] = useState('');
+  const [bulkPublisherAr, setBulkPublisherAr] = useState('');
+  const [bulkAuthorOpen, setBulkAuthorOpen] = useState(false);
+  const [bulkAuthor, setBulkAuthor] = useState('');
+  const [bulkAuthorAr, setBulkAuthorAr] = useState('');
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const all = res.data.data || res.data;
       setAllCategories(all);
       setCategories(all.filter((c) => !c.parentId));
+    }).catch(() => {});
+  }, []);
+
+  const [suggestedPublishers, setSuggestedPublishers] = useState([]);
+  const [suggestedPublishersAr, setSuggestedPublishersAr] = useState([]);
+  const [suggestedAuthors, setSuggestedAuthors] = useState([]);
+  const [suggestedAuthorsAr, setSuggestedAuthorsAr] = useState([]);
+
+  useEffect(() => {
+    api.get('/books/filters').then((res) => {
+      setSuggestedPublishers((res.data.publishers || []).map((p) => typeof p === 'string' ? p : p.value));
+      setSuggestedPublishersAr((res.data.publishers || []).map((p) => typeof p === 'string' ? null : p.valueAr).filter(Boolean));
+      setSuggestedAuthors((res.data.authors || []).map((a) => typeof a === 'string' ? a : a.value));
+      setSuggestedAuthorsAr((res.data.authors || []).map((a) => typeof a === 'string' ? null : a.valueAr).filter(Boolean));
     }).catch(() => {});
   }, []);
 
@@ -76,7 +96,6 @@ export default function Books() {
       const res = await api.get(`/admin/books?${params}`);
       setBooks(res.data.data);
       setPagination(res.data.pagination);
-      setSelectedIds([]);
     } catch (err) {
       // silently handle error
     } finally {
@@ -102,7 +121,7 @@ export default function Books() {
     try {
       await api.post('/admin/books/bulk-action', { ids: selectedIds, action, ...extra });
       toast.success(t('common.bulkSuccess'));
-      setSelectedIds([]);
+      if (action === 'delete') setSelectedIds([]);
       setBulkConfirmAction(null);
       fetchBooks();
     } catch (err) {
@@ -136,6 +155,7 @@ export default function Books() {
     setSelectedSub('');
     setSelectedL3('');
     setSelectedL4('');
+    setSelectedIds([]);
     setImageFilter('');
     setDescFilter('');
     setIssueFilter('');
@@ -437,11 +457,11 @@ export default function Books() {
           <span className="text-sm 3xl:text-lg font-medium text-admin-accent">{selectedIds.length} {t('common.selected')}</span>
           <div className="flex-1" />
           <button onClick={() => setBulkConfirmAction('delete')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">{t('common.bulkDelete')}</button>
-          <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">{t('common.bulkActivate')}</button>
-          <button onClick={() => handleBulkAction('deactivate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">{t('common.bulkDeactivate')}</button>
+          <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors">{t('common.bulkActivate')}</button>
+          <button onClick={() => handleBulkAction('deactivate')} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-muted hover:bg-gray-50 transition-colors">{t('common.bulkDeactivate')}</button>
           {/* Move to Category dropdown */}
           <div className="relative">
-            <button onClick={() => { setBulkCatOpen(!bulkCatOpen); setBulkSectionOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors whitespace-nowrap">
+            <button onClick={() => { setBulkCatOpen(!bulkCatOpen); setBulkSectionOpen(false); setBulkPubOpen(false); setBulkAuthorOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors whitespace-nowrap">
               {t('books.moveCategory')}
             </button>
             {bulkCatOpen && (() => {
@@ -528,7 +548,7 @@ export default function Books() {
           </div>
           {/* Set Section dropdown */}
           <div className="relative">
-            <button onClick={() => { setBulkSectionOpen(!bulkSectionOpen); setBulkCatOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors whitespace-nowrap">
+            <button onClick={() => { setBulkSectionOpen(!bulkSectionOpen); setBulkCatOpen(false); setBulkPubOpen(false); setBulkAuthorOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors whitespace-nowrap">
               {t('books.setSection')}
             </button>
             {bulkSectionOpen && (
@@ -551,7 +571,73 @@ export default function Books() {
               </div>
             )}
           </div>
-          <button onClick={() => setSelectedIds([])} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
+          {/* Set Publisher dropdown */}
+          <div className="relative">
+            <button onClick={() => { setBulkPubOpen(!bulkPubOpen); setBulkAuthorOpen(false); setBulkCatOpen(false); setBulkSectionOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors whitespace-nowrap">
+              {t('books.publisher')}
+            </button>
+            {bulkPubOpen && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
+                {/* EN input */}
+                <div className="relative">
+                  <input type="text" value={bulkPublisher} onChange={(e) => setBulkPublisher(e.target.value)} placeholder={t('books.publisherEn')} className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" autoFocus />
+                  {/* EN dropdown — between EN and AR inputs */}
+                  <div className="hidden peer-focus:block mt-1 bg-white border border-admin-border rounded-lg shadow-lg max-h-36 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                    {suggestedPublishers.filter(p => !bulkPublisher || p.toLowerCase().includes(bulkPublisher.toLowerCase())).map((p) => (
+                      <button key={p} onMouseDown={(e) => e.preventDefault()} onClick={() => { setBulkPublisher(p); document.activeElement?.blur(); }} className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${bulkPublisher === p ? 'bg-admin-accent/10 text-admin-accent font-medium' : 'text-admin-text hover:bg-gray-50'}`}>{p}</button>
+                    ))}
+                  </div>
+                </div>
+                {/* AR input */}
+                <div className="relative mt-2">
+                  <input type="text" value={bulkPublisherAr} onChange={(e) => setBulkPublisherAr(e.target.value)} placeholder={t('books.publisherAr')} dir="rtl" className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" />
+                  {/* AR dropdown — under AR input, shows Arabic names */}
+                  <div className="hidden peer-focus:block mt-1 bg-white border border-admin-border rounded-lg shadow-lg max-h-36 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                    {suggestedPublishersAr.filter(p => !bulkPublisherAr || p.includes(bulkPublisherAr)).map((p) => (
+                      <button key={p} onMouseDown={(e) => e.preventDefault()} onClick={() => { setBulkPublisherAr(p); document.activeElement?.blur(); }} className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${bulkPublisherAr === p ? 'bg-admin-accent/10 text-admin-accent font-medium' : 'text-admin-text hover:bg-gray-50'}`} dir="rtl">{p}</button>
+                    ))}
+                  </div>
+                </div>
+                <button disabled={!bulkPublisher.trim()} onClick={() => { handleBulkAction('setPublisher', { publisher: bulkPublisher.trim(), publisherAr: bulkPublisherAr.trim() }); setBulkPubOpen(false); setBulkPublisher(''); setBulkPublisherAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                  {t('common.apply')}
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Set Author dropdown */}
+          <div className="relative">
+            <button onClick={() => { setBulkAuthorOpen(!bulkAuthorOpen); setBulkPubOpen(false); setBulkCatOpen(false); setBulkSectionOpen(false); }} className="px-3 py-1.5 3xl:px-6 3xl:py-2.5 text-xs 3xl:text-base font-medium rounded-lg border border-admin-border text-admin-text hover:bg-gray-50 transition-colors whitespace-nowrap">
+              {t('books.author')}
+            </button>
+            {bulkAuthorOpen && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] 3xl:w-[340px] p-3">
+                {/* EN input */}
+                <div className="relative">
+                  <input type="text" value={bulkAuthor} onChange={(e) => setBulkAuthor(e.target.value)} placeholder={t('books.authorEn')} className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" autoFocus />
+                  {/* EN dropdown — between EN and AR inputs */}
+                  <div className="hidden peer-focus:block mt-1 bg-white border border-admin-border rounded-lg shadow-lg max-h-36 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                    {suggestedAuthors.filter(a => !bulkAuthor || a.toLowerCase().includes(bulkAuthor.toLowerCase())).map((a) => (
+                      <button key={a} onMouseDown={(e) => e.preventDefault()} onClick={() => { setBulkAuthor(a); document.activeElement?.blur(); }} className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${bulkAuthor === a ? 'bg-admin-accent/10 text-admin-accent font-medium' : 'text-admin-text hover:bg-gray-50'}`}>{a}</button>
+                    ))}
+                  </div>
+                </div>
+                {/* AR input */}
+                <div className="relative mt-2">
+                  <input type="text" value={bulkAuthorAr} onChange={(e) => setBulkAuthorAr(e.target.value)} placeholder={t('books.authorAr')} dir="rtl" className="w-full px-3 py-1.5 text-sm border border-admin-input-border rounded-lg focus:outline-none focus:border-admin-accent peer" />
+                  {/* AR dropdown — under AR input, shows Arabic names */}
+                  <div className="hidden peer-focus:block mt-1 bg-white border border-admin-border rounded-lg shadow-lg max-h-36 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                    {suggestedAuthorsAr.filter(a => !bulkAuthorAr || a.includes(bulkAuthorAr)).map((a) => (
+                      <button key={a} onMouseDown={(e) => e.preventDefault()} onClick={() => { setBulkAuthorAr(a); document.activeElement?.blur(); }} className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${bulkAuthorAr === a ? 'bg-admin-accent/10 text-admin-accent font-medium' : 'text-admin-text hover:bg-gray-50'}`} dir="rtl">{a}</button>
+                    ))}
+                  </div>
+                </div>
+                <button disabled={!bulkAuthor.trim()} onClick={() => { handleBulkAction('setAuthor', { author: bulkAuthor.trim(), authorAr: bulkAuthorAr.trim() }); setBulkAuthorOpen(false); setBulkAuthor(''); setBulkAuthorAr(''); }} className="w-full mt-2 px-4 py-1.5 text-sm bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                  {t('common.apply')}
+                </button>
+              </div>
+            )}
+          </div>
+          <button onClick={() => { setSelectedIds([]); setBulkCatOpen(false); setBulkSectionOpen(false); setBulkPubOpen(false); setBulkAuthorOpen(false); setBulkConfirmAction(null); }} className="text-sm 3xl:text-base text-admin-muted hover:text-admin-text">&#10005;</button>
         </div>
       )}
 
