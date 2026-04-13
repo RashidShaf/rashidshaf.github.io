@@ -512,7 +512,13 @@ export default function Books() {
                   )}
                   <div className="p-2 border-t border-admin-border flex items-center justify-between">
                     <span className="text-xs 3xl:text-sm text-admin-muted">{bulkSelectedCats.length} {t('common.selected')}</span>
-                    <button disabled={bulkSelectedCats.length === 0} onClick={() => { handleBulkAction('moveCategory', { categoryId: bulkSelectedCats[0], additionalCategoryIds: bulkSelectedCats.slice(1) }); setBulkCatOpen(false); setBulkSelectedCats([]); setBulkSelectedL1(''); setBulkCatSearch(''); }} className="px-4 py-1.5 3xl:px-5 3xl:py-2 text-sm 3xl:text-base bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                    <button disabled={bulkSelectedCats.length === 0} onClick={() => {
+                      // Sort by depth — deepest category becomes primary
+                      const getDepth = (id) => { let d = 0; let c = allCategories.find(x => x.id === id); while (c?.parentId) { d++; c = allCategories.find(x => x.id === c.parentId); } return d; };
+                      const sorted = [...bulkSelectedCats].sort((a, b) => getDepth(b) - getDepth(a));
+                      handleBulkAction('moveCategory', { categoryId: sorted[0], additionalCategoryIds: sorted.slice(1) });
+                      setBulkCatOpen(false); setBulkSelectedCats([]); setBulkSelectedL1('');
+                    }} className="px-4 py-1.5 3xl:px-5 3xl:py-2 text-sm 3xl:text-base bg-admin-accent text-white rounded-lg hover:bg-blue-600 disabled:opacity-50">
                       {t('common.apply')}
                     </button>
                   </div>

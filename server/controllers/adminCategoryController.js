@@ -8,18 +8,18 @@ exports.list = async (req, res, next) => {
     const categories = await prisma.category.findMany({
       orderBy: { displayOrder: 'asc' },
       include: {
-        _count: { select: { books: true, children: true } },
+        _count: { select: { books: true, children: true, bookCategories: true } },
         children: {
           orderBy: { displayOrder: 'asc' },
           include: {
-            _count: { select: { books: true, children: true } },
+            _count: { select: { books: true, children: true, bookCategories: true } },
             children: {
               orderBy: { displayOrder: 'asc' },
               include: {
-                _count: { select: { books: true, children: true } },
+                _count: { select: { books: true, children: true, bookCategories: true } },
                 children: {
                   orderBy: { displayOrder: 'asc' },
-                  include: { _count: { select: { books: true } } },
+                  include: { _count: { select: { books: true, bookCategories: true } } },
                 },
               },
             },

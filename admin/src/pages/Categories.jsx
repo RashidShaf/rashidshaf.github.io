@@ -201,9 +201,10 @@ export default function Categories() {
   const activeCategories = categories.filter((c) => c.isActive !== false).length;
   const isTopLevel = selectedParent === 'top';
 
+  const getBookCount = (cat) => (cat._count?.books || 0) + (cat._count?.bookCategories || 0);
   const getTotalItems = (cat) => {
-    const direct = cat._count?.books || 0;
-    const childrenBooks = (cat.children || []).reduce((sum, child) => sum + (child._count?.books || 0), 0);
+    const direct = getBookCount(cat);
+    const childrenBooks = (cat.children || []).reduce((sum, child) => sum + getBookCount(child), 0);
     return direct + childrenBooks;
   };
 
@@ -397,7 +398,7 @@ export default function Categories() {
                         <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted font-medium">{rowCat._count?.children || 0}</td>
                       )}
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
-                        {!rowCat.parentId ? getTotalItems(rowCat) : (rowCat._count?.books ?? 0)}
+                        {!rowCat.parentId ? getTotalItems(rowCat) : getBookCount(rowCat)}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                         {(isBooks && !isChild) ? (
