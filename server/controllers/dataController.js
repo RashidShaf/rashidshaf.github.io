@@ -423,6 +423,53 @@ exports.importTemplate = async (req, res, next) => {
   }
 };
 
+exports.importTemplateAll = async (req, res, next) => {
+  try {
+    const sections = [
+      {
+        name: 'Book Corner',
+        columns: ['barcode', 'nameEn', 'nameAr', 'Description Ar', 'Description EN', 'Author AR', 'Author EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
+      },
+      {
+        name: 'Stationery Corner',
+        columns: ['barcode', 'nameEn', 'nameAr', 'Description Ar', 'Description EN', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'],
+      },
+      {
+        name: 'Islamic Corner',
+        columns: ['barcode', 'nameEn', 'nameAr', 'Description Ar', 'Description EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
+      },
+    ];
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Product Template');
+
+    let currentRow = 1;
+    for (const section of sections) {
+      const headerCell = sheet.getCell(currentRow, 1);
+      headerCell.value = section.name;
+      headerCell.font = { bold: true, size: 14 };
+      currentRow += 3;
+
+      section.columns.forEach((col, i) => {
+        const cell = sheet.getCell(currentRow, i + 1);
+        cell.value = col;
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8E8E8' } };
+      });
+      currentRow += 13;
+    }
+
+    sheet.columns.forEach((col) => { col.width = 18; });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Product-Template.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Preview import — parse CSV, validate, detect duplicates (does NOT create anything)
 exports.importPreview = async (req, res, next) => {
   try {

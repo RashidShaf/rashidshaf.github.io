@@ -120,6 +120,22 @@ export default function DataManagement() {
     }
   };
 
+  const downloadFullTemplate = async () => {
+    try {
+      const res = await api.get('/admin/data/import/template-all', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Product-Template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error(t('data.failedTemplate'));
+    }
+  };
+
   const exportItems = [
     { type: 'products', label: t('data.products'), icon: FiFileText, color: 'bg-blue-600', hasExcel: true },
     { type: 'customers', label: t('data.customers'), icon: FiUsers, color: 'bg-emerald-600' },
@@ -177,7 +193,10 @@ export default function DataManagement() {
               ))}
             </select>
             <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
-              <FiDownload size={16} /> {t('data.downloadTemplate')}
+              <FiDownload size={16} /> CSV
+            </button>
+            <button onClick={downloadFullTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-green-600 text-white text-sm 3xl:text-base font-medium rounded-xl hover:bg-green-700 transition-colors whitespace-nowrap">
+              <FiDownload size={16} /> Excel
             </button>
           </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
