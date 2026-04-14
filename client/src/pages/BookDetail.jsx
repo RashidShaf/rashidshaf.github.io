@@ -253,12 +253,13 @@ const BookDetail = () => {
               )}
             </div>
 
-            {/* Quantity + Wishlist */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-5">
+            {/* Quantity + Wishlist + Buttons */}
+            <div className="inline-flex flex-col gap-5 sm:gap-6 mt-5 sm:mt-6">
+            <div className="flex items-center">
               <div className="flex items-center border border-muted/20 rounded-lg">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-7 h-7 sm:w-8 sm:h-8 3xl:w-10 3xl:h-10 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-xs sm:text-sm">-</button>
-                <span className="w-8 h-7 sm:w-10 sm:h-8 3xl:w-12 3xl:h-10 flex items-center justify-center text-xs sm:text-sm 3xl:text-base font-medium text-foreground border-x border-muted/20">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-7 h-7 sm:w-8 sm:h-8 3xl:w-10 3xl:h-10 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-xs sm:text-sm">+</button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 sm:w-12 sm:h-11 3xl:w-16 3xl:h-14 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-sm sm:text-base 3xl:text-lg">-</button>
+                <span className="w-14 h-10 sm:w-16 sm:h-11 3xl:w-20 3xl:h-14 flex items-center justify-center text-sm sm:text-base 3xl:text-lg font-medium text-foreground border-x border-muted/20">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 sm:w-12 sm:h-11 3xl:w-16 3xl:h-14 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-sm sm:text-base 3xl:text-lg">+</button>
               </div>
 
               <motion.button
@@ -267,7 +268,7 @@ const BookDetail = () => {
                   toggleWishlist(book.id);
                   toast.success(inWishlist ? t('book.removedFromWishlistToast') : t('book.addedToWishlistToast'));
                 }}
-                className={`w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all ${
+                className={`ms-auto me-6 sm:me-10 w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all ${
                   inWishlist
                     ? 'border-red-500 bg-red-500 text-white'
                     : 'border-gray-300 text-gray-400 hover:border-red-500 hover:text-red-500'
@@ -278,7 +279,7 @@ const BookDetail = () => {
             </div>
 
             {/* Add to Cart + Buy Now */}
-            <div className="flex items-center gap-2 mt-4 sm:mt-5">
+            <div className="flex items-center gap-2">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
@@ -315,6 +316,7 @@ const BookDetail = () => {
                 {t('books.outOfStock')}
               </p>
             )}
+            </div>
             </div>
 
             {/* Product Details — mobile only */}
