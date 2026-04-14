@@ -193,10 +193,7 @@ export default function DataManagement() {
               ))}
             </select>
             <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
-              <FiDownload size={16} /> CSV
-            </button>
-            <button onClick={downloadFullTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-green-600 text-white text-sm 3xl:text-base font-medium rounded-xl hover:bg-green-700 transition-colors whitespace-nowrap">
-              <FiDownload size={16} /> Excel
+              <FiDownload size={16} /> {t('data.downloadTemplate')}
             </button>
           </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">

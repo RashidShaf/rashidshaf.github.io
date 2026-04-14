@@ -402,14 +402,6 @@ exports.importTemplate = async (req, res, next) => {
     if (hasField('author')) { headers.push('authorEn', 'authorAr'); sample.authorEn = ''; sample.authorAr = ''; }
     if (hasField('publisher')) { headers.push('publisherEn', 'publisherAr'); sample.publisherEn = ''; sample.publisherAr = ''; }
     if (hasField('language')) { headers.push('language'); sample.language = ''; }
-    if (hasField('brand')) { headers.push('brand', 'brandAr'); sample.brand = ''; sample.brandAr = ''; }
-    if (hasField('color')) { headers.push('color', 'colorAr'); sample.color = ''; sample.colorAr = ''; }
-    if (hasField('material')) { headers.push('material', 'materialAr'); sample.material = ''; sample.materialAr = ''; }
-    if (hasField('dimensions')) { headers.push('dimensions'); sample.dimensions = ''; }
-    if (hasField('ageRange')) { headers.push('ageRange'); sample.ageRange = ''; }
-
-    // Custom fields
-    customDefs.forEach((cf) => { headers.push(`cf_${cf.key}`); sample[`cf_${cf.key}`] = ''; });
 
     headers.push('purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory');
     sample.purchasePrice = '30.00'; sample.sellingPrice = '49.99'; sample.mainCategory = ''; sample.subCategory = ''; sample.subSubCategory = '';
@@ -641,7 +633,7 @@ exports.importConfirm = async (req, res, next) => {
             descriptionAr: product.descriptionAr || null,
             publisher: product.publisherEn || null,
             publisherAr: product.publisherAr || null,
-            language: product.language || null,
+            language: product.language || 'en',
             brand: product.brand || null,
             brandAr: product.brandAr || null,
             color: product.color || null,
