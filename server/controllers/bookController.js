@@ -164,7 +164,9 @@ exports.list = async (req, res, next) => {
         skip,
         take: limit,
         include: {
-          category: { select: { id: true, name: true, nameAr: true, slug: true } },
+          category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true,
+            parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } },
+          } },
         },
       }),
       prisma.book.count({ where }),
@@ -183,10 +185,10 @@ exports.getBySlug = async (req, res, next) => {
       include: {
         category: {
           select: {
-            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true, customFields: true,
-            parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true,
-              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true,
-                parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true } },
+            id: true, name: true, nameAr: true, slug: true, isActive: true, parentId: true, detailFields: true, customFields: true, placeholderImage: true,
+            parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true, placeholderImage: true,
+              parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, parentId: true, placeholderImage: true,
+                parent: { select: { id: true, name: true, nameAr: true, slug: true, detailFields: true, customFields: true, placeholderImage: true } },
               } },
             } },
           },
@@ -251,7 +253,7 @@ exports.featured = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
     });
     res.json(books);
   } catch (error) { next(error); }
@@ -268,7 +270,7 @@ exports.newArrivals = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
     });
     res.json(books);
   } catch (error) { next(error); }
@@ -285,7 +287,7 @@ exports.bestsellers = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
     });
     res.json(books);
   } catch (error) {
@@ -304,7 +306,7 @@ exports.trending = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
     });
     res.json(books);
   } catch (error) { next(error); }
@@ -321,7 +323,7 @@ exports.comingSoon = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
     });
     res.json(books);
   } catch (error) { next(error); }
@@ -345,7 +347,7 @@ exports.recommendations = async (req, res, next) => {
       orderBy: [{ isOutOfStock: 'asc' }, { averageRating: 'desc' }],
       take: 6,
       include: {
-        category: { select: { id: true, name: true, nameAr: true, slug: true } },
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
       },
     });
 

@@ -17,7 +17,14 @@ const BookCard = ({ book, comingSoon = false }) => {
   const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
   const inWishlist = wishlistItems.includes(book.id);
 
-  const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
+  const coverUrl = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
+  const placeholderUrl = (() => {
+    if (coverUrl) return null;
+    const cat = book.category;
+    const ph = cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage;
+    return ph ? `${API_BASE}/${ph}` : null;
+  })();
   const isOutOfStock = !comingSoon && book.isOutOfStock;
 
   return (
@@ -32,6 +39,12 @@ const BookCard = ({ book, comingSoon = false }) => {
         {coverUrl ? (
           <img
             src={coverUrl}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : placeholderUrl ? (
+          <img
+            src={placeholderUrl}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

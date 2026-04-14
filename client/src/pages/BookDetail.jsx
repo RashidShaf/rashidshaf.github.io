@@ -110,7 +110,14 @@ const BookDetail = () => {
   const parentCatName = parentCat ? (language === 'ar' && parentCat.nameAr ? parentCat.nameAr : parentCat.name) : null;
   const inWishlist = wishlistItems.includes(book.id);
 
-  const coverUrl = book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}` : null;
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
+  const coverUrl = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
+  const placeholderUrl = (() => {
+    if (coverUrl) return null;
+    const cat = book.category;
+    const ph = cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage;
+    return ph ? `${API_BASE}/${ph}` : null;
+  })();
 
   const hasDiscount = book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price);
   const discountPercent = hasDiscount
@@ -175,6 +182,8 @@ const BookDetail = () => {
               <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
               {(selectedImage || coverUrl) ? (
                 <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
+              ) : placeholderUrl ? (
+                <img src={placeholderUrl} alt={title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                   <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>

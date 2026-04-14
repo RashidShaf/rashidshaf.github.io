@@ -18,6 +18,8 @@ router.put('/:categoryId/filters/reorder', [auth, admin], adminCategoryFilterCon
 router.put('/filters/:id', [auth, admin], adminCategoryFilterController.update);
 router.delete('/filters/:id', [auth, admin], adminCategoryFilterController.remove);
 
+router.put('/:id/placeholder', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.uploadPlaceholder);
+router.delete('/:id/placeholder', [auth, admin], adminCategoryController.removePlaceholder);
 router.put('/:id', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.update);
 router.delete('/:id', [auth, admin], adminCategoryController.remove);
 

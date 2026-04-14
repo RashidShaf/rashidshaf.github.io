@@ -168,3 +168,36 @@ exports.bulkAction = async (req, res, next) => {
     res.json({ message: 'Bulk action completed.', count: ids.length });
   } catch (error) { next(error); }
 };
+
+exports.uploadPlaceholder = async (req, res, next) => {
+  try {
+    const category = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!category) return res.status(404).json({ message: 'Category not found.' });
+    if (!req.file) return res.status(400).json({ message: 'Image is required.' });
+
+    // Delete old placeholder if exists
+    if (category.placeholderImage) {
+      const oldPath = path.join(__dirname, '..', category.placeholderImage);
+      fs.unlink(oldPath, () => {});
+    }
+
+    const placeholderImage = `uploads/categories/${req.file.filename}`;
+    const updated = await prisma.category.update({ where: { id: req.params.id }, data: { placeholderImage } });
+    res.json(updated);
+  } catch (error) { next(error); }
+};
+
+exports.removePlaceholder = async (req, res, next) => {
+  try {
+    const category = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!category) return res.status(404).json({ message: 'Category not found.' });
+
+    if (category.placeholderImage) {
+      const filePath = path.join(__dirname, '..', category.placeholderImage);
+      fs.unlink(filePath, () => {});
+    }
+
+    await prisma.category.update({ where: { id: req.params.id }, data: { placeholderImage: null } });
+    res.json({ message: 'Placeholder removed.' });
+  } catch (error) { next(error); }
+};

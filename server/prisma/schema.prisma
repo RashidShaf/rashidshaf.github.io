@@ -81,8 +81,9 @@ model Category {
   slug          String    @unique
   description   String?
   descriptionAr String?   @map("description_ar")
-  image         String?
-  parentId      String?   @map("parent_id")
+  image            String?
+  placeholderImage String?   @map("placeholder_image")
+  parentId         String?   @map("parent_id")
   detailFields  String?   @map("detail_fields") @db.Text
   customFields  String?   @map("custom_fields") @db.Text
   displayOrder  Int       @default(0) @map("display_order")

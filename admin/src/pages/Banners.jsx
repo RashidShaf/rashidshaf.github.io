@@ -23,8 +23,10 @@ const LOGO_POSITIONS = [
 ];
 
 export default function Banners() {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [banners, setBanners] = useState([]);
+  const [placeholderUploading, setPlaceholderUploading] = useState(null);
+  const placeholderRefs = useRef({});
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -535,6 +537,60 @@ export default function Banners() {
           </div>
         </div>
       )}
+
+      {/* Category Placeholder Images */}
+      <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm mt-6 3xl:mt-8">
+        <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">{language === 'ar' ? 'صور المنتجات الافتراضية' : 'Category Placeholder Images'}</h2>
+        <p className="text-xs 3xl:text-sm text-admin-muted mb-5">{language === 'ar' ? 'صورة تظهر للمنتجات التي لا تحتوي على صورة غلاف في كل قسم' : 'Fallback image shown for products without a cover image in each category'}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 3xl:gap-5">
+          {categories.map((cat) => (
+            <div key={cat.id} className="bg-admin-bg border border-admin-border rounded-xl overflow-hidden">
+              <div className="relative aspect-[4/5] bg-gray-100 flex items-center justify-center group">
+                {cat.placeholderImage ? (
+                  <>
+                    <img src={`${API_BASE}/${cat.placeholderImage}`} alt={cat.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button onClick={() => placeholderRefs.current[cat.id]?.click()} className="p-2 bg-white rounded-lg text-admin-text hover:bg-gray-100 transition-colors">
+                        <FiEdit2 size={16} />
+                      </button>
+                      <button onClick={async () => { try { await api.delete(`/admin/categories/${cat.id}/placeholder`); setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, placeholderImage: null } : c)); toast.success(language === 'ar' ? 'تم الحذف' : 'Removed'); } catch { toast.error(t('common.saveFailed')); } }} className="p-2 bg-white rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button onClick={() => placeholderRefs.current[cat.id]?.click()} disabled={placeholderUploading === cat.id} className="flex flex-col items-center justify-center gap-2 text-admin-muted hover:text-admin-accent transition-colors w-full h-full">
+                    <FiUpload size={24} />
+                    <span className="text-xs font-medium">{placeholderUploading === cat.id ? t('common.loading') : t('common.clickToUpload')}</span>
+                  </button>
+                )}
+                <input
+                  ref={(el) => { placeholderRefs.current[cat.id] = el; }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setPlaceholderUploading(cat.id);
+                    try {
+                      const fd = new FormData();
+                      fd.append('image', file);
+                      const res = await api.put(`/admin/categories/${cat.id}/placeholder`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                      setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, placeholderImage: res.data.placeholderImage } : c));
+                      toast.success(language === 'ar' ? 'تم الرفع' : 'Uploaded');
+                    } catch { toast.error(t('common.saveFailed')); }
+                    finally { setPlaceholderUploading(null); if (e.target) e.target.value = ''; }
+                  }}
+                />
+              </div>
+              <div className="px-3 py-2.5 text-center">
+                <p className="text-sm 3xl:text-base font-medium text-admin-text">{language === 'ar' && cat.nameAr ? cat.nameAr : cat.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <ConfirmModal
         open={!!deleteId}
