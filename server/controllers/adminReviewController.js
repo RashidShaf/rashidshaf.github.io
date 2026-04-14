@@ -15,6 +15,7 @@ exports.list = async (req, res, next) => {
         { book: { titleAr: { contains: search, mode: 'insensitive' } } },
         { user: { firstName: { contains: search, mode: 'insensitive' } } },
         { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { guestName: { contains: search, mode: 'insensitive' } },
       ];
     }
     if (isVisible !== undefined) {

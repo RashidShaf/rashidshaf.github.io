@@ -260,7 +260,7 @@ export default function Reviews() {
                       </span>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
-                      {review.user?.firstName} {review.user?.lastName}
+                      {review.user ? `${review.user.firstName} ${review.user.lastName || ''}` : (review.guestName || t('common.guest'))}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       {renderStars(review.rating)}
