@@ -334,15 +334,20 @@ exports.recommendations = async (req, res, next) => {
     const book = await prisma.book.findUnique({ where: { id: req.params.id } });
     if (!book) return res.status(404).json({ message: 'Book not found.' });
 
+    const orConditions = [];
+    if (book.categoryId) orConditions.push({ categoryId: book.categoryId });
+    if (book.author && book.author.trim()) orConditions.push({ author: book.author });
+    if (book.publisher && book.publisher.trim()) orConditions.push({ publisher: book.publisher });
+    if (book.brand && book.brand.trim()) orConditions.push({ brand: book.brand });
+    if (book.tags && book.tags.length > 0) orConditions.push({ tags: { hasSome: book.tags } });
+    // Also match products sharing additional categories
+    if (book.categoryId) orConditions.push({ bookCategories: { some: { categoryId: book.categoryId } } });
+
     const books = await prisma.book.findMany({
       where: {
         isActive: true,
         id: { not: book.id },
-        OR: [
-          { categoryId: book.categoryId },
-          { author: book.author },
-          { tags: { hasSome: book.tags } },
-        ],
+        ...(orConditions.length > 0 ? { OR: orConditions } : {}),
       },
       orderBy: [{ isOutOfStock: 'asc' }, { averageRating: 'desc' }],
       take: 6,
