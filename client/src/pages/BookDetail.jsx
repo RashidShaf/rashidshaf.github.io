@@ -196,7 +196,7 @@ const BookDetail = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
-            className="flex-1 min-w-0 lg:max-w-md 3xl:max-w-lg"
+            className="flex-1 min-w-0 lg:max-w-md 3xl:max-w-lg lg:h-[460px] 3xl:h-[600px] lg:flex lg:flex-col"
           >
             {/* Category */}
             {(parentCatName || catName) && (
@@ -223,8 +223,8 @@ const BookDetail = () => {
             {/* Author */}
             {author && author !== 'Unknown' && author.trim() !== '' && <p className="text-sm sm:text-lg 3xl:text-2xl text-foreground/60 mt-1 sm:mt-2">{author}</p>}
 
-            {/* Rating — clickable to open reviews */}
-            <button onClick={() => setReviewModalOpen(true)} className="flex items-center gap-2 mt-3 sm:mt-5 3xl:mt-6 cursor-pointer hover:opacity-80 transition-opacity">
+            {/* Rating — mobile only, desktop shows in right column */}
+            <button onClick={() => setReviewModalOpen(true)} className="flex lg:hidden items-center gap-2 mt-3 sm:mt-5 cursor-pointer hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <FiStar
@@ -243,8 +243,10 @@ const BookDetail = () => {
               <span className="text-sm text-foreground/50 underline underline-offset-2">({book.reviewCount} {t('book.reviews')})</span>
             </button>
 
+            {/* Price + Quantity + Buttons — pushed to bottom on desktop */}
+            <div className="lg:mt-auto">
             {/* Price */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-7 3xl:mt-8">
+            <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-7 lg:mt-0">
               <span className="text-2xl sm:text-3xl 3xl:text-5xl font-bold text-foreground">{formatPrice(book.price)}</span>
               {hasDiscount && (
                 <span className="text-sm sm:text-lg text-foreground/40 line-through">{formatPrice(book.compareAtPrice)}</span>
@@ -252,7 +254,7 @@ const BookDetail = () => {
             </div>
 
             {/* Quantity + Wishlist */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 3xl:mt-8">
+            <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-5">
               <div className="flex items-center border border-muted/20 rounded-lg">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-7 h-7 sm:w-8 sm:h-8 3xl:w-10 3xl:h-10 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-l-lg rtl:rounded-l-none rtl:rounded-r-lg text-xs sm:text-sm">-</button>
                 <span className="w-8 h-7 sm:w-10 sm:h-8 3xl:w-12 3xl:h-10 flex items-center justify-center text-xs sm:text-sm 3xl:text-base font-medium text-foreground border-x border-muted/20">{quantity}</span>
@@ -276,7 +278,7 @@ const BookDetail = () => {
             </div>
 
             {/* Add to Cart + Buy Now */}
-            <div className="flex items-center gap-2 mt-5 sm:mt-6 3xl:mt-8">
+            <div className="flex items-center gap-2 mt-4 sm:mt-5">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
@@ -313,6 +315,7 @@ const BookDetail = () => {
                 {t('books.outOfStock')}
               </p>
             )}
+            </div>
 
             {/* Product Details — mobile only */}
             {(() => {
@@ -416,20 +419,31 @@ const BookDetail = () => {
             if (items.length === 0) return null;
 
             return (
-              <div className="hidden lg:block flex-1 min-w-[300px] max-w-[520px] 3xl:max-w-[520px] h-fit">
-                <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-4">{t('book.details')}</h3>
-                <div className="grid grid-cols-2 gap-2.5 3xl:gap-3">
+              <div className="hidden lg:block flex-1 min-w-[300px] h-fit xl:ms-4 2xl:ms-8 3xl:ms-12">
+                <div className="flex items-center justify-between mb-4 max-w-[520px]">
+                  <h3 className="text-base 3xl:text-xl font-semibold text-foreground">{t('book.details')}</h3>
+                  <button onClick={() => setReviewModalOpen(true)} className="flex items-center gap-1.5 3xl:gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <FiStar key={i} size={14} className={`3xl:w-[18px] 3xl:h-[18px] ${i < Math.round(parseFloat(book.averageRating)) ? 'text-yellow-500 fill-yellow-500' : 'text-muted/30'}`} />
+                      ))}
+                    </div>
+                    <span className="text-sm 3xl:text-base font-medium text-foreground">{parseFloat(book.averageRating).toFixed(1)}</span>
+                    <span className="text-sm 3xl:text-base text-foreground/50">({book.reviewCount} {t('book.reviews')})</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 3xl:gap-4 max-w-[520px] 3xl:max-w-[620px]">
                   {items.map((item, i) => (
-                    <div key={i} className="bg-surface-alt/60 border border-muted/8 rounded-lg px-3 py-2.5 3xl:px-4 3xl:py-3">
-                      <p className="text-[10px] 3xl:text-xs text-foreground/40 uppercase tracking-wider">{item.label}</p>
-                      <p className="text-sm 3xl:text-base text-foreground font-medium mt-1 truncate">{item.value}</p>
+                    <div key={i} className="bg-surface-alt/60 border border-muted/8 rounded-lg px-3 py-2.5 3xl:px-5 3xl:py-4">
+                      <p className="text-[10px] 3xl:text-sm text-foreground/40 uppercase tracking-wider">{item.label}</p>
+                      <p className="text-sm 3xl:text-lg text-foreground font-medium mt-1 truncate">{item.value}</p>
                     </div>
                   ))}
                 </div>
                 {description && (
-                  <div className="mt-5 pt-4 border-t border-muted/10 2xl:w-[550px] 3xl:w-[min(1600px,calc(100vw-1180px))]">
-                    <h3 className="text-base 3xl:text-lg font-semibold text-foreground mb-2">{t('book.description')}</h3>
-                    <p className="text-foreground/70 text-sm 3xl:text-base leading-relaxed whitespace-pre-line break-words text-justify">{description}</p>
+                  <div className="mt-5 pt-4 border-t border-muted/10">
+                    <h3 className="text-base 3xl:text-xl font-semibold text-foreground mb-2 3xl:mb-3">{t('book.description')}</h3>
+                    <p className="text-foreground/70 text-sm 3xl:text-lg leading-relaxed 3xl:leading-relaxed whitespace-pre-line break-words text-justify">{description}</p>
                   </div>
                 )}
               </div>
