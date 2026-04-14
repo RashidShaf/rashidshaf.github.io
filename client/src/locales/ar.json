@@ -87,7 +87,8 @@
     "color": "اللون",
     "material": "المادة",
     "dimensions": "الأبعاد",
-    "ageRange": "الفئة العمرية"
+    "ageRange": "الفئة العمرية",
+    "barcode": "الباركود"
   },
   "book": {
     "description": "الوصف",

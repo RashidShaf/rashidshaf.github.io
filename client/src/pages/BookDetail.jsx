@@ -339,6 +339,7 @@ const BookDetail = () => {
                 show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
                 show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
                 show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
+                book.sku && { label: t('books.barcode'), value: book.sku },
                 show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
                 show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
                 show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
@@ -402,6 +403,7 @@ const BookDetail = () => {
               show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
               show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
               show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
+              book.sku && { label: t('books.barcode'), value: book.sku },
               show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
               show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
               show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
@@ -443,8 +445,8 @@ const BookDetail = () => {
                     <span className="text-sm 3xl:text-base text-foreground/50">({book.reviewCount} {t('book.reviews')})</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5 3xl:gap-4 max-w-[520px] 3xl:max-w-[620px]">
-                  {items.map((item, i) => (
+                <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-6 gap-2.5 3xl:gap-4">
+                  {items.slice(0, 18).map((item, i) => (
                     <div key={i} className="bg-surface-alt/60 border border-muted/8 rounded-lg px-3 py-2.5 3xl:px-5 3xl:py-4">
                       <p className="text-[10px] 3xl:text-sm text-foreground/40 uppercase tracking-wider">{item.label}</p>
                       <p className="text-sm 3xl:text-lg text-foreground font-medium mt-1 truncate">{item.value}</p>

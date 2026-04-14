@@ -87,7 +87,8 @@
     "color": "Color",
     "material": "Material",
     "dimensions": "Dimensions",
-    "ageRange": "Age Range"
+    "ageRange": "Age Range",
+    "barcode": "Barcode"
   },
   "book": {
     "description": "Description",
