@@ -378,20 +378,43 @@ exports.importProducts = async (req, res, next) => {
 // Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
-    const headers = ['barcode', 'nameEn', 'nameAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'];
+    const headers = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'];
+    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', descriptionEn: '', descriptionAr: '' };
 
-    const sample = [{
-      barcode: '978316148410',
-      nameEn: 'Sample Product',
-      nameAr: 'منتج تجريبي',
-      purchasePrice: '30.00',
-      sellingPrice: '49.99',
-      mainCategory: 'Books corner',
-      subCategory: 'Fiction',
-      subSubCategory: '',
-    }];
+    // If category provided, add category-specific columns
+    let detailArr = null;
+    let customDefs = [];
+    if (req.query.category) {
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
+      if (category?.detailFields) {
+        try {
+          const parsed = JSON.parse(category.detailFields);
+          detailArr = Array.isArray(parsed) ? parsed : parsed.detail || null;
+        } catch {}
+      }
+      if (category?.customFields) {
+        try { customDefs = JSON.parse(category.customFields); } catch {}
+      }
+    }
 
-    const csv = stringify(sample, { header: true, columns: headers });
+    const hasField = (key) => !detailArr || detailArr.includes(key);
+
+    if (hasField('author')) { headers.push('authorEn', 'authorAr'); sample.authorEn = ''; sample.authorAr = ''; }
+    if (hasField('publisher')) { headers.push('publisherEn', 'publisherAr'); sample.publisherEn = ''; sample.publisherAr = ''; }
+    if (hasField('language')) { headers.push('language'); sample.language = ''; }
+    if (hasField('brand')) { headers.push('brand', 'brandAr'); sample.brand = ''; sample.brandAr = ''; }
+    if (hasField('color')) { headers.push('color', 'colorAr'); sample.color = ''; sample.colorAr = ''; }
+    if (hasField('material')) { headers.push('material', 'materialAr'); sample.material = ''; sample.materialAr = ''; }
+    if (hasField('dimensions')) { headers.push('dimensions'); sample.dimensions = ''; }
+    if (hasField('ageRange')) { headers.push('ageRange'); sample.ageRange = ''; }
+
+    // Custom fields
+    customDefs.forEach((cf) => { headers.push(`cf_${cf.key}`); sample[`cf_${cf.key}`] = ''; });
+
+    headers.push('purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory');
+    sample.purchasePrice = '30.00'; sample.sellingPrice = '49.99'; sample.mainCategory = ''; sample.subCategory = ''; sample.subSubCategory = '';
+
+    const csv = stringify([sample], { header: true, columns: headers });
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=product-import-template.csv');
     res.send(csv);
@@ -463,11 +486,34 @@ exports.importPreview = async (req, res, next) => {
         }
       }
 
+      // Build custom fields from cf_ columns
+      const customFields = {};
+      Object.keys(row).filter((k) => k.startsWith('cf_')).forEach((k) => {
+        const val = row[k]?.trim();
+        if (val) customFields[k.slice(3)] = { value: val };
+      });
+
       const product = {
         row: rowNum,
         barcode: row.barcode.trim(),
         nameEn: row.nameEn.trim(),
         nameAr: row.nameAr?.trim() || '',
+        descriptionEn: row.descriptionEn?.trim() || row['Description EN']?.trim() || '',
+        descriptionAr: row.descriptionAr?.trim() || row['Description Ar']?.trim() || '',
+        authorEn: row.authorEn?.trim() || row['Author EN']?.trim() || '',
+        authorAr: row.authorAr?.trim() || row['Author AR']?.trim() || '',
+        publisherEn: row.publisherEn?.trim() || row['Publisher (English)']?.trim() || '',
+        publisherAr: row.publisherAr?.trim() || row['Publisher AR']?.trim() || '',
+        language: row.language?.trim() || '',
+        brand: row.brand?.trim() || '',
+        brandAr: row.brandAr?.trim() || '',
+        color: row.color?.trim() || '',
+        colorAr: row.colorAr?.trim() || '',
+        material: row.material?.trim() || '',
+        materialAr: row.materialAr?.trim() || '',
+        dimensions: row.dimensions?.trim() || '',
+        ageRange: row.ageRange?.trim() || '',
+        customFields: Object.keys(customFields).length > 0 ? JSON.stringify(customFields) : null,
         purchasePrice: row.purchasePrice ? parseFloat(row.purchasePrice) : null,
         sellingPrice: parseFloat(row.sellingPrice),
         mainCategory: row.mainCategory?.trim() || '',
@@ -542,7 +588,22 @@ exports.importConfirm = async (req, res, next) => {
             title: product.nameEn,
             titleAr: product.nameAr || null,
             slug,
-            author: '',
+            author: product.authorEn || '',
+            authorAr: product.authorAr || null,
+            description: product.descriptionEn || null,
+            descriptionAr: product.descriptionAr || null,
+            publisher: product.publisherEn || null,
+            publisherAr: product.publisherAr || null,
+            language: product.language || null,
+            brand: product.brand || null,
+            brandAr: product.brandAr || null,
+            color: product.color || null,
+            colorAr: product.colorAr || null,
+            material: product.material || null,
+            materialAr: product.materialAr || null,
+            dimensions: product.dimensions || null,
+            ageRange: product.ageRange || null,
+            customFields: product.customFields || null,
             sku: product.barcode || null,
             price: product.sellingPrice,
             purchasePrice: product.purchasePrice || null,

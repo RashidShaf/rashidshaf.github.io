@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -6,13 +6,22 @@ import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
 export default function DataManagement() {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [preview, setPreview] = useState(null);
   const [password, setPassword] = useState('');
   const [importResult, setImportResult] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [templateCategory, setTemplateCategory] = useState('');
+
+  useEffect(() => {
+    api.get('/admin/categories').then((res) => {
+      const all = res.data.data || res.data;
+      setCategories(all.filter((c) => !c.parentId));
+    }).catch(() => {});
+  }, []);
 
   const exportData = async (type, format = 'csv') => {
     try {
@@ -96,7 +105,8 @@ export default function DataManagement() {
 
   const downloadTemplate = async () => {
     try {
-      const res = await api.get('/admin/data/import/template', { responseType: 'blob' });
+      const params = templateCategory ? `?category=${templateCategory}` : '';
+      const res = await api.get(`/admin/data/import/template${params}`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -155,9 +165,21 @@ export default function DataManagement() {
         <p className="text-xs 3xl:text-sm text-admin-muted mb-5">{t('data.importDesc')}</p>
 
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-5">
-          <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors">
-            <FiDownload size={16} /> {t('data.downloadTemplate')}
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={templateCategory}
+              onChange={(e) => setTemplateCategory(e.target.value)}
+              className="px-3 py-2.5 3xl:px-4 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base rounded-xl focus:outline-none focus:border-admin-accent cursor-pointer"
+            >
+              <option value="">{t('common.all')}</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{language === 'ar' && cat.nameAr ? cat.nameAr : cat.name}</option>
+              ))}
+            </select>
+            <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
+              <FiDownload size={16} /> {t('data.downloadTemplate')}
+            </button>
+          </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
             <p>{t('data.step1')}</p>
             <p>{t('data.step2')}</p>
