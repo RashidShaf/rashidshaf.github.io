@@ -116,9 +116,9 @@ const BookCard = ({ book, comingSoon = false }) => {
 
         {/* Rating — top right */}
         {!comingSoon && (
-          <span className="absolute top-2 right-2 rtl:right-auto rtl:left-2 flex items-center gap-1 px-2 py-1 3xl:px-2.5 3xl:py-1.5 bg-black/50 backdrop-blur-sm rounded-md">
-            <FiStar className="w-3.5 h-3.5 3xl:w-5 3xl:h-5 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs 3xl:text-base font-semibold text-white">{parseFloat(book.averageRating).toFixed(1)}</span>
+          <span className="absolute top-2 right-2 rtl:right-auto rtl:left-2 flex items-center gap-0.5 px-1.5 py-0.5 3xl:px-2 3xl:py-1 bg-black/50 backdrop-blur-sm rounded-md">
+            <FiStar className="w-3 h-3 3xl:w-4 3xl:h-4 text-yellow-500 fill-yellow-500" />
+            <span className="text-[10px] 3xl:text-sm font-semibold text-white">{parseFloat(book.averageRating).toFixed(1)}</span>
           </span>
         )}
       </Link>
