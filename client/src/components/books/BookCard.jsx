@@ -113,35 +113,33 @@ const BookCard = ({ book, comingSoon = false }) => {
             </span>
           )
         )}
-
-        {/* Rating — top right */}
-        {!comingSoon && (
-          <span className="absolute top-2 right-2 rtl:right-auto rtl:left-2 flex items-center gap-1 px-2 py-1 3xl:px-2.5 3xl:py-1.5 bg-black/50 backdrop-blur-sm rounded-md">
-            <FiStar className="w-3.5 h-3.5 3xl:w-5 3xl:h-5 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs 3xl:text-base font-semibold text-white">{parseFloat(book.averageRating).toFixed(1)}</span>
-          </span>
-        )}
       </Link>
 
       {/* Info */}
       <div className="px-3 py-3 3xl:px-4 3xl:py-4">
         <Link to={comingSoon ? '#' : `/books/${book.slug}`} className="block">
-          <h3 className="text-[13px] sm:text-[15px] 3xl:text-xl font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
+          <h3 className="text-[13px] sm:text-[15px] 3xl:text-lg font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">
             {title}
           </h3>
-          {author && author !== 'Unknown' && author.trim() !== '' && <p className="text-[11px] sm:text-[13px] 3xl:text-lg text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>}
+          {author && author !== 'Unknown' && author.trim() !== '' && <p className="text-[11px] sm:text-[13px] 3xl:text-base text-foreground/60 mt-0.5 sm:mt-1 line-clamp-1">{author}</p>}
 
           {!comingSoon && (
-            <div className="mt-1.5 sm:mt-2 3xl:mt-3">
+            <div className="mt-1.5 sm:mt-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm 3xl:text-xl font-bold text-foreground">
+                <span className="text-xs sm:text-sm 3xl:text-lg font-bold text-foreground">
                   {formatPrice(book.price)}
                 </span>
                 {book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price) && (
-                  <span className="text-[10px] sm:text-[11px] 3xl:text-sm text-foreground/60 line-through">
+                  <span className="text-[10px] sm:text-[11px] text-foreground/60 line-through">
                     {formatPrice(book.compareAtPrice)}
                   </span>
                 )}
+              </div>
+              <div className="flex items-center gap-0.5 mt-1">
+                <FiStar className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                <span className="text-[11px] font-medium text-foreground">
+                  {parseFloat(book.averageRating).toFixed(1)}
+                </span>
               </div>
             </div>
           )}
