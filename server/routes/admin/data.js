@@ -19,7 +19,6 @@ router.post('/import/products', [auth, admin], upload.single('file'), dataContro
 router.post('/import/preview', [auth, admin], upload.single('file'), dataController.importPreview);
 router.post('/import/confirm', [auth, admin], dataController.importConfirm);
 router.get('/import/template', [auth, admin], dataController.importTemplate);
-router.get('/import/template-all', [auth, admin], dataController.importTemplateAll);
 
 
 module.exports = router;
