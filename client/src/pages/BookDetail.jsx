@@ -225,7 +225,7 @@ const BookDetail = () => {
             )}
 
             {/* Title */}
-            <h1 className="text-xl sm:text-3xl lg:text-4xl 3xl:text-6xl font-display font-bold text-foreground mt-2 leading-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl 3xl:text-5xl font-display font-bold text-foreground mt-3 sm:mt-4 leading-tight">
               {title}
             </h1>
 
