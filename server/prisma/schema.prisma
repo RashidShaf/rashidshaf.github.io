@@ -197,20 +197,20 @@ model BookCategory {
 
 model Review {
   id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  userId    String?  @map("user_id")
   bookId    String   @map("book_id")
   rating    Int
   title     String?
   comment   String?  @db.Text
+  guestName String?  @map("guest_name")
   isVerified Boolean @default(false) @map("is_verified")
   isVisible Boolean  @default(true) @map("is_visible")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, bookId])
   @@index([bookId])
   @@map("reviews")
 }

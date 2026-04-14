@@ -25,31 +25,39 @@ exports.listByBook = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const { rating, title, comment } = req.body;
+    const { rating, title, comment, guestName } = req.body;
     const bookId = req.params.bookId;
+    const isGuest = !req.user;
 
-    const existing = await prisma.review.findUnique({
-      where: { userId_bookId: { userId: req.user.id, bookId } },
-    });
-    if (existing) {
-      return res.status(409).json({ message: 'You have already reviewed this book.' });
+    // Duplicate check for logged-in users
+    if (!isGuest) {
+      const existing = await prisma.review.findFirst({
+        where: { userId: req.user.id, bookId },
+      });
+      if (existing) {
+        return res.status(409).json({ message: 'You have already reviewed this book.' });
+      }
     }
 
-    // Check if user purchased this book
-    const purchased = await prisma.orderItem.findFirst({
-      where: {
-        bookId,
-        order: { userId: req.user.id, status: { in: ['DELIVERED', 'CONFIRMED', 'PROCESSING', 'SHIPPED'] } },
-      },
-    });
+    // Check if user purchased this book (only for logged-in users)
+    let purchased = false;
+    if (!isGuest) {
+      purchased = await prisma.orderItem.findFirst({
+        where: {
+          bookId,
+          order: { userId: req.user.id, status: { in: ['DELIVERED', 'CONFIRMED', 'PROCESSING', 'SHIPPED'] } },
+        },
+      });
+    }
 
     const review = await prisma.review.create({
       data: {
-        userId: req.user.id,
+        userId: isGuest ? null : req.user.id,
         bookId,
         rating: Math.min(5, Math.max(1, rating)),
         title,
         comment,
+        guestName: isGuest ? (guestName?.trim() || 'Guest') : null,
         isVerified: !!purchased,
       },
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
@@ -74,10 +82,11 @@ exports.create = async (req, res, next) => {
     try {
       const { createNotification } = require('./notificationController');
       const book = await prisma.book.findUnique({ where: { id: bookId }, select: { title: true } });
+      const reviewerName = isGuest ? (guestName || 'Guest') : review.user?.firstName;
       await createNotification({
         type: 'NEW_REVIEW',
         title: 'New Review',
-        message: `${review.user.firstName} rated "${book?.title}" ${rating}/5`,
+        message: `${reviewerName} rated "${book?.title}" ${rating}/5`,
         metadata: { bookId, reviewId: review.id },
       });
     } catch {}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { FiStar } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../../stores/useLanguageStore';
@@ -43,11 +42,12 @@ const StarSelector = ({ rating, hovered, onHover, onLeave, onSelect }) => (
   </div>
 );
 
-const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
+const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel, isGuest }) => {
   const { t } = useLanguageStore();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [comment, setComment] = useState(existingReview?.comment || '');
+  const [guestName, setGuestName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const isEdit = !!existingReview;
@@ -65,7 +65,9 @@ const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
         await api.put(`/reviews/${existingReview.id}`, { rating, comment });
         toast.success(t('book.reviewUpdated'));
       } else {
-        await api.post(`/reviews/books/${bookId}`, { rating, comment });
+        const data = { rating, comment };
+        if (isGuest) data.guestName = guestName.trim();
+        await api.post(`/reviews/books/${bookId}`, data);
         toast.success(t('book.reviewSubmitted'));
       }
       onSuccess();
@@ -81,6 +83,16 @@ const ReviewForm = ({ bookId, existingReview, onSuccess, onCancel }) => {
       <h4 className="text-base font-semibold text-foreground">
         {isEdit ? t('book.editReview') : t('book.writeReview')}
       </h4>
+
+      {isGuest && (
+        <input
+          type="text"
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+          className="w-full bg-surface-alt border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-accent"
+          placeholder={t('contact.name')}
+        />
+      )}
 
       <div>
         <StarSelector
@@ -127,7 +139,7 @@ const ReviewCard = ({ review, isOwn, onEdit, onDelete }) => {
 
   const userName = review.user
     ? `${review.user.firstName} ${review.user.lastName ? review.user.lastName.charAt(0) + '.' : ''}`
-    : 'Anonymous';
+    : (review.guestName || 'Guest');
 
   const dateStr = language === 'ar'
     ? formatDateAr(review.createdAt)
@@ -275,12 +287,12 @@ const ReviewSection = ({ bookId, book, onReviewChange }) => {
           </div>
         ) : null
       ) : (
-        <div className="mb-6 bg-surface border border-muted/10 rounded-xl p-3 sm:p-5 text-center">
-          <p className="text-sm text-foreground/60">
-            <Link to="/login" className="text-accent hover:text-accent-light transition-colors font-medium">
-              {t('book.loginToReview')}
-            </Link>
-          </p>
+        <div className="mb-6">
+          <ReviewForm
+            bookId={bookId}
+            onSuccess={handleReviewSuccess}
+            isGuest={true}
+          />
         </div>
       )}
 
