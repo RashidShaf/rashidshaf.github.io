@@ -105,6 +105,10 @@ exports.bulkAction = async (req, res, next) => {
     const { ids, action } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ message: 'No items selected.' });
 
+    // Get affected bookIds before action (for stats recalculation)
+    const affectedReviews = await prisma.review.findMany({ where: { id: { in: ids } }, select: { bookId: true } });
+    const affectedBookIds = [...new Set(affectedReviews.map((r) => r.bookId))];
+
     switch (action) {
       case 'delete':
         await prisma.review.deleteMany({ where: { id: { in: ids } } });
@@ -118,6 +122,20 @@ exports.bulkAction = async (req, res, next) => {
       default:
         return res.status(400).json({ message: 'Invalid action.' });
     }
+
+    // Recalculate stats for all affected books
+    await Promise.all(affectedBookIds.map(async (bookId) => {
+      const stats = await prisma.review.aggregate({
+        where: { bookId, isVisible: true },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+      await prisma.book.update({
+        where: { id: bookId },
+        data: { averageRating: stats._avg.rating || 0, reviewCount: stats._count.rating || 0 },
+      });
+    }));
+
     res.json({ message: 'Bulk action completed.', count: ids.length });
   } catch (error) { next(error); }
 };
