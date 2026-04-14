@@ -229,8 +229,18 @@ const ReviewSection = ({ bookId, book, onReviewChange }) => {
     ? reviews.find((r) => r.user?.id === user.id)
     : null;
 
+  const hasGuestReviewed = !user && (() => {
+    try { return (JSON.parse(localStorage.getItem('guestReviews') || '[]')).includes(bookId); } catch { return false; }
+  })();
+
   const handleReviewSuccess = () => {
     setEditingReview(null);
+    if (!user) {
+      try {
+        const reviewed = JSON.parse(localStorage.getItem('guestReviews') || '[]');
+        if (!reviewed.includes(bookId)) { reviewed.push(bookId); localStorage.setItem('guestReviews', JSON.stringify(reviewed)); }
+      } catch {}
+    }
     fetchReviews(1);
     onReviewChange?.();
   };
@@ -286,6 +296,10 @@ const ReviewSection = ({ bookId, book, onReviewChange }) => {
             />
           </div>
         ) : null
+      ) : hasGuestReviewed ? (
+        <div className="mb-6 bg-surface border border-muted/10 rounded-xl p-3 sm:p-5 text-center">
+          <p className="text-sm text-foreground/60">{t('book.reviewSubmitted')}</p>
+        </div>
       ) : (
         <div className="mb-6">
           <ReviewForm
