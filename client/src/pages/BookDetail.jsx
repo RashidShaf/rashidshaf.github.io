@@ -431,7 +431,7 @@ const BookDetail = () => {
 
             return (
               <div className="hidden lg:block flex-1 min-w-[300px] h-fit xl:ms-4 2xl:ms-8 3xl:ms-12">
-                <div className="flex items-center justify-between mb-4 max-w-[520px]">
+                <div className="flex items-center justify-between mb-4 max-w-[460px] 3xl:max-w-[540px]">
                   <h3 className="text-base 3xl:text-xl font-semibold text-foreground">{t('book.details')}</h3>
                   <button onClick={() => setReviewModalOpen(true)} className="flex items-center gap-1.5 3xl:gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                     <div className="flex items-center gap-0.5">
@@ -452,7 +452,7 @@ const BookDetail = () => {
                   ))}
                 </div>
                 {description && (
-                  <div className="mt-5 pt-4 border-t border-muted/10">
+                  <div className="mt-5 pt-4 border-t border-black">
                     <h3 className="text-base 3xl:text-xl font-semibold text-foreground mb-2 3xl:mb-3">{t('book.description')}</h3>
                     <p className="text-foreground/70 text-sm 3xl:text-lg leading-relaxed 3xl:leading-relaxed whitespace-pre-line break-words text-justify">{description}</p>
                   </div>
