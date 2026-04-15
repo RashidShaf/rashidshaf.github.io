@@ -15,6 +15,7 @@ exports.sales = async (req, res, next) => {
         where, orderBy: { createdAt: 'desc' },
         select: {
           orderNumber: true, total: true, status: true, createdAt: true,
+          shippingPhone: true, shippingName: true,
           user: { select: { firstName: true, lastName: true } },
           items: { select: { quantity: true, title: true, book: { select: { title: true, titleAr: true } } } },
         },
@@ -70,15 +71,16 @@ exports.salesExport = async (req, res, next) => {
       return str;
     };
 
-    const header = 'Order Number,Customer,Email,Items,Total (QAR),Status,Date';
+    const header = 'Order Number,Customer,Phone,Email,Items,Total (QAR),Status,Date';
     const rows = orders.map((o) => {
-      const customer = `${o.user.firstName} ${o.user.lastName}`;
+      const customer = o.user ? `${o.user.firstName} ${o.user.lastName}` : (o.shippingName || 'Guest');
       const itemCount = o.items.reduce((sum, i) => sum + i.quantity, 0);
       const date = new Date(o.createdAt).toISOString().split('T')[0];
       return [
         escapeCsv(o.orderNumber),
         escapeCsv(customer),
-        escapeCsv(o.user.email),
+        escapeCsv(o.shippingPhone || ''),
+        escapeCsv(o.user?.email || ''),
         itemCount,
         parseFloat(o.total).toFixed(2),
         o.status,

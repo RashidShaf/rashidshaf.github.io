@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../utils/api';
+import useCartStore from './useCartStore';
+import useWishlistStore from './useWishlistStore';
 
 const useAuthStore = create(
   persist(
@@ -42,6 +44,11 @@ const useAuthStore = create(
           // ignore
         }
         set({ user: null, accessToken: null, refreshToken: null });
+        // Clear other user-specific stores to prevent data leaking to next user
+        useCartStore.setState({ items: [], paymentMethod: 'COD' });
+        useWishlistStore.setState({ items: [], books: [] });
+        localStorage.removeItem('cart-storage');
+        localStorage.removeItem('wishlist-storage');
       },
 
       fetchUser: async () => {

@@ -100,7 +100,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const review = await prisma.review.findUnique({ where: { id: req.params.id } });
-    if (!review || review.userId !== req.user.id) {
+    if (!review || !review.userId || review.userId !== req.user.id) {
       return res.status(404).json({ message: 'Review not found.' });
     }
 
@@ -130,7 +130,7 @@ exports.update = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const review = await prisma.review.findUnique({ where: { id: req.params.id } });
-    if (!review || review.userId !== req.user.id) {
+    if (!review || !review.userId || review.userId !== req.user.id) {
       return res.status(404).json({ message: 'Review not found.' });
     }
 

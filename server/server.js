@@ -91,6 +91,20 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Arkaan Bookstore API running on port ${PORT}`);
+
+  // Clean up expired refresh tokens on startup and every 24h
+  const prisma = require('./config/database');
+  const cleanExpiredTokens = async () => {
+    try {
+      const { count } = await prisma.refreshToken.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
+      if (count > 0) console.log(`Cleaned ${count} expired refresh tokens`);
+    } catch {}
+  };
+  cleanExpiredTokens();
+  const cleanupInterval = setInterval(cleanExpiredTokens, 24 * 60 * 60 * 1000);
+  cleanupInterval.unref();
 });
 
 module.exports = app;

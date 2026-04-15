@@ -57,10 +57,14 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // If already refreshing, queue this request
+      // If already refreshing, queue this request with a timeout
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          refreshQueue.push({ resolve, reject });
+          const timer = setTimeout(() => reject(new Error('Token refresh timeout')), 10000);
+          refreshQueue.push({
+            resolve: (val) => { clearTimeout(timer); resolve(val); },
+            reject: (err) => { clearTimeout(timer); reject(err); },
+          });
         }).then((token) => {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return api(originalRequest);

@@ -263,10 +263,24 @@ exports.remove = async (req, res, next) => {
 exports.uploadCover = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+
+    // Fetch current book to get old cover path
+    const existingBook = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      select: { coverImage: true },
+    });
+
     const coverImage = `uploads/covers/${req.file.filename}`;
     const book = await prisma.book.update({
       where: { id: req.params.id }, data: { coverImage },
     });
+
+    // Delete old cover file if it exists
+    if (existingBook?.coverImage) {
+      const oldPath = path.join(__dirname, '..', existingBook.coverImage);
+      fs.unlink(oldPath, () => {});
+    }
+
     res.json({ coverImage: book.coverImage });
   } catch (error) {
     next(error);
