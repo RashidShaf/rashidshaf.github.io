@@ -93,7 +93,9 @@ export default function Inventory() {
   }, [page, limit, selectedTab, selectedSub]);
 
   // Debounced URL sync for search + server fetch
+  const firstSearchRun = useRef(true);
   useEffect(() => {
+    if (firstSearchRun.current) { firstSearchRun.current = false; return; }
     const timer = setTimeout(() => {
       setPage(1);
       fetchInventory();

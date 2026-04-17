@@ -110,7 +110,9 @@ export default function Orders() {
   useEffect(() => { fetchOrders(); }, [page, limit, statusFilter, customerFilter]);
 
   // Live search with debounce
+  const firstSearchRun = useRef(true);
   useEffect(() => {
+    if (firstSearchRun.current) { firstSearchRun.current = false; return; }
     const timer = setTimeout(() => {
       setPage(1);
       fetchOrders();

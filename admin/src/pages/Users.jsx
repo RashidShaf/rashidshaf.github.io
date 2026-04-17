@@ -63,7 +63,9 @@ export default function Users() {
   useEffect(() => { fetchUsers(); }, [page, limit]);
 
   // Live search with debounce
+  const firstSearchRun = useRef(true);
   useEffect(() => {
+    if (firstSearchRun.current) { firstSearchRun.current = false; return; }
     const timer = setTimeout(() => {
       setPage(1);
       fetchUsers();

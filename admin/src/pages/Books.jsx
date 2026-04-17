@@ -185,7 +185,9 @@ export default function Books() {
 
   useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter]);
 
+  const firstSearchRun = useRef(true);
   useEffect(() => {
+    if (firstSearchRun.current) { firstSearchRun.current = false; return; }
     const timer = setTimeout(() => {
       setPage(1);
       fetchBooks();

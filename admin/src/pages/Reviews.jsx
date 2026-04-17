@@ -60,7 +60,9 @@ export default function Reviews() {
 
   useEffect(() => { fetchReviews(); }, [page, limit, visibilityFilter]);
 
+  const firstSearchRun = useRef(true);
   useEffect(() => {
+    if (firstSearchRun.current) { firstSearchRun.current = false; return; }
     const timer = setTimeout(() => {
       setPage(1);
       fetchReviews();
