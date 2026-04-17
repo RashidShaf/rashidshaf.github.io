@@ -1,29 +1,34 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 
+const buildReviewsWhere = (query) => {
+  const { search, isVisible, rating } = query;
+  const where = {};
+  if (search) {
+    where.OR = [
+      { comment: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search, mode: 'insensitive' } },
+      { book: { title: { contains: search, mode: 'insensitive' } } },
+      { book: { titleAr: { contains: search, mode: 'insensitive' } } },
+      { user: { firstName: { contains: search, mode: 'insensitive' } } },
+      { user: { lastName: { contains: search, mode: 'insensitive' } } },
+      { guestName: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+  if (isVisible !== undefined) {
+    where.isVisible = isVisible === 'true';
+  }
+  if (rating) {
+    where.rating = parseInt(rating);
+  }
+  return where;
+};
+
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search, isVisible, rating } = req.query;
-
-    const where = {};
-    if (search) {
-      where.OR = [
-        { comment: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
-        { book: { title: { contains: search, mode: 'insensitive' } } },
-        { book: { titleAr: { contains: search, mode: 'insensitive' } } },
-        { user: { firstName: { contains: search, mode: 'insensitive' } } },
-        { user: { lastName: { contains: search, mode: 'insensitive' } } },
-        { guestName: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    if (isVisible !== undefined) {
-      where.isVisible = isVisible === 'true';
-    }
-    if (rating) {
-      where.rating = parseInt(rating);
-    }
+    const { withStats } = req.query;
+    const where = buildReviewsWhere(req.query);
 
     const [reviews, total] = await Promise.all([
       prisma.review.findMany({
@@ -39,7 +44,22 @@ exports.list = async (req, res, next) => {
       prisma.review.count({ where }),
     ]);
 
-    res.json(getPaginatedResponse(reviews, total, page, limit));
+    let stats = null;
+    if (withStats === '1') {
+      try {
+        const visibleWhere = { AND: [where, { isVisible: true }] };
+        const [visibleCount, avgAgg] = await Promise.all([
+          prisma.review.count({ where: visibleWhere }),
+          prisma.review.aggregate({ where, _avg: { rating: true } }),
+        ]);
+        const avgRating = avgAgg._avg.rating != null ? avgAgg._avg.rating.toFixed(1) : '0.0';
+        stats = { total, visible: visibleCount, avgRating };
+      } catch {
+        stats = null;
+      }
+    }
+
+    res.json({ ...getPaginatedResponse(reviews, total, page, limit), stats });
   } catch (error) {
     next(error);
   }

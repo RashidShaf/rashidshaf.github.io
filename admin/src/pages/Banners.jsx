@@ -200,8 +200,8 @@ export default function Banners() {
     return b.categoryId === categoryFilter;
   });
 
-  const totalBanners = banners.length;
-  const activeBanners = banners.filter((b) => b.isActive).length;
+  const totalBanners = filteredBanners.length;
+  const activeBanners = filteredBanners.filter((b) => b.isActive).length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>

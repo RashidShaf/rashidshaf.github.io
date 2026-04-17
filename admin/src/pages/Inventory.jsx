@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiChevronUp, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
@@ -28,9 +28,7 @@ export default function Inventory() {
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
   const [selectedSub, setSelectedSub] = useState(searchParams.get('sub') || '');
 
-  useEffect(() => {
-    api.get('/admin/reports/inventory').then((res) => setSummary(res.data.summary)).catch(() => {});
-  }, []);
+  const fetchAbortRef = useRef(null);
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
@@ -44,28 +42,48 @@ export default function Inventory() {
   const getTabName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
 
   const fetchInventory = async () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit });
       if (invSearch) params.set('search', invSearch);
       if (selectedSub) params.set('category', selectedSub);
       else if (selectedTab) params.set('category', selectedTab);
-      const [invRes, lowRes] = await Promise.all([
-        api.get(`/admin/inventory?${params}`),
-        api.get('/admin/inventory/low-stock'),
+
+      const summaryParams = new URLSearchParams();
+      if (invSearch) summaryParams.set('search', invSearch);
+      if (selectedSub) summaryParams.set('category', selectedSub);
+      else if (selectedTab) summaryParams.set('category', selectedTab);
+
+      const [invRes, lowRes, summaryRes] = await Promise.all([
+        api.get(`/admin/inventory?${params}`, { signal: controller.signal }),
+        api.get('/admin/inventory/low-stock', { signal: controller.signal }),
+        api.get(`/admin/reports/inventory?${summaryParams}`, { signal: controller.signal }).catch(() => ({ data: { summary: null } })),
       ]);
       setInventory(invRes.data.data || invRes.data);
       setPagination(invRes.data.pagination || null);
       setLowStock(lowRes.data.data || lowRes.data);
       setSelectedIds([]);
+      if (summaryRes.data.summary) {
+        setSummary(summaryRes.data.summary);
+      } else {
+        setSummary(null);
+        toast.error(t('inventory.failedLoadStats'), { toastId: 'inv-stats-fail' });
+      }
     } catch (err) {
-      toast.error(t('inventory.failedFetch'));
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+      toast.error(t('inventory.failedFetch'), { toastId: 'inv-list-fail' });
     } finally {
-      setLoading(false);
-      const savedScroll = sessionStorage.getItem('admin-inventory-scroll');
-      if (savedScroll) {
-        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
-        sessionStorage.removeItem('admin-inventory-scroll');
+      if (fetchAbortRef.current === controller) {
+        setLoading(false);
+        const savedScroll = sessionStorage.getItem('admin-inventory-scroll');
+        if (savedScroll) {
+          setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+          sessionStorage.removeItem('admin-inventory-scroll');
+        }
       }
     }
   };
@@ -182,14 +200,13 @@ export default function Inventory() {
       transition={{ duration: 0.4 }}
     >
       {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
-          {[
-            { icon: FiBook, label: t('inventory.totalBooks'), value: summary.totalStock !== undefined ? (pagination?.total || inventory.length || '-') : '-', bg: 'bg-blue-600' },
-            { icon: FiLayers, label: t('inventory.totalStock'), value: summary.totalStock ?? 0, bg: 'bg-emerald-600' },
-            { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: summary.lowStockCount ?? 0, bg: 'bg-amber-500' },
-            { icon: FiDollarSign, label: t('inventory.totalValue'), value: `QAR ${parseFloat(summary.totalValue ?? 0).toFixed(0)}`, bg: 'bg-violet-600' },
-          ].map((card, i) => (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
+        {[
+          { icon: FiBook, label: t('inventory.totalBooks'), value: pagination?.total ?? '—', bg: 'bg-blue-600' },
+          { icon: FiLayers, label: t('inventory.totalStock'), value: summary?.totalStock ?? '—', bg: 'bg-emerald-600' },
+          { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: summary?.lowStockCount ?? '—', bg: 'bg-amber-500' },
+          { icon: FiDollarSign, label: t('inventory.totalValue'), value: summary?.totalValue == null ? '—' : `QAR ${parseFloat(summary.totalValue).toFixed(0)}`, bg: 'bg-violet-600' },
+        ].map((card, i) => (
             <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
               <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
                 <card.icon className="w-5 h-5 text-white" />
@@ -197,9 +214,8 @@ export default function Inventory() {
               <p className="text-2xl 3xl:text-3xl font-extrabold text-admin-text tracking-tight leading-none">{card.value}</p>
               <p className="text-xs 3xl:text-sm font-medium text-admin-muted mt-1.5">{card.label}</p>
             </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       {/* Low Stock Alerts */}
       {lowStock.length > 0 && (

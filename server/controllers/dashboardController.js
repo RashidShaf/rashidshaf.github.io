@@ -2,7 +2,8 @@ const prisma = require('../config/database');
 
 exports.stats = async (req, res, next) => {
   try {
-    const [totalBooks, totalUsers, totalOrders, revenueResult] = await Promise.all([
+    const [totalBooks, activeBooks, totalUsers, totalOrders, revenueResult] = await Promise.all([
+      prisma.book.count(),
       prisma.book.count({ where: { isActive: true } }),
       prisma.user.count({ where: { role: 'USER' } }),
       prisma.order.count(),
@@ -14,6 +15,7 @@ exports.stats = async (req, res, next) => {
 
     res.json({
       totalBooks,
+      activeBooks,
       totalUsers,
       totalOrders,
       totalRevenue: revenueResult._sum.total || 0,

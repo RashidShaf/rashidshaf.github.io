@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiSlash, FiUsers, FiUserCheck, FiRefreshCw } from 'react-icons/fi';
@@ -21,31 +21,41 @@ export default function Users() {
   const [limit, setLimit] = useState(parseInt(searchParams.get('limit')) || 10);
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [stats, setStats] = useState({ total: null, active: null });
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
-
-  useEffect(() => {
-    api.get('/admin/dashboard/stats').then((res) => setTotalUsers(res.data.totalUsers || 0)).catch(() => {});
-  }, []);
+  const fetchAbortRef = useRef(null);
 
   const fetchUsers = async () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, withStats: '1' });
       if (search) params.set('search', search);
-      const res = await api.get(`/admin/users?${params}`);
+      const res = await api.get(`/admin/users?${params}`, { signal: controller.signal });
       setUsers(res.data.data || res.data);
       setPagination(res.data.pagination || null);
       setSelectedIds([]);
+      if (res.data.stats) {
+        setStats(res.data.stats);
+      } else {
+        setStats({ total: null, active: null });
+        toast.error(t('users.failedLoadStats'), { toastId: 'users-stats-fail' });
+      }
     } catch (err) {
-      toast.error(t('users.failedFetch'));
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+      toast.error(t('users.failedFetch'), { toastId: 'users-list-fail' });
     } finally {
-      setLoading(false);
-      const savedScroll = sessionStorage.getItem('admin-users-scroll');
-      if (savedScroll) {
-        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
-        sessionStorage.removeItem('admin-users-scroll');
+      if (fetchAbortRef.current === controller) {
+        setLoading(false);
+        const savedScroll = sessionStorage.getItem('admin-users-scroll');
+        if (savedScroll) {
+          setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+          sessionStorage.removeItem('admin-users-scroll');
+        }
       }
     }
   };
@@ -119,8 +129,8 @@ export default function Users() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiUsers, label: t('users.totalUsers'), value: totalUsers, bg: 'bg-blue-600', color: 'text-white' },
-          { icon: FiUserCheck, label: t('users.activeUsers'), value: pagination?.total || totalUsers, bg: 'bg-emerald-600', color: 'text-white' },
+          { icon: FiUsers, label: t('users.totalUsers'), value: stats.total ?? '—', bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiUserCheck, label: t('users.activeUsers'), value: stats.active ?? '—', bg: 'bg-emerald-600', color: 'text-white' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>

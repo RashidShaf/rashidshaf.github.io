@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { FiStar, FiSearch, FiTrash2, FiEye, FiEyeOff, FiRefreshCw, FiChevronLeft, FiChevronRight, FiMessageSquare, FiCheckCircle } from 'react-icons/fi';
@@ -17,48 +17,43 @@ export default function Reviews() {
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [visibilityFilter, setVisibilityFilter] = useState(searchParams.get('visibility') || '');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, avgRating: 0, visible: 0 });
+  const [stats, setStats] = useState({ total: null, avgRating: null, visible: null });
   const [deleteId, setDeleteId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
-
-  // Fetch stats
-  useEffect(() => {
-    api.get('/admin/reviews?limit=1').then((res) => {
-      const total = res.data.pagination?.total || 0;
-      setStats((s) => ({ ...s, total }));
-    }).catch(() => {});
-    api.get('/admin/reviews?isVisible=true&limit=1').then((res) => {
-      const visible = res.data.pagination?.total || 0;
-      setStats((s) => ({ ...s, visible }));
-    }).catch(() => {});
-    api.get('/admin/reviews?limit=100').then((res) => {
-      const all = res.data.data || [];
-      if (all.length > 0) {
-        const avg = all.reduce((sum, r) => sum + (r.rating || 0), 0) / all.length;
-        setStats((s) => ({ ...s, avgRating: avg.toFixed(1) }));
-      }
-    }).catch(() => {});
-  }, []);
+  const fetchAbortRef = useRef(null);
 
   const fetchReviews = async () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, withStats: '1' });
       if (search) params.set('search', search);
       if (visibilityFilter) params.set('isVisible', visibilityFilter);
-      const res = await api.get(`/admin/reviews?${params}`);
+      const res = await api.get(`/admin/reviews?${params}`, { signal: controller.signal });
       setReviews(res.data.data || []);
       setPagination(res.data.pagination || null);
       setSelectedIds([]);
+      if (res.data.stats) {
+        setStats(res.data.stats);
+      } else {
+        setStats({ total: null, visible: null, avgRating: null });
+        toast.error(t('reviews.failedLoadStats'), { toastId: 'reviews-stats-fail' });
+      }
     } catch (err) {
-      toast.error(t('reviews.failedFetch'));
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+      toast.error(t('reviews.failedFetch'), { toastId: 'reviews-list-fail' });
     } finally {
-      setLoading(false);
-      const savedScroll = sessionStorage.getItem('admin-reviews-scroll');
-      if (savedScroll) {
-        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
-        sessionStorage.removeItem('admin-reviews-scroll');
+      if (fetchAbortRef.current === controller) {
+        setLoading(false);
+        const savedScroll = sessionStorage.getItem('admin-reviews-scroll');
+        if (savedScroll) {
+          setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+          sessionStorage.removeItem('admin-reviews-scroll');
+        }
       }
     }
   };
@@ -154,9 +149,9 @@ export default function Reviews() {
       {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiMessageSquare, label: t('reviews.totalReviews'), value: stats.total, bg: 'bg-blue-600' },
-          { icon: FiStar, label: t('reviews.averageRating'), value: stats.avgRating, bg: 'bg-amber-500' },
-          { icon: FiEye, label: t('reviews.visibleReviews'), value: stats.visible, bg: 'bg-emerald-600' },
+          { icon: FiMessageSquare, label: t('reviews.totalReviews'), value: stats.total ?? '—', bg: 'bg-blue-600' },
+          { icon: FiStar, label: t('reviews.averageRating'), value: stats.avgRating ?? '—', bg: 'bg-amber-500' },
+          { icon: FiEye, label: t('reviews.visibleReviews'), value: stats.visible ?? '—', bg: 'bg-emerald-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>

@@ -1,25 +1,34 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 
+const buildOrdersWhere = (query) => {
+  const { status, search, customerType } = query;
+  const where = {};
+  if (status) where.status = status;
+  if (customerType === 'guest') where.userId = null;
+  if (customerType === 'customer') where.userId = { not: null };
+  if (search) {
+    where.OR = [
+      { orderNumber: { contains: search, mode: 'insensitive' } },
+      { shippingPhone: { contains: search, mode: 'insensitive' } },
+      { shippingName: { contains: search, mode: 'insensitive' } },
+      { user: { firstName: { contains: search, mode: 'insensitive' } } },
+      { user: { lastName: { contains: search, mode: 'insensitive' } } },
+      { user: { email: { contains: search, mode: 'insensitive' } } },
+      { items: { some: { title: { contains: search, mode: 'insensitive' } } } },
+      { items: { some: { book: { title: { contains: search, mode: 'insensitive' } } } } },
+      { items: { some: { book: { titleAr: { contains: search, mode: 'insensitive' } } } } },
+      { items: { some: { book: { sku: { contains: search, mode: 'insensitive' } } } } },
+    ];
+  }
+  return where;
+};
+
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { status, search, customerType } = req.query;
-
-    const where = {};
-    if (status) where.status = status;
-    if (customerType === 'guest') where.userId = null;
-    if (customerType === 'customer') where.userId = { not: null };
-    if (search) {
-      where.OR = [
-        { orderNumber: { contains: search, mode: 'insensitive' } },
-        { shippingPhone: { contains: search, mode: 'insensitive' } },
-        { shippingName: { contains: search, mode: 'insensitive' } },
-        { user: { firstName: { contains: search, mode: 'insensitive' } } },
-        { user: { lastName: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
+    const { withStats } = req.query;
+    const where = buildOrdersWhere(req.query);
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -32,7 +41,31 @@ exports.list = async (req, res, next) => {
       prisma.order.count({ where }),
     ]);
 
-    res.json(getPaginatedResponse(orders, total, page, limit));
+    let stats = null;
+    if (withStats === '1') {
+      try {
+        const revenueWhere = { AND: [where, { status: { not: 'CANCELLED' } }] };
+        const processingWhere = { AND: [where, { status: 'PROCESSING' }] };
+        const deliveredWhere = { AND: [where, { status: 'DELIVERED' }] };
+
+        const [revenueAgg, pendingCount, deliveredCount] = await Promise.all([
+          prisma.order.aggregate({ where: revenueWhere, _sum: { total: true } }),
+          prisma.order.count({ where: processingWhere }),
+          prisma.order.count({ where: deliveredWhere }),
+        ]);
+
+        stats = {
+          totalOrders: total,
+          totalRevenue: revenueAgg._sum.total || 0,
+          pending: pendingCount,
+          delivered: deliveredCount,
+        };
+      } catch {
+        stats = null;
+      }
+    }
+
+    res.json({ ...getPaginatedResponse(orders, total, page, limit), stats });
   } catch (error) {
     next(error);
   }

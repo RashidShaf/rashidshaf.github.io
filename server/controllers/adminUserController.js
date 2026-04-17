@@ -1,20 +1,25 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 
+const buildUsersWhere = (query) => {
+  const { search } = query;
+  const where = {};
+  if (search) {
+    where.OR = [
+      { firstName: { contains: search, mode: 'insensitive' } },
+      { lastName: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+  return where;
+};
+
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search } = req.query;
-
-    const where = {};
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    const { withStats } = req.query;
+    const where = buildUsersWhere(req.query);
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -28,7 +33,18 @@ exports.list = async (req, res, next) => {
       prisma.user.count({ where }),
     ]);
 
-    res.json(getPaginatedResponse(users, total, page, limit));
+    let stats = null;
+    if (withStats === '1') {
+      try {
+        const activeWhere = { AND: [where, { isBlocked: false }] };
+        const active = await prisma.user.count({ where: activeWhere });
+        stats = { total, active };
+      } catch {
+        stats = null;
+      }
+    }
+
+    res.json({ ...getPaginatedResponse(users, total, page, limit), stats });
   } catch (error) {
     next(error);
   }

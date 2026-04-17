@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
@@ -29,46 +29,43 @@ export default function Orders() {
   const [customerFilter, setCustomerFilter] = useState(searchParams.get('customer') || 'ALL');
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pending: 0, delivered: 0 });
+  const [stats, setStats] = useState({ totalOrders: null, totalRevenue: null, pending: null, delivered: null });
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkStatusValue, setBulkStatusValue] = useState('');
-
-  useEffect(() => {
-    api.get('/admin/dashboard/stats').then((res) => {
-      setStats((s) => ({ ...s, totalOrders: res.data.totalOrders || 0, totalRevenue: res.data.totalRevenue || 0 }));
-    }).catch(() => {});
-    // Get pending & delivered counts
-    Promise.all([
-      api.get('/admin/orders?status=PROCESSING&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
-      api.get('/admin/orders?status=DELIVERED&limit=1').catch(() => ({ data: { pagination: { total: 0 } } })),
-    ]).then(([pendingRes, deliveredRes]) => {
-      setStats((s) => ({
-        ...s,
-        pending: pendingRes.data.pagination?.total || 0,
-        delivered: deliveredRes.data.pagination?.total || 0,
-      }));
-    });
-  }, []);
+  const fetchAbortRef = useRef(null);
 
   const fetchOrders = async () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, withStats: '1' });
       if (statusFilter !== 'ALL') params.set('status', statusFilter);
       if (customerFilter !== 'ALL') params.set('customerType', customerFilter);
       if (search) params.set('search', search);
-      const res = await api.get(`/admin/orders?${params}`);
+      const res = await api.get(`/admin/orders?${params}`, { signal: controller.signal });
       setOrders(res.data.data || res.data);
       setPagination(res.data.pagination || null);
       setSelectedIds([]);
+      if (res.data.stats) {
+        setStats(res.data.stats);
+      } else {
+        setStats({ totalOrders: null, totalRevenue: null, pending: null, delivered: null });
+        toast.error(t('orders.failedLoadStats'), { toastId: 'orders-stats-fail' });
+      }
     } catch (err) {
-      toast.error(t('orders.failedFetch'));
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+      toast.error(t('orders.failedFetch'), { toastId: 'orders-list-fail' });
     } finally {
-      setLoading(false);
-      const savedScroll = sessionStorage.getItem('admin-orders-scroll');
-      if (savedScroll) {
-        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
-        sessionStorage.removeItem('admin-orders-scroll');
+      if (fetchAbortRef.current === controller) {
+        setLoading(false);
+        const savedScroll = sessionStorage.getItem('admin-orders-scroll');
+        if (savedScroll) {
+          setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+          sessionStorage.removeItem('admin-orders-scroll');
+        }
       }
     }
   };
@@ -142,10 +139,10 @@ export default function Orders() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiShoppingBag, label: t('orders.totalOrders'), value: stats.totalOrders, bg: 'bg-blue-600', color: 'text-white' },
-          { icon: FiDollarSign, label: t('orders.revenue'), value: `QAR ${parseFloat(stats.totalRevenue || 0).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
-          { icon: FiClock, label: t('orders.processing'), value: stats.pending, bg: 'bg-amber-500', color: 'text-white' },
-          { icon: FiCheckCircle, label: t('orders.delivered'), value: stats.delivered, bg: 'bg-teal-600', color: 'text-white' },
+          { icon: FiShoppingBag, label: t('orders.totalOrders'), value: stats.totalOrders ?? '—', bg: 'bg-blue-600', color: 'text-white' },
+          { icon: FiDollarSign, label: t('orders.revenue'), value: stats.totalRevenue == null ? '—' : `QAR ${parseFloat(stats.totalRevenue).toFixed(0)}`, bg: 'bg-emerald-600', color: 'text-white' },
+          { icon: FiClock, label: t('orders.processing'), value: stats.pending ?? '—', bg: 'bg-amber-500', color: 'text-white' },
+          { icon: FiCheckCircle, label: t('orders.delivered'), value: stats.delivered ?? '—', bg: 'bg-teal-600', color: 'text-white' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>

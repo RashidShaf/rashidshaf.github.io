@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter } from 'react-icons/fi';
@@ -16,7 +16,7 @@ export default function Books() {
   const [limit, setLimit] = useState(parseInt(searchParams.get('limit')) || 10);
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, featured: 0, lowStock: 0 });
+  const [stats, setStats] = useState({ total: null, active: null, lowStock: null });
   const [deleteId, setDeleteId] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -90,46 +90,48 @@ export default function Books() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    Promise.all([
-      api.get('/admin/dashboard/stats').catch(() => ({ data: {} })),
-      api.get('/admin/inventory/low-stock').catch(() => ({ data: [] })),
-    ]).then(([statsRes, lowRes]) => {
-      setStats({
-        total: statsRes.data.totalBooks || 0,
-        featured: 0,
-        lowStock: Array.isArray(lowRes.data) ? lowRes.data.length : 0,
-      });
-    });
-  }, []);
+  const fetchAbortRef = useRef(null);
 
   const fetchBooks = async () => {
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, withStats: '1' });
       if (search) params.set('search', search);
       if (selectedL4) params.set('category', selectedL4);
       else if (selectedL3) params.set('category', selectedL3);
       else if (selectedSub) params.set('category', selectedSub);
       else if (selectedTab) params.set('category', selectedTab);
-      // Quality filters
       if (imageFilter === 'hasImage') params.set('hasImage', 'true');
       if (imageFilter === 'noImage') params.set('hasImage', 'false');
       if (descFilter === 'noDesc') params.set('hasDesc', 'false');
       if (descFilter === 'noDescAr') params.set('hasDescAr', 'false');
       if (issueFilter === 'duplicateBarcode') params.set('duplicateBarcode', 'true');
       if (issueFilter === 'similarNames') params.set('similarNames', 'true');
-      const res = await api.get(`/admin/books?${params}`);
+
+      const res = await api.get(`/admin/books?${params}`, { signal: controller.signal });
       setBooks(res.data.data);
       setPagination(res.data.pagination);
+      if (res.data.stats) {
+        setStats(res.data.stats);
+      } else {
+        setStats({ total: null, active: null, lowStock: null });
+        toast.error(t('books.failedLoadStats'), { toastId: 'books-stats-fail' });
+      }
     } catch (err) {
-      // silently handle error
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') return;
+      toast.error(t('books.failedFetch'), { toastId: 'books-list-fail' });
     } finally {
-      setLoading(false);
-      const savedScroll = sessionStorage.getItem('admin-books-scroll');
-      if (savedScroll) {
-        setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
-        sessionStorage.removeItem('admin-books-scroll');
+      if (fetchAbortRef.current === controller) {
+        setLoading(false);
+        const savedScroll = sessionStorage.getItem('admin-books-scroll');
+        if (savedScroll) {
+          setTimeout(() => window.scrollTo(0, parseInt(savedScroll)), 50);
+          sessionStorage.removeItem('admin-books-scroll');
+        }
       }
     }
   };
@@ -325,9 +327,9 @@ export default function Books() {
       {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4 3xl:gap-6 mb-6 3xl:mb-8">
         {[
-          { icon: FiBook, label: t('dashboard.totalBooks'), value: stats.total, bg: 'bg-blue-600' },
-          { icon: FiStar, label: t('books.active'), value: pagination?.total || stats.total, bg: 'bg-amber-500' },
-          { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: stats.lowStock, bg: 'bg-red-600' },
+          { icon: FiBook, label: t('dashboard.totalBooks'), value: stats.total ?? '—', bg: 'bg-blue-600' },
+          { icon: FiStar, label: t('books.active'), value: stats.active ?? '—', bg: 'bg-amber-500' },
+          { icon: FiAlertTriangle, label: t('inventory.lowStock'), value: stats.lowStock ?? '—', bg: 'bg-red-600' },
         ].map((card, i) => (
           <div key={i} className="bg-admin-card rounded-xl border border-admin-border p-5 3xl:p-7 h-[140px] 3xl:h-[170px] flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-shadow">
             <div className={`w-11 h-11 3xl:w-14 3xl:h-14 rounded-xl ${card.bg} flex items-center justify-center mb-3`}>
@@ -919,7 +921,7 @@ export default function Books() {
 
         <div className="flex items-center justify-between px-4 py-3 3xl:px-6 3xl:py-4 border-t border-admin-border">
           <div className="flex items-center gap-3">
-            <span className="text-xs 3xl:text-sm text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total || books.length}</span>
+            <span className="text-xs 3xl:text-sm text-admin-muted">{t('common.showing')} {books.length} {t('common.of')} {pagination?.total ?? books.length}</span>
             <select
               value={limit}
               onChange={(e) => {

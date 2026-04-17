@@ -100,8 +100,41 @@ exports.salesExport = async (req, res, next) => {
 
 exports.inventory = async (req, res, next) => {
   try {
+    const { category, search } = req.query;
+    const where = { AND: [{ isActive: true }] };
+
+    if (search) {
+      where.AND.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { titleAr: { contains: search, mode: 'insensitive' } },
+          { author: { contains: search, mode: 'insensitive' } },
+          { authorAr: { contains: search, mode: 'insensitive' } },
+          { isbn: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (category) {
+      const collectIds = async (parentIds) => {
+        const children = await prisma.category.findMany({ where: { parentId: { in: parentIds } }, select: { id: true } });
+        if (children.length === 0) return [];
+        const childIds = children.map((c) => c.id);
+        const deeper = await collectIds(childIds);
+        return [...childIds, ...deeper];
+      };
+      const categoryIds = [category, ...(await collectIds([category]))];
+      where.AND.push({
+        OR: [
+          { categoryId: { in: categoryIds } },
+          { bookCategories: { some: { categoryId: { in: categoryIds } } } },
+        ],
+      });
+    }
+
     const books = await prisma.book.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { stock: 'asc' },
       select: { id: true, title: true, author: true, stock: true, lowStockThreshold: true, salesCount: true, price: true },
     });
