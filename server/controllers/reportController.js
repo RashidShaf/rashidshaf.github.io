@@ -101,7 +101,7 @@ exports.salesExport = async (req, res, next) => {
 exports.inventory = async (req, res, next) => {
   try {
     const { category, search } = req.query;
-    const where = { AND: [{ isActive: true }] };
+    const where = { AND: [] };
 
     if (search) {
       where.AND.push({

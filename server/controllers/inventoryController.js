@@ -6,7 +6,7 @@ exports.overview = async (req, res, next) => {
     const { page, limit, skip } = getPagination(req.query);
     const { search, category } = req.query;
 
-    const where = { isActive: true, AND: [] };
+    const where = { AND: [] };
 
     if (search) {
       where.AND.push({
@@ -57,7 +57,6 @@ exports.lowStock = async (req, res, next) => {
   try {
     const books = await prisma.book.findMany({
       where: {
-        isActive: true,
         stock: { lte: prisma.book.fields?.lowStockThreshold || 5 },
       },
       orderBy: { stock: 'asc' },
