@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX, FiEdit2, FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX, FiEdit2, FiChevronUp, FiChevronDown, FiMenu, FiRotateCcw, FiColumns } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -17,6 +17,7 @@ export default function DataManagement() {
   const [templateCategory, setTemplateCategory] = useState('');
   const [editTemplateOpen, setEditTemplateOpen] = useState(false);
   const [orderItems, setOrderItems] = useState([]);
+  const [defaultOrderItems, setDefaultOrderItems] = useState([]);
   const [templateInfoLoading, setTemplateInfoLoading] = useState(false);
 
   useEffect(() => {
@@ -151,6 +152,7 @@ export default function DataManagement() {
         ...optional.map((f) => ({ id: f.id, locked: false, checked: false, labelEn: f.labelEn, labelAr: f.labelAr, columns: f.columns })),
       ];
       setOrderItems(items);
+      setDefaultOrderItems(items);
     } catch {
       toast.error(t('data.failedTemplate'));
       setEditTemplateOpen(false);
@@ -168,6 +170,8 @@ export default function DataManagement() {
   });
 
   const toggleItemChecked = (idx) => setOrderItems((prev) => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it));
+
+  const resetOrder = () => setOrderItems(defaultOrderItems.map((it) => ({ ...it, checked: it.locked })));
 
   const downloadCustomTemplate = async () => {
     try {
@@ -470,67 +474,171 @@ export default function DataManagement() {
       </div>
 
       {/* Edit Template Modal */}
-      {editTemplateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditTemplateOpen(false)}>
-          <div className="bg-admin-card rounded-xl shadow-xl w-full max-w-xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-admin-border">
-              <h3 className="text-lg font-bold text-admin-text">{t('data.editTemplate')}</h3>
-              <button onClick={() => setEditTemplateOpen(false)} className="p-1.5 text-admin-muted hover:text-admin-text hover:bg-gray-100 rounded-lg transition-colors">
-                <FiX size={18} />
-              </button>
-            </div>
-            <div className="p-5 space-y-3">
-              {templateInfoLoading ? (
-                <p className="text-sm text-admin-muted">{t('common.loading')}...</p>
-              ) : (
-                <>
-                  <p className="text-xs text-admin-muted">{t('data.editTemplateHelp')}</p>
+      {editTemplateOpen && (() => {
+        const selectedCategory = categories.find((c) => c.id === templateCategory);
+        const categoryLabel = selectedCategory ? (language === 'ar' && selectedCategory.nameAr ? selectedCategory.nameAr : selectedCategory.name) : '';
+        const activeItems = orderItems.filter((it) => it.locked || it.checked);
+        const activeColumns = activeItems.flatMap((it) => it.columns);
+        const totalCols = activeColumns.length;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditTemplateOpen(false)}>
+            <div className="bg-admin-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-start justify-between px-6 py-5 border-b border-admin-border bg-gradient-to-b from-admin-card to-admin-bg">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 3xl:w-11 3xl:h-11 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center flex-shrink-0">
+                    <FiColumns size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg 3xl:text-xl font-bold text-admin-text">{t('data.editTemplate')}</h3>
+                    {categoryLabel && (
+                      <p className="text-xs 3xl:text-sm text-admin-muted mt-0.5">
+                        {t('data.forCategory')}: <span className="font-medium text-admin-text">{categoryLabel}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setEditTemplateOpen(false)} className="p-2 text-admin-muted hover:text-admin-text hover:bg-gray-100 rounded-lg transition-colors">
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* Info bar */}
+              <div className="flex items-center justify-between px-6 py-3 bg-admin-bg border-b border-admin-border">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-admin-accent text-white text-xs font-semibold">{totalCols}</span>
+                  <span className="text-admin-muted">{t('data.columnsIncluded')}</span>
+                </div>
+                <button onClick={resetOrder} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-admin-muted hover:text-admin-text hover:bg-white border border-transparent hover:border-admin-border rounded-lg transition-colors">
+                  <FiRotateCcw size={13} /> {t('data.resetOrder')}
+                </button>
+              </div>
+
+              {/* Scrollable list */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                {templateInfoLoading ? (
                   <div className="space-y-1.5">
-                    {orderItems.map((it, idx) => (
-                      <div key={it.id} className={`flex items-center gap-2 p-2 3xl:p-2.5 bg-admin-bg border border-admin-border rounded-lg ${!it.locked && !it.checked ? 'opacity-60' : ''}`}>
-                        <div className="flex flex-col gap-0.5">
-                          <button onClick={() => moveItem(idx, -1)} disabled={idx === 0} className="p-0.5 text-admin-muted hover:text-admin-text disabled:opacity-30 disabled:hover:text-admin-muted">
-                            <FiChevronUp size={14} />
-                          </button>
-                          <button onClick={() => moveItem(idx, 1)} disabled={idx === orderItems.length - 1} className="p-0.5 text-admin-muted hover:text-admin-text disabled:opacity-30 disabled:hover:text-admin-muted">
-                            <FiChevronDown size={14} />
-                          </button>
-                        </div>
-                        {it.locked ? (
-                          <FiLock size={14} className="text-admin-muted flex-shrink-0" title={t('data.requiredColumns')} />
-                        ) : (
-                          <input
-                            type="checkbox"
-                            checked={it.checked}
-                            onChange={() => toggleItemChecked(idx)}
-                            className="w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-admin-text font-mono">
-                            {it.locked ? it.id : (language === 'ar' ? it.labelAr : it.labelEn)}
-                          </p>
-                          {!it.locked && (
-                            <p className="text-xs text-admin-muted font-mono mt-0.5 truncate">{it.columns.join(', ')}</p>
-                          )}
-                        </div>
-                      </div>
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="h-12 bg-admin-bg border border-admin-border rounded-lg animate-pulse" />
                     ))}
                   </div>
-                </>
+                ) : (
+                  <>
+                    <p className="text-xs text-admin-muted mb-3">{t('data.editTemplateHelp')}</p>
+                    <div className="space-y-1.5">
+                      {orderItems.map((it, idx) => {
+                        const isActive = it.locked || it.checked;
+                        return (
+                          <div
+                            key={it.id}
+                            className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors ${
+                              isActive
+                                ? it.locked
+                                  ? 'bg-white border-admin-border border-s-4 border-s-admin-accent'
+                                  : 'bg-white border-admin-border'
+                                : 'bg-admin-bg/60 border-admin-border border-dashed'
+                            }`}
+                          >
+                            {/* Position index */}
+                            <span className="text-[11px] font-mono font-semibold text-admin-muted w-6 text-center select-none">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+
+                            {/* Grip icon (visual cue) */}
+                            <FiMenu size={14} className="text-admin-muted/60 flex-shrink-0 hidden sm:block" />
+
+                            {/* Lock or checkbox */}
+                            {it.locked ? (
+                              <div className="flex items-center justify-center w-5 h-5 flex-shrink-0" title={t('data.requiredColumn')}>
+                                <FiLock size={12} className="text-admin-accent" />
+                              </div>
+                            ) : (
+                              <input
+                                type="checkbox"
+                                checked={it.checked}
+                                onChange={() => toggleItemChecked(idx)}
+                                className="w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent focus:ring-2 focus:ring-offset-0 flex-shrink-0 cursor-pointer"
+                              />
+                            )}
+
+                            {/* Label + column preview */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-medium ${isActive ? 'text-admin-text' : 'text-admin-muted'} ${it.locked ? 'font-mono' : ''}`}>
+                                  {it.locked ? it.id : (language === 'ar' ? it.labelAr : it.labelEn)}
+                                </p>
+                                {it.locked && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-admin-accent bg-admin-accent/10 px-1.5 py-0.5 rounded">
+                                    {t('data.required')}
+                                  </span>
+                                )}
+                              </div>
+                              {!it.locked && (
+                                <p className="text-[11px] text-admin-muted font-mono mt-0.5 truncate">{it.columns.join('  ·  ')}</p>
+                              )}
+                            </div>
+
+                            {/* Move arrows */}
+                            <div className="flex flex-col gap-0.5 flex-shrink-0">
+                              <button
+                                onClick={() => moveItem(idx, -1)}
+                                disabled={idx === 0}
+                                aria-label="Move up"
+                                className="p-1 text-admin-muted hover:text-admin-accent hover:bg-admin-accent/5 rounded disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-admin-muted transition-colors"
+                              >
+                                <FiChevronUp size={14} />
+                              </button>
+                              <button
+                                onClick={() => moveItem(idx, 1)}
+                                disabled={idx === orderItems.length - 1}
+                                aria-label="Move down"
+                                className="p-1 text-admin-muted hover:text-admin-accent hover:bg-admin-accent/5 rounded disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-admin-muted transition-colors"
+                              >
+                                <FiChevronDown size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Preview strip */}
+              {!templateInfoLoading && activeColumns.length > 0 && (
+                <div className="px-6 py-4 bg-admin-bg border-t border-admin-border">
+                  <p className="text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.csvPreview')}</p>
+                  <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                    {activeColumns.map((col, i) => (
+                      <span key={`${col}-${i}`} className="px-2 py-0.5 bg-white border border-admin-border text-[11px] text-admin-text rounded font-mono">
+                        {col}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
-            <div className="flex items-center justify-end gap-2 p-5 border-t border-admin-border">
-              <button onClick={() => setEditTemplateOpen(false)} className="px-4 py-2 text-sm text-admin-text bg-admin-bg border border-admin-border rounded-lg hover:bg-gray-100 transition-colors">
-                {t('common.cancel')}
-              </button>
-              <button onClick={downloadCustomTemplate} disabled={templateInfoLoading} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50">
-                <FiDownload size={14} /> {t('data.save')}
-              </button>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-admin-border bg-admin-card">
+                <p className="text-xs text-admin-muted hidden sm:block">{t('data.saveHint')}</p>
+                <div className="flex items-center gap-2 ms-auto">
+                  <button onClick={() => setEditTemplateOpen(false)} className="px-4 py-2 text-sm font-medium text-admin-text bg-white border border-admin-border rounded-lg hover:bg-gray-50 transition-colors">
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={downloadCustomTemplate}
+                    disabled={templateInfoLoading || activeColumns.length === 0}
+                    className="flex items-center gap-2 px-5 py-2 bg-admin-accent text-white text-sm font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    <FiDownload size={14} /> {t('data.save')}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </motion.div>
   );
 }
