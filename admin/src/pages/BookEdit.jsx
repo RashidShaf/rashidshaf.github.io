@@ -115,7 +115,7 @@ export default function BookEdit() {
           compareAtPrice: book.compareAtPrice ? parseFloat(book.compareAtPrice).toString() : '',
           publisher: book.publisher || '',
           publisherAr: book.publisherAr || '',
-          language: book.language || 'en',
+          language: book.language === 'ar' ? 'ar' : 'en',
           pages: book.pages ? book.pages.toString() : '',
           stock: book.stock != null ? book.stock.toString() : '0',
           parentCategoryId: cornerId,
