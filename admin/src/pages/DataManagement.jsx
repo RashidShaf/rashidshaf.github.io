@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX, FiEdit2, FiChevronUp, FiChevronDown, FiMenu, FiRotateCcw, FiColumns } from 'react-icons/fi';
+import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX, FiEdit2, FiChevronUp, FiChevronDown, FiMenu, FiColumns } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -17,7 +17,6 @@ export default function DataManagement() {
   const [templateCategory, setTemplateCategory] = useState('');
   const [editTemplateOpen, setEditTemplateOpen] = useState(false);
   const [orderItems, setOrderItems] = useState([]);
-  const [defaultOrderItems, setDefaultOrderItems] = useState([]);
   const [templateInfoLoading, setTemplateInfoLoading] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [categoriesWithCustomTemplate, setCategoriesWithCustomTemplate] = useState(new Set());
@@ -181,7 +180,6 @@ export default function DataManagement() {
       ];
       const items = Array.isArray(savedOrder) && savedOrder.length ? applySavedOrder(baseItems, savedOrder) : baseItems;
       setOrderItems(items);
-      setDefaultOrderItems(baseItems);
       setCategoriesWithCustomTemplate((prev) => {
         const next = new Set(prev);
         if (Array.isArray(savedOrder) && savedOrder.length) next.add(templateCategory);
@@ -205,8 +203,6 @@ export default function DataManagement() {
   });
 
   const toggleItemChecked = (idx) => setOrderItems((prev) => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it));
-
-  const resetOrder = () => setOrderItems(defaultOrderItems.map((it) => ({ ...it, checked: it.locked })));
 
   const saveTemplateConfig = async () => {
     setSavingTemplate(true);
@@ -521,7 +517,6 @@ export default function DataManagement() {
         const categoryLabel = selectedCategory ? (language === 'ar' && selectedCategory.nameAr ? selectedCategory.nameAr : selectedCategory.name) : '';
         const activeItems = orderItems.filter((it) => it.locked || it.checked);
         const activeColumns = activeItems.flatMap((it) => it.columns);
-        const totalCols = activeColumns.length;
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditTemplateOpen(false)}>
             <div className="bg-admin-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -545,16 +540,19 @@ export default function DataManagement() {
                 </button>
               </div>
 
-              {/* Info bar */}
-              <div className="flex items-center justify-between px-6 py-3 bg-admin-bg border-b border-admin-border">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-admin-accent text-white text-xs font-semibold">{totalCols}</span>
-                  <span className="text-admin-muted">{t('data.columnsIncluded')}</span>
+              {/* CSV header preview (top) */}
+              {!templateInfoLoading && activeColumns.length > 0 && (
+                <div className="px-6 py-3 bg-admin-bg border-b border-admin-border">
+                  <p className="text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.csvPreview')}</p>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                    {activeColumns.map((col, i) => (
+                      <span key={`${col}-${i}`} className="px-2 py-0.5 bg-white border border-admin-border text-[11px] text-admin-text rounded font-mono">
+                        {col}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <button onClick={resetOrder} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-admin-muted hover:text-admin-text hover:bg-white border border-transparent hover:border-admin-border rounded-lg transition-colors">
-                  <FiRotateCcw size={13} /> {t('data.resetOrder')}
-                </button>
-              </div>
+              )}
 
               {/* Scrollable list */}
               <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -646,20 +644,6 @@ export default function DataManagement() {
                   </>
                 )}
               </div>
-
-              {/* Preview strip */}
-              {!templateInfoLoading && activeColumns.length > 0 && (
-                <div className="px-6 py-4 bg-admin-bg border-t border-admin-border">
-                  <p className="text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.csvPreview')}</p>
-                  <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                    {activeColumns.map((col, i) => (
-                      <span key={`${col}-${i}`} className="px-2 py-0.5 bg-white border border-admin-border text-[11px] text-admin-text rounded font-mono">
-                        {col}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Footer */}
               <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-admin-border bg-admin-card">
