@@ -509,36 +509,39 @@ exports.importTemplateInfo = async (req, res, next) => {
   }
 };
 
-// Generates a CSV with the 10 required columns plus any optional fields the admin ticked
+// Generates a CSV using an admin-curated ordered list of field ids
+// Each id is either a required column name (from TEMPLATE_REQUIRED) or an optional field id (author, publisher, language, cf_<key>).
 exports.importTemplateCustom = async (req, res, next) => {
   try {
-    const selected = (req.query.fields || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const order = (req.query.order || '').split(',').map((s) => s.trim()).filter(Boolean);
     let optional = [];
     if (req.query.category) {
       const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
       optional = buildOptionalFields(category);
     }
+    const optionalById = Object.fromEntries(optional.map((f) => [f.id, f]));
 
-    // Columns: required first (in a sensible order), then optional in the order they appear in buildOptionalFields
-    const headers = ['barcode', 'nameEn', 'nameAr'];
-    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي' };
+    const sampleFor = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', purchasePrice: '30.00', sellingPrice: '49.99' };
 
-    for (const field of optional) {
-      if (!selected.includes(field.id)) continue;
-      for (const col of field.columns) {
-        headers.push(col);
-        sample[col] = '';
+    const headers = [];
+    const sample = {};
+    const seen = new Set();
+
+    const effectiveOrder = order.length ? order : TEMPLATE_REQUIRED;
+    for (const id of effectiveOrder) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      if (TEMPLATE_REQUIRED.includes(id)) {
+        headers.push(id);
+        sample[id] = sampleFor[id] || '';
+      } else if (optionalById[id]) {
+        for (const col of optionalById[id].columns) {
+          headers.push(col);
+          sample[col] = '';
+        }
       }
+      // unknown ids silently ignored
     }
-
-    headers.push('descriptionEn', 'descriptionAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory');
-    sample.descriptionEn = '';
-    sample.descriptionAr = '';
-    sample.purchasePrice = '30.00';
-    sample.sellingPrice = '49.99';
-    sample.mainCategory = '';
-    sample.subCategory = '';
-    sample.subSubCategory = '';
 
     const csv = stringify([sample], { header: true, columns: headers });
     res.setHeader('Content-Type', 'text/csv');
