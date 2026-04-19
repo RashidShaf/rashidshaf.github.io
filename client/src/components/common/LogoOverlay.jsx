@@ -17,12 +17,12 @@ const LogoOverlay = ({ position = 'center-left', compact = false, hideMobile = f
     <div className="relative flex items-center justify-center">
       {compact ? (
         <>
-          <div className="absolute w-[58px] h-[58px] sm:w-[105px] sm:h-[105px] md:w-[125px] md:h-[125px] lg:w-[160px] lg:h-[160px] xl:w-[215px] xl:h-[215px] 2xl:w-[225px] 2xl:h-[225px] 3xl:w-[370px] 3xl:h-[370px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[75px] h-[75px] sm:w-[130px] sm:h-[130px] md:w-[155px] md:h-[155px] lg:w-[200px] lg:h-[200px] xl:w-[265px] xl:h-[265px] 2xl:w-[285px] 2xl:h-[285px] 3xl:w-[460px] 3xl:h-[460px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <div className="absolute w-[58px] h-[58px] sm:w-[115px] sm:h-[115px] sm2:w-[125px] sm2:h-[125px] md:w-[125px] md:h-[125px] lg:w-[160px] lg:h-[160px] xl:w-[215px] xl:h-[215px] 2xl:w-[225px] 2xl:h-[225px] 3xl:w-[370px] 3xl:h-[370px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[75px] h-[75px] sm:w-[145px] sm:h-[145px] sm2:w-[155px] sm2:h-[155px] md:w-[155px] md:h-[155px] lg:w-[200px] lg:h-[200px] xl:w-[265px] xl:h-[265px] 2xl:w-[285px] 2xl:h-[285px] 3xl:w-[460px] 3xl:h-[460px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
           <motion.img
             src="/logo.jpg"
             alt="Arkaan"
-            className="w-12 h-12 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 xl:w-44 xl:h-44 2xl:w-44 2xl:h-44 3xl:w-72 3xl:h-72 rounded-full object-cover shadow-2xl"
+            className="w-12 h-12 sm:w-[88px] sm:h-[88px] sm2:w-24 sm2:h-24 md:w-24 md:h-24 lg:w-32 lg:h-32 xl:w-44 xl:h-44 2xl:w-44 2xl:h-44 3xl:w-72 3xl:h-72 rounded-full object-cover shadow-2xl"
             style={{ boxShadow: '0 0 40px rgba(122,27,78,0.4), 0 0 20px rgba(212,165,116,0.15)' }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
@@ -30,12 +30,12 @@ const LogoOverlay = ({ position = 'center-left', compact = false, hideMobile = f
         </>
       ) : (
         <>
-          <div className="absolute w-[70px] h-[70px] sm:w-[115px] sm:h-[115px] md:w-[160px] md:h-[160px] lg:w-[200px] lg:h-[200px] xl:w-[260px] xl:h-[260px] 2xl:w-[280px] 2xl:h-[280px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
-          <div className="absolute w-[90px] h-[90px] sm:w-[140px] sm:h-[140px] md:w-[195px] md:h-[195px] lg:w-[250px] lg:h-[250px] xl:w-[325px] xl:h-[325px] 2xl:w-[350px] 2xl:h-[350px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
+          <div className="absolute w-[70px] h-[70px] sm:w-[130px] sm:h-[130px] sm2:w-[150px] sm2:h-[150px] md:w-[160px] md:h-[160px] lg:w-[200px] lg:h-[200px] xl:w-[260px] xl:h-[260px] 2xl:w-[280px] 2xl:h-[280px] 3xl:w-[400px] 3xl:h-[400px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.25)' }} />
+          <div className="absolute w-[90px] h-[90px] sm:w-[160px] sm:h-[160px] sm2:w-[180px] sm2:h-[180px] md:w-[195px] md:h-[195px] lg:w-[250px] lg:h-[250px] xl:w-[325px] xl:h-[325px] 2xl:w-[350px] 2xl:h-[350px] 3xl:w-[500px] 3xl:h-[500px] rounded-full" style={{ border: '1px solid rgba(212,165,116,0.12)' }} />
           <motion.img
             src="/logo.jpg"
             alt="Arkaan"
-            className="w-14 h-14 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 xl:w-52 xl:h-52 2xl:w-56 2xl:h-56 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
+            className="w-14 h-14 sm:w-28 sm:h-28 sm2:w-32 sm2:h-32 md:w-32 md:h-32 lg:w-40 lg:h-40 xl:w-52 xl:h-52 2xl:w-56 2xl:h-56 3xl:w-80 3xl:h-80 rounded-full object-cover shadow-2xl"
             style={{ boxShadow: '0 0 60px rgba(122,27,78,0.5), 0 0 30px rgba(212,165,116,0.2)' }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
@@ -44,7 +44,7 @@ const LogoOverlay = ({ position = 'center-left', compact = false, hideMobile = f
       )}
     </div>
     <div className={compact ? '-mt-1.5 sm:-mt-3' : '-mt-2 sm:-mt-4'}>
-      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className={compact ? 'w-14 sm:w-16 md:w-24 lg:w-28 xl:w-40 2xl:w-40 3xl:w-56 drop-shadow-lg' : 'w-16 sm:w-20 md:w-28 lg:w-32 xl:w-44 2xl:w-48 3xl:w-64 drop-shadow-lg'} />
+      <img src="/arkaan-banner-logo.png" alt="مكتبة أركان - Arkaan Bookstore" className={compact ? 'w-14 sm:w-20 sm2:w-24 md:w-24 lg:w-28 xl:w-40 2xl:w-40 3xl:w-56 drop-shadow-lg' : 'w-16 sm:w-24 sm2:w-28 md:w-28 lg:w-32 xl:w-44 2xl:w-48 3xl:w-64 drop-shadow-lg'} />
     </div>
   </div>
 );
