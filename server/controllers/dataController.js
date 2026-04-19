@@ -378,8 +378,8 @@ exports.importProducts = async (req, res, next) => {
 // Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
-    const headers = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'];
-    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', descriptionEn: '', descriptionAr: '' };
+    const headers = ['barcode', 'nameEn', 'nameAr', 'Classification EN', 'Classification Ar', 'descriptionEn', 'descriptionAr'];
+    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', 'Classification EN': '', 'Classification Ar': '', descriptionEn: '', descriptionAr: '' };
 
     // If category provided, add category-specific columns
     let detailArr = null;
