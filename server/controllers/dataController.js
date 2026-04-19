@@ -420,7 +420,7 @@ exports.importTemplateAll = async (req, res, next) => {
     const sections = [
       {
         name: 'Book Corner',
-        columns: ['barcode', 'nameEn', 'nameAr', 'Description Ar', 'Description EN', 'Author AR', 'Author EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
+        columns: ['barcode', 'nameEn', 'nameAr', 'Classification EN', 'Classification Ar', 'Description Ar', 'Description EN', 'Author AR', 'Author EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
       },
       {
         name: 'Stationery Corner',
@@ -531,6 +531,15 @@ exports.importPreview = async (req, res, next) => {
         const val = row[k]?.trim();
         if (val) customFields[k.slice(3)] = { value: val };
       });
+      // Bilingual "Classification" columns (Book Corner filter)
+      const classEn = row['Classification EN']?.trim();
+      const classAr = row['Classification Ar']?.trim();
+      if (classEn || classAr) {
+        customFields.classification = {
+          ...(classEn && { value: classEn }),
+          ...(classAr && { valueAr: classAr }),
+        };
+      }
 
       const product = {
         row: rowNum,
