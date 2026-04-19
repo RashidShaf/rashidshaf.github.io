@@ -19,23 +19,11 @@ export default function DataManagement() {
   const [orderItems, setOrderItems] = useState([]);
   const [templateInfoLoading, setTemplateInfoLoading] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
-  const [categoriesWithCustomTemplate, setCategoriesWithCustomTemplate] = useState(new Set());
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const all = res.data.data || res.data;
-      const tops = all.filter((c) => !c.parentId);
-      setCategories(tops);
-      const customized = new Set();
-      tops.forEach((c) => {
-        if (c.importTemplateOrder) {
-          try {
-            const parsed = JSON.parse(c.importTemplateOrder);
-            if (Array.isArray(parsed) && parsed.length) customized.add(c.id);
-          } catch {}
-        }
-      });
-      setCategoriesWithCustomTemplate(customized);
+      setCategories(all.filter((c) => !c.parentId));
     }).catch(() => {});
   }, []);
 
@@ -180,12 +168,6 @@ export default function DataManagement() {
       ];
       const items = Array.isArray(savedOrder) && savedOrder.length ? applySavedOrder(baseItems, savedOrder) : baseItems;
       setOrderItems(items);
-      setCategoriesWithCustomTemplate((prev) => {
-        const next = new Set(prev);
-        if (Array.isArray(savedOrder) && savedOrder.length) next.add(templateCategory);
-        else next.delete(templateCategory);
-        return next;
-      });
     } catch {
       toast.error(t('data.failedTemplate'));
       setEditTemplateOpen(false);
@@ -210,12 +192,6 @@ export default function DataManagement() {
       const order = orderItems.filter((it) => it.locked || it.checked).map((it) => it.id);
       await api.post('/admin/data/import/template-config', { categoryId: templateCategory, order });
       toast.success(t('data.templateSaved'));
-      setCategoriesWithCustomTemplate((prev) => {
-        const next = new Set(prev);
-        if (order.length) next.add(templateCategory);
-        else next.delete(templateCategory);
-        return next;
-      });
       setEditTemplateOpen(false);
     } catch {
       toast.error(t('data.failedSave'));
@@ -290,11 +266,6 @@ export default function DataManagement() {
             </button>
             <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
               <FiDownload size={16} /> {t('data.downloadTemplate')}
-              {templateCategory && categoriesWithCustomTemplate.has(templateCategory) && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-admin-accent bg-admin-accent/10 px-1.5 py-0.5 rounded">
-                  {t('data.customized')}
-                </span>
-              )}
             </button>
           </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
