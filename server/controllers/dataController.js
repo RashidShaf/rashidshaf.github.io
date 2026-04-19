@@ -378,14 +378,15 @@ exports.importProducts = async (req, res, next) => {
 // Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
-    const headers = ['barcode', 'nameEn', 'nameAr', 'Classification EN', 'Classification Ar', 'descriptionEn', 'descriptionAr'];
-    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', 'Classification EN': '', 'Classification Ar': '', descriptionEn: '', descriptionAr: '' };
+    const headers = ['barcode', 'nameEn', 'nameAr'];
+    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي' };
 
     // If category provided, add category-specific columns
     let detailArr = null;
     let customDefs = [];
+    let isBookCorner = false;
     if (req.query.category) {
-      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true, slug: true, parentId: true } });
       if (category?.detailFields) {
         try {
           const parsed = JSON.parse(category.detailFields);
@@ -395,7 +396,28 @@ exports.importTemplate = async (req, res, next) => {
       if (category?.customFields) {
         try { customDefs = JSON.parse(category.customFields); } catch {}
       }
+      // Walk up parent chain to find root corner slug
+      let topSlug = category?.slug;
+      let parentId = category?.parentId;
+      while (parentId) {
+        const parent = await prisma.category.findUnique({ where: { id: parentId }, select: { slug: true, parentId: true } });
+        if (!parent) break;
+        topSlug = parent.slug;
+        parentId = parent.parentId;
+      }
+      isBookCorner = topSlug === 'books';
     }
+
+    // Classification columns only for Books corner (filter uses customFields.classification)
+    if (isBookCorner) {
+      headers.push('Classification EN', 'Classification Ar');
+      sample['Classification EN'] = '';
+      sample['Classification Ar'] = '';
+    }
+
+    headers.push('descriptionEn', 'descriptionAr');
+    sample.descriptionEn = '';
+    sample.descriptionAr = '';
 
     const hasField = (key) => !detailArr || detailArr.includes(key);
 
