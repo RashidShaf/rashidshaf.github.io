@@ -22,6 +22,7 @@ router.get('/import/template', [auth, admin], dataController.importTemplate);
 router.get('/import/template-all', [auth, admin], dataController.importTemplateAll);
 router.get('/import/template-info', [auth, admin], dataController.importTemplateInfo);
 router.get('/import/template-custom', [auth, admin], dataController.importTemplateCustom);
+router.post('/import/template-config', [auth, admin], dataController.importTemplateConfigSave);
 
 
 module.exports = router;

@@ -19,11 +19,24 @@ export default function DataManagement() {
   const [orderItems, setOrderItems] = useState([]);
   const [defaultOrderItems, setDefaultOrderItems] = useState([]);
   const [templateInfoLoading, setTemplateInfoLoading] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [categoriesWithCustomTemplate, setCategoriesWithCustomTemplate] = useState(new Set());
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
       const all = res.data.data || res.data;
-      setCategories(all.filter((c) => !c.parentId));
+      const tops = all.filter((c) => !c.parentId);
+      setCategories(tops);
+      const customized = new Set();
+      tops.forEach((c) => {
+        if (c.importTemplateOrder) {
+          try {
+            const parsed = JSON.parse(c.importTemplateOrder);
+            if (Array.isArray(parsed) && parsed.length) customized.add(c.id);
+          } catch {}
+        }
+      });
+      setCategoriesWithCustomTemplate(customized);
     }).catch(() => {});
   }, []);
 
@@ -140,19 +153,41 @@ export default function DataManagement() {
     }
   };
 
+  const applySavedOrder = (baseItems, savedOrder) => {
+    const byId = Object.fromEntries(baseItems.map((it) => [it.id, it]));
+    const ordered = [];
+    const seen = new Set();
+    for (const id of savedOrder) {
+      if (seen.has(id)) continue;
+      const it = byId[id];
+      if (it) { ordered.push({ ...it, checked: true }); seen.add(id); }
+    }
+    for (const it of baseItems) {
+      if (!seen.has(it.id)) ordered.push({ ...it, checked: it.locked });
+    }
+    return ordered;
+  };
+
   const openEditTemplate = async () => {
     if (!templateCategory) { toast.error(t('data.pickCategory')); return; }
     setTemplateInfoLoading(true);
     setEditTemplateOpen(true);
     try {
       const res = await api.get(`/admin/data/import/template-info?category=${templateCategory}`);
-      const { required, optional } = res.data;
-      const items = [
+      const { required, optional, savedOrder } = res.data;
+      const baseItems = [
         ...required.map((name) => ({ id: name, locked: true, checked: true, labelEn: name, labelAr: name, columns: [name] })),
         ...optional.map((f) => ({ id: f.id, locked: false, checked: false, labelEn: f.labelEn, labelAr: f.labelAr, columns: f.columns })),
       ];
+      const items = Array.isArray(savedOrder) && savedOrder.length ? applySavedOrder(baseItems, savedOrder) : baseItems;
       setOrderItems(items);
-      setDefaultOrderItems(items);
+      setDefaultOrderItems(baseItems);
+      setCategoriesWithCustomTemplate((prev) => {
+        const next = new Set(prev);
+        if (Array.isArray(savedOrder) && savedOrder.length) next.add(templateCategory);
+        else next.delete(templateCategory);
+        return next;
+      });
     } catch {
       toast.error(t('data.failedTemplate'));
       setEditTemplateOpen(false);
@@ -173,21 +208,23 @@ export default function DataManagement() {
 
   const resetOrder = () => setOrderItems(defaultOrderItems.map((it) => ({ ...it, checked: it.locked })));
 
-  const downloadCustomTemplate = async () => {
+  const saveTemplateConfig = async () => {
+    setSavingTemplate(true);
     try {
-      const order = orderItems.filter((it) => it.locked || it.checked).map((it) => it.id).join(',');
-      const res = await api.get(`/admin/data/import/template-custom?category=${templateCategory}&order=${encodeURIComponent(order)}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'product-import-template.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const order = orderItems.filter((it) => it.locked || it.checked).map((it) => it.id);
+      await api.post('/admin/data/import/template-config', { categoryId: templateCategory, order });
+      toast.success(t('data.templateSaved'));
+      setCategoriesWithCustomTemplate((prev) => {
+        const next = new Set(prev);
+        if (order.length) next.add(templateCategory);
+        else next.delete(templateCategory);
+        return next;
+      });
       setEditTemplateOpen(false);
     } catch {
-      toast.error(t('data.failedTemplate'));
+      toast.error(t('data.failedSave'));
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -257,6 +294,11 @@ export default function DataManagement() {
             </button>
             <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
               <FiDownload size={16} /> {t('data.downloadTemplate')}
+              {templateCategory && categoriesWithCustomTemplate.has(templateCategory) && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-admin-accent bg-admin-accent/10 px-1.5 py-0.5 rounded">
+                  {t('data.customized')}
+                </span>
+              )}
             </button>
           </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
@@ -621,17 +663,17 @@ export default function DataManagement() {
 
               {/* Footer */}
               <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-admin-border bg-admin-card">
-                <p className="text-xs text-admin-muted hidden sm:block">{t('data.saveHint')}</p>
+                <p className="text-xs text-admin-muted hidden sm:block">{t('data.savePersistHint')}</p>
                 <div className="flex items-center gap-2 ms-auto">
                   <button onClick={() => setEditTemplateOpen(false)} className="px-4 py-2 text-sm font-medium text-admin-text bg-white border border-admin-border rounded-lg hover:bg-gray-50 transition-colors">
                     {t('common.cancel')}
                   </button>
                   <button
-                    onClick={downloadCustomTemplate}
-                    disabled={templateInfoLoading || activeColumns.length === 0}
+                    onClick={saveTemplateConfig}
+                    disabled={templateInfoLoading || savingTemplate || activeColumns.length === 0}
                     className="flex items-center gap-2 px-5 py-2 bg-admin-accent text-white text-sm font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
-                    <FiDownload size={14} /> {t('data.save')}
+                    <FiCheck size={14} /> {savingTemplate ? t('data.saving') : t('data.save')}
                   </button>
                 </div>
               </div>

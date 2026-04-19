@@ -378,6 +378,40 @@ exports.importProducts = async (req, res, next) => {
 // Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
+    // If the admin has saved a custom column order for this category, build the CSV in that order.
+    if (req.query.category) {
+      const saved = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true, importTemplateOrder: true } });
+      if (saved?.importTemplateOrder) {
+        let savedOrder = null;
+        try {
+          const parsed = JSON.parse(saved.importTemplateOrder);
+          if (Array.isArray(parsed) && parsed.length) savedOrder = parsed;
+        } catch {}
+        if (savedOrder) {
+          const optional = buildOptionalFields(saved);
+          const optionalById = Object.fromEntries(optional.map((f) => [f.id, f]));
+          const sampleFor = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', purchasePrice: '30.00', sellingPrice: '49.99' };
+          const headers = [];
+          const sample = {};
+          const seen = new Set();
+          for (const id of savedOrder) {
+            if (seen.has(id)) continue;
+            seen.add(id);
+            if (TEMPLATE_REQUIRED.includes(id)) {
+              headers.push(id);
+              sample[id] = sampleFor[id] || '';
+            } else if (optionalById[id]) {
+              for (const col of optionalById[id].columns) { headers.push(col); sample[col] = ''; }
+            }
+          }
+          const csv = stringify([sample], { header: true, columns: headers });
+          res.setHeader('Content-Type', 'text/csv');
+          res.setHeader('Content-Disposition', 'attachment; filename=product-import-template.csv');
+          return res.send(csv);
+        }
+      }
+    }
+
     const headers = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'];
     const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', descriptionEn: '', descriptionAr: '' };
 
@@ -499,11 +533,35 @@ const TEMPLATE_REQUIRED = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'desc
 exports.importTemplateInfo = async (req, res, next) => {
   try {
     let optional = [];
+    let savedOrder = null;
     if (req.query.category) {
-      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true, importTemplateOrder: true } });
       optional = buildOptionalFields(category);
+      if (category?.importTemplateOrder) {
+        try {
+          const parsed = JSON.parse(category.importTemplateOrder);
+          if (Array.isArray(parsed)) savedOrder = parsed;
+        } catch {}
+      }
     }
-    res.json({ required: TEMPLATE_REQUIRED, optional });
+    res.json({ required: TEMPLATE_REQUIRED, optional, savedOrder });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Persists the admin's column order/selection for a category
+exports.importTemplateConfigSave = async (req, res, next) => {
+  try {
+    const { categoryId, order } = req.body;
+    if (!categoryId) return res.status(400).json({ message: 'categoryId required' });
+    if (!Array.isArray(order)) return res.status(400).json({ message: 'order must be an array' });
+    const safe = order.filter((x) => typeof x === 'string' && x.length > 0);
+    await prisma.category.update({
+      where: { id: categoryId },
+      data: { importTemplateOrder: safe.length ? JSON.stringify(safe) : null },
+    });
+    res.json({ ok: true });
   } catch (error) {
     next(error);
   }
