@@ -20,6 +20,8 @@ router.post('/import/preview', [auth, admin], upload.single('file'), dataControl
 router.post('/import/confirm', [auth, admin], dataController.importConfirm);
 router.get('/import/template', [auth, admin], dataController.importTemplate);
 router.get('/import/template-all', [auth, admin], dataController.importTemplateAll);
+router.get('/import/template-info', [auth, admin], dataController.importTemplateInfo);
+router.get('/import/template-custom', [auth, admin], dataController.importTemplateCustom);
 
 
 module.exports = router;

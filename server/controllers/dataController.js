@@ -378,15 +378,14 @@ exports.importProducts = async (req, res, next) => {
 // Download import template (simplified)
 exports.importTemplate = async (req, res, next) => {
   try {
-    const headers = ['barcode', 'nameEn', 'nameAr'];
-    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي' };
+    const headers = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'];
+    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', descriptionEn: '', descriptionAr: '' };
 
     // If category provided, add category-specific columns
     let detailArr = null;
     let customDefs = [];
-    let isBookCorner = false;
     if (req.query.category) {
-      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true, slug: true, parentId: true } });
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
       if (category?.detailFields) {
         try {
           const parsed = JSON.parse(category.detailFields);
@@ -396,28 +395,7 @@ exports.importTemplate = async (req, res, next) => {
       if (category?.customFields) {
         try { customDefs = JSON.parse(category.customFields); } catch {}
       }
-      // Walk up parent chain to find root corner slug
-      let topSlug = category?.slug;
-      let parentId = category?.parentId;
-      while (parentId) {
-        const parent = await prisma.category.findUnique({ where: { id: parentId }, select: { slug: true, parentId: true } });
-        if (!parent) break;
-        topSlug = parent.slug;
-        parentId = parent.parentId;
-      }
-      isBookCorner = topSlug === 'books';
     }
-
-    // Classification columns only for Books corner (filter uses customFields.classification)
-    if (isBookCorner) {
-      headers.push('Classification EN', 'Classification Ar');
-      sample['Classification EN'] = '';
-      sample['Classification Ar'] = '';
-    }
-
-    headers.push('descriptionEn', 'descriptionAr');
-    sample.descriptionEn = '';
-    sample.descriptionAr = '';
 
     const hasField = (key) => !detailArr || detailArr.includes(key);
 
@@ -442,7 +420,7 @@ exports.importTemplateAll = async (req, res, next) => {
     const sections = [
       {
         name: 'Book Corner',
-        columns: ['barcode', 'nameEn', 'nameAr', 'Classification EN', 'Classification Ar', 'Description Ar', 'Description EN', 'Author AR', 'Author EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
+        columns: ['barcode', 'nameEn', 'nameAr', 'Description Ar', 'Description EN', 'Author AR', 'Author EN', 'Publisher AR', 'Publisher (English)', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory', 'Language'],
       },
       {
         name: 'Stationery Corner',
@@ -484,6 +462,93 @@ exports.importTemplateAll = async (req, res, next) => {
   }
 };
 
+// Build the list of optional field toggles available for a category
+// Used by the Edit Template modal to render checkboxes and by template-custom to resolve them back to columns.
+function buildOptionalFields(category) {
+  const optional = [];
+  let detailArr = null;
+  let customDefs = [];
+  if (category?.detailFields) {
+    try {
+      const parsed = JSON.parse(category.detailFields);
+      detailArr = Array.isArray(parsed) ? parsed : parsed.detail || null;
+    } catch {}
+  }
+  if (category?.customFields) {
+    try {
+      const parsed = JSON.parse(category.customFields);
+      if (Array.isArray(parsed)) customDefs = parsed;
+    } catch {}
+  }
+  const hasField = (key) => !detailArr || detailArr.includes(key);
+  if (hasField('author')) optional.push({ id: 'author', labelEn: 'Author', labelAr: 'المؤلف', columns: ['authorEn', 'authorAr'] });
+  if (hasField('publisher')) optional.push({ id: 'publisher', labelEn: 'Publisher', labelAr: 'الناشر', columns: ['publisherEn', 'publisherAr'] });
+  if (hasField('language')) optional.push({ id: 'language', labelEn: 'Language', labelAr: 'اللغة', columns: ['language'] });
+  customDefs.forEach((cf) => {
+    if (!cf?.key || !cf?.name) return;
+    const labelEn = cf.name;
+    const labelAr = cf.nameAr || cf.name;
+    optional.push({ id: `cf_${cf.key}`, labelEn, labelAr, columns: [`${labelEn} EN`, `${labelEn} Ar`] });
+  });
+  return optional;
+}
+
+const TEMPLATE_REQUIRED = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'];
+
+// Returns the checkbox metadata for the Edit Template modal
+exports.importTemplateInfo = async (req, res, next) => {
+  try {
+    let optional = [];
+    if (req.query.category) {
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
+      optional = buildOptionalFields(category);
+    }
+    res.json({ required: TEMPLATE_REQUIRED, optional });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Generates a CSV with the 10 required columns plus any optional fields the admin ticked
+exports.importTemplateCustom = async (req, res, next) => {
+  try {
+    const selected = (req.query.fields || '').split(',').map((s) => s.trim()).filter(Boolean);
+    let optional = [];
+    if (req.query.category) {
+      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
+      optional = buildOptionalFields(category);
+    }
+
+    // Columns: required first (in a sensible order), then optional in the order they appear in buildOptionalFields
+    const headers = ['barcode', 'nameEn', 'nameAr'];
+    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي' };
+
+    for (const field of optional) {
+      if (!selected.includes(field.id)) continue;
+      for (const col of field.columns) {
+        headers.push(col);
+        sample[col] = '';
+      }
+    }
+
+    headers.push('descriptionEn', 'descriptionAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory');
+    sample.descriptionEn = '';
+    sample.descriptionAr = '';
+    sample.purchasePrice = '30.00';
+    sample.sellingPrice = '49.99';
+    sample.mainCategory = '';
+    sample.subCategory = '';
+    sample.subSubCategory = '';
+
+    const csv = stringify([sample], { header: true, columns: headers });
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=product-import-template.csv');
+    res.send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Preview import — parse CSV, validate, detect duplicates (does NOT create anything)
 exports.importPreview = async (req, res, next) => {
   try {
@@ -501,7 +566,7 @@ exports.importPreview = async (req, res, next) => {
 
     // Fetch categories and existing barcodes
     const allCategories = await prisma.category.findMany({
-      select: { id: true, name: true, slug: true, parentId: true },
+      select: { id: true, name: true, slug: true, parentId: true, customFields: true },
     });
     const existingBarcodes = await prisma.book.findMany({
       where: { sku: { not: null } },
@@ -510,6 +575,22 @@ exports.importPreview = async (req, res, next) => {
     const barcodeMap = {};
     existingBarcodes.forEach((b) => { barcodeMap[b.sku] = b.title; });
     const barcodeSet = new Set(Object.keys(barcodeMap));
+
+    // Build custom-field lookup: unique (key → { key, name, nameAr }) across all categories
+    const customFieldLookup = new Map();
+    for (const cat of allCategories) {
+      if (!cat.customFields) continue;
+      try {
+        const defs = JSON.parse(cat.customFields);
+        if (Array.isArray(defs)) {
+          defs.forEach((cf) => {
+            if (cf?.key && cf?.name && !customFieldLookup.has(cf.key.toLowerCase())) {
+              customFieldLookup.set(cf.key.toLowerCase(), { key: cf.key, name: cf.name, nameAr: cf.nameAr || cf.name });
+            }
+          });
+        }
+      } catch {}
+    }
 
     const valid = [];
     const duplicates = [];
@@ -547,20 +628,24 @@ exports.importPreview = async (req, res, next) => {
         }
       }
 
-      // Build custom fields from cf_ columns
+      // Build custom fields from cf_<key> columns (legacy) and bilingual "<Label> EN"/"<Label> Ar" pairs
       const customFields = {};
       Object.keys(row).filter((k) => k.startsWith('cf_')).forEach((k) => {
         const val = row[k]?.trim();
         if (val) customFields[k.slice(3)] = { value: val };
       });
-      // Bilingual "Classification" columns (Book Corner filter)
-      const classEn = row['Classification EN']?.trim();
-      const classAr = row['Classification Ar']?.trim();
-      if (classEn || classAr) {
-        customFields.classification = {
-          ...(classEn && { value: classEn }),
-          ...(classAr && { valueAr: classAr }),
-        };
+      // Resolve bilingual label columns against known custom-field definitions across all categories.
+      for (const [keyLower, meta] of customFieldLookup) {
+        const enCol = row[`${meta.name} EN`] || row[`${meta.name} En`] || row[`${meta.name} en`];
+        const arCol = row[`${meta.name} AR`] || row[`${meta.name} Ar`] || row[`${meta.name} ar`];
+        const enVal = enCol?.trim();
+        const arVal = arCol?.trim();
+        if (enVal || arVal) {
+          customFields[meta.key] = {
+            ...(enVal && { value: enVal }),
+            ...(arVal && { valueAr: arVal }),
+          };
+        }
       }
 
       const product = {

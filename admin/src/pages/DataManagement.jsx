@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX } from 'react-icons/fi';
+import { FiDownload, FiUpload, FiFileText, FiUsers, FiShoppingBag, FiPackage, FiLayers, FiCheck, FiAlertCircle, FiLock, FiX, FiEdit2 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -15,6 +15,10 @@ export default function DataManagement() {
   const [importResult, setImportResult] = useState(null);
   const [categories, setCategories] = useState([]);
   const [templateCategory, setTemplateCategory] = useState('');
+  const [editTemplateOpen, setEditTemplateOpen] = useState(false);
+  const [templateInfo, setTemplateInfo] = useState(null);
+  const [selectedFields, setSelectedFields] = useState([]);
+  const [templateInfoLoading, setTemplateInfoLoading] = useState(false);
 
   useEffect(() => {
     api.get('/admin/categories').then((res) => {
@@ -136,6 +140,42 @@ export default function DataManagement() {
     }
   };
 
+  const openEditTemplate = async () => {
+    if (!templateCategory) { toast.error(t('data.pickCategory')); return; }
+    setTemplateInfoLoading(true);
+    setEditTemplateOpen(true);
+    try {
+      const res = await api.get(`/admin/data/import/template-info?category=${templateCategory}`);
+      setTemplateInfo(res.data);
+      setSelectedFields([]);
+    } catch {
+      toast.error(t('data.failedTemplate'));
+      setEditTemplateOpen(false);
+    } finally {
+      setTemplateInfoLoading(false);
+    }
+  };
+
+  const toggleField = (id) => setSelectedFields((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]);
+
+  const downloadCustomTemplate = async () => {
+    try {
+      const fields = selectedFields.join(',');
+      const res = await api.get(`/admin/data/import/template-custom?category=${templateCategory}&fields=${encodeURIComponent(fields)}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'product-import-template.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setEditTemplateOpen(false);
+    } catch {
+      toast.error(t('data.failedTemplate'));
+    }
+  };
+
   const exportItems = [
     { type: 'products', label: t('data.products'), icon: FiFileText, color: 'bg-blue-600', hasExcel: true },
     { type: 'customers', label: t('data.customers'), icon: FiUsers, color: 'bg-emerald-600' },
@@ -194,6 +234,14 @@ export default function DataManagement() {
             </select>
             <button onClick={downloadTemplate} className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
               <FiDownload size={16} /> {t('data.downloadTemplate')}
+            </button>
+            <button
+              onClick={openEditTemplate}
+              disabled={!templateCategory}
+              title={!templateCategory ? t('data.pickCategory') : ''}
+              className="flex items-center gap-2 px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-border text-admin-text text-sm 3xl:text-base font-medium rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <FiEdit2 size={16} /> {t('data.editTemplate')}
             </button>
           </div>
           <div className="text-xs 3xl:text-sm text-admin-muted max-w-md">
@@ -409,6 +457,71 @@ export default function DataManagement() {
           </div>
         )}
       </div>
+
+      {/* Edit Template Modal */}
+      {editTemplateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditTemplateOpen(false)}>
+          <div className="bg-admin-card rounded-xl shadow-xl w-full max-w-xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-admin-border">
+              <h3 className="text-lg font-bold text-admin-text">{t('data.editTemplate')}</h3>
+              <button onClick={() => setEditTemplateOpen(false)} className="p-1.5 text-admin-muted hover:text-admin-text hover:bg-gray-100 rounded-lg transition-colors">
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-5">
+              {templateInfoLoading ? (
+                <p className="text-sm text-admin-muted">{t('common.loading')}...</p>
+              ) : templateInfo && (
+                <>
+                  <div>
+                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.requiredColumns')}</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {templateInfo.required.map((col) => (
+                        <span key={col} className="px-2.5 py-1 bg-admin-bg border border-admin-border text-xs text-admin-text rounded-md font-mono">
+                          {col}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.optionalColumns')}</h4>
+                    {templateInfo.optional.length === 0 ? (
+                      <p className="text-sm text-admin-muted">{t('data.noOptionalColumns')}</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {templateInfo.optional.map((field) => (
+                          <label key={field.id} className="flex items-start gap-3 p-3 bg-admin-bg border border-admin-border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedFields.includes(field.id)}
+                              onChange={() => toggleField(field.id)}
+                              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-admin-accent focus:ring-admin-accent"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-admin-text">
+                                {language === 'ar' ? field.labelAr : field.labelEn}
+                              </p>
+                              <p className="text-xs text-admin-muted font-mono mt-0.5">{field.columns.join(', ')}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 p-5 border-t border-admin-border">
+              <button onClick={() => setEditTemplateOpen(false)} className="px-4 py-2 text-sm text-admin-text bg-admin-bg border border-admin-border rounded-lg hover:bg-gray-100 transition-colors">
+                {t('common.cancel')}
+              </button>
+              <button onClick={downloadCustomTemplate} disabled={templateInfoLoading} className="flex items-center gap-2 px-4 py-2 bg-admin-accent text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50">
+                <FiDownload size={14} /> {t('data.downloadCsv')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
