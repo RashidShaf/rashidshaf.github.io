@@ -4,6 +4,14 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const ExcelJS = require('exceljs');
 
+// Coerce any language-like input into the two values the schema/filter accept.
+function normalizeLanguage(value) {
+  if (!value || typeof value !== 'string') return 'en';
+  const v = value.trim().toLowerCase();
+  if (v === 'ar' || v.startsWith('ar-') || v === 'arabic' || v === 'عربية' || v === 'العربية') return 'ar';
+  return 'en';
+}
+
 // ==================== EXPORT ====================
 
 // Export Products
@@ -324,7 +332,7 @@ exports.importProducts = async (req, res, next) => {
           compareAtPrice: row.compareAtPrice ? parseFloat(row.compareAtPrice) : null,
           publisher: row.publisher?.trim() || null,
           publisherAr: row.publisherAr?.trim() || null,
-          language: row.language?.trim() || 'en',
+          language: normalizeLanguage(row.language),
           pages: row.pages ? parseInt(row.pages) : null,
           weight: row.weight ? parseFloat(row.weight) : null,
           dimensions: row.dimensions?.trim() || null,
@@ -720,7 +728,7 @@ exports.importPreview = async (req, res, next) => {
         authorAr: row.authorAr?.trim() || row['Author AR']?.trim() || '',
         publisherEn: row.publisherEn?.trim() || row['Publisher (English)']?.trim() || '',
         publisherAr: row.publisherAr?.trim() || row['Publisher AR']?.trim() || '',
-        language: row.language?.trim() || '',
+        language: normalizeLanguage(row.language),
         brand: row.brand?.trim() || '',
         brandAr: row.brandAr?.trim() || '',
         color: row.color?.trim() || '',
@@ -810,7 +818,7 @@ exports.importConfirm = async (req, res, next) => {
             descriptionAr: product.descriptionAr || null,
             publisher: product.publisherEn || null,
             publisherAr: product.publisherAr || null,
-            language: product.language || 'en',
+            language: normalizeLanguage(product.language),
             brand: product.brand || null,
             brandAr: product.brandAr || null,
             color: product.color || null,
