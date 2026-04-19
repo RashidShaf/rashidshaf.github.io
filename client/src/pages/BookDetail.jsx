@@ -161,41 +161,39 @@ const BookDetail = () => {
             transition={{ duration: 0.3 }}
             className="flex-shrink-0 lg:mx-0"
           >
-            <div className="flex gap-2 sm:gap-4 items-start">
-              {/* Thumbnail strip */}
-              <div className="flex flex-col gap-1.5 sm:gap-2 w-10 sm:w-14 3xl:w-18 flex-shrink-0">
-                {book.images && book.images.length > 0 ? (
-                  [coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
+            <div className="flex flex-col gap-3 sm:gap-4 items-center sm:items-start">
+              {/* Main cover */}
+              <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+                {(selectedImage || coverUrl) ? (
+                  <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
+                ) : placeholderUrl ? (
+                  <img src={placeholderUrl} alt={title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
+                    <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>
+                  </div>
+                )}
+                {hasDiscount && (
+                  <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-md">
+                    -{discountPercent}%
+                  </span>
+                )}
+              </div>
+
+              {/* Thumbnail strip — below main image */}
+              {book.images && book.images.length > 0 && (
+                <div className="flex flex-row gap-2 sm:gap-2.5 flex-wrap">
+                  {[coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
                     <div
                       key={i}
                       onClick={() => setSelectedImage(img)}
-                      className={`w-10 sm:w-14 3xl:w-18 h-12 sm:h-16 3xl:h-20 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
+                      className={`w-14 h-16 sm:w-16 sm:h-20 3xl:w-20 3xl:h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </div>
-                  ))
-                ) : null}
-              </div>
-
-              {/* Main cover */}
-              <div className="flex-1 flex justify-center sm:justify-start">
-              <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
-              {(selectedImage || coverUrl) ? (
-                <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
-              ) : placeholderUrl ? (
-                <img src={placeholderUrl} alt={title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
-                  <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>
+                  ))}
                 </div>
               )}
-              {hasDiscount && (
-                <span className="absolute top-3 left-3 rtl:left-auto rtl:right-3 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-md">
-                  -{discountPercent}%
-                </span>
-              )}
-            </div>
-            </div>
             </div>
 
           </motion.div>
