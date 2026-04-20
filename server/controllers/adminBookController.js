@@ -5,7 +5,8 @@ const fs = require('fs');
 const path = require('path');
 
 const buildBooksWhere = async (query) => {
-  const { search, category, hasImage, hasDesc, hasDescAr, duplicateBarcode, similarNames } = query;
+  const { search, category, hasImage, hasDesc, hasDescAr, duplicateBarcode, similarNames,
+    hasBarcode, author, publisher, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice } = query;
   const where = { AND: [] };
 
   if (search) {
@@ -44,6 +45,32 @@ const buildBooksWhere = async (query) => {
   if (hasDesc === 'false') where.AND.push({ OR: [{ description: null }, { description: '' }] });
   if (hasDescAr === 'true') where.AND.push({ descriptionAr: { not: null } });
   if (hasDescAr === 'false') where.AND.push({ OR: [{ descriptionAr: null }, { descriptionAr: '' }] });
+
+  if (hasBarcode === 'true')  where.AND.push({ AND: [{ sku: { not: null } }, { sku: { not: '' } }] });
+  if (hasBarcode === 'false') where.AND.push({ OR: [{ sku: null }, { sku: '' }] });
+
+  if (author && author.trim()) where.AND.push({
+    OR: [
+      { author:   { contains: author.trim(), mode: 'insensitive' } },
+      { authorAr: { contains: author.trim(), mode: 'insensitive' } },
+    ],
+  });
+  if (publisher && publisher.trim()) where.AND.push({
+    OR: [
+      { publisher:   { contains: publisher.trim(), mode: 'insensitive' } },
+      { publisherAr: { contains: publisher.trim(), mode: 'insensitive' } },
+    ],
+  });
+
+  const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+  const minP = num(minPrice);
+  const maxP = num(maxPrice);
+  if (minP !== null) where.AND.push({ price: { gte: minP } });
+  if (maxP !== null) where.AND.push({ price: { lte: maxP } });
+  const minPP = num(minPurchasePrice);
+  const maxPP = num(maxPurchasePrice);
+  if (minPP !== null) where.AND.push({ purchasePrice: { gte: minPP } });
+  if (maxPP !== null) where.AND.push({ purchasePrice: { lte: maxPP } });
 
   if (duplicateBarcode === 'true') {
     const dupes = await prisma.$queryRaw`
@@ -115,6 +142,28 @@ exports.list = async (req, res, next) => {
     }
 
     res.json({ ...getPaginatedResponse(books, total, page, limit), stats });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /admin/books/filter-options — returns distinct authors and publishers for the filter dropdowns
+exports.filterOptions = async (req, res, next) => {
+  try {
+    const books = await prisma.book.findMany({
+      where: { isActive: true },
+      select: { author: true, authorAr: true, publisher: true, publisherAr: true },
+    });
+    const dedupe = (arr) => Array.from(new Set(arr.filter((s) => s && s.trim()))).sort((a, b) => a.localeCompare(b));
+    const authors = dedupe([
+      ...books.map((b) => b.author),
+      ...books.map((b) => b.authorAr),
+    ]);
+    const publishers = dedupe([
+      ...books.map((b) => b.publisher),
+      ...books.map((b) => b.publisherAr),
+    ]);
+    res.json({ authors, publishers });
   } catch (error) {
     next(error);
   }

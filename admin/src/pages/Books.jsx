@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -27,6 +27,18 @@ export default function Books() {
   const [imageFilter, setImageFilter] = useState(searchParams.get('img') || '');
   const [descFilter, setDescFilter] = useState(searchParams.get('desc') || '');
   const [issueFilter, setIssueFilter] = useState(searchParams.get('issue') || '');
+  const [barcodeFilter, setBarcodeFilter] = useState(searchParams.get('barcode') || '');
+  const [authorFilter, setAuthorFilter] = useState(searchParams.get('author') || '');
+  const [publisherFilter, setPublisherFilter] = useState(searchParams.get('publisher') || '');
+  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [minPurchasePrice, setMinPurchasePrice] = useState(searchParams.get('minPurchasePrice') || '');
+  const [maxPurchasePrice, setMaxPurchasePrice] = useState(searchParams.get('maxPurchasePrice') || '');
+  // Draft values for price popup (committed on Apply)
+  const [minPriceDraft, setMinPriceDraft] = useState('');
+  const [maxPriceDraft, setMaxPriceDraft] = useState('');
+  const [minPurchasePriceDraft, setMinPurchasePriceDraft] = useState('');
+  const [maxPurchasePriceDraft, setMaxPurchasePriceDraft] = useState('');
   const [openFilterMenu, setOpenFilterMenu] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkConfirmAction, setBulkConfirmAction] = useState(null);
@@ -60,7 +72,15 @@ export default function Books() {
       setAllCategories(all);
       setCategories(all.filter((c) => !c.parentId));
     }).catch(() => {});
+    api.get('/admin/books/filter-options').then((res) => {
+      setFilterOptionAuthors(res.data.authors || []);
+      setFilterOptionPublishers(res.data.publishers || []);
+    }).catch(() => {});
   }, []);
+  const [filterOptionAuthors, setFilterOptionAuthors] = useState([]);
+  const [filterOptionPublishers, setFilterOptionPublishers] = useState([]);
+  const [authorMenuSearch, setAuthorMenuSearch] = useState('');
+  const [publisherMenuSearch, setPublisherMenuSearch] = useState('');
 
   const [suggestedBrands, setSuggestedBrands] = useState([]);
   const [suggestedBrandsAr, setSuggestedBrandsAr] = useState([]);
@@ -111,6 +131,14 @@ export default function Books() {
       if (descFilter === 'noDescAr') params.set('hasDescAr', 'false');
       if (issueFilter === 'duplicateBarcode') params.set('duplicateBarcode', 'true');
       if (issueFilter === 'similarNames') params.set('similarNames', 'true');
+      if (barcodeFilter === 'with')    params.set('hasBarcode', 'true');
+      if (barcodeFilter === 'without') params.set('hasBarcode', 'false');
+      if (authorFilter)    params.set('author', authorFilter);
+      if (publisherFilter) params.set('publisher', publisherFilter);
+      if (minPrice)         params.set('minPrice', minPrice);
+      if (maxPrice)         params.set('maxPrice', maxPrice);
+      if (minPurchasePrice) params.set('minPurchasePrice', minPurchasePrice);
+      if (maxPurchasePrice) params.set('maxPurchasePrice', maxPurchasePrice);
 
       const res = await api.get(`/admin/books?${params}`, { signal: controller.signal });
       setBooks(res.data.data);
@@ -183,7 +211,7 @@ export default function Books() {
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter]);
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter, barcodeFilter, authorFilter, publisherFilter, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice]);
 
   const firstSearchRun = useRef(true);
   useEffect(() => {
@@ -443,7 +471,7 @@ export default function Books() {
       )}
 
       {/* Search + Refresh + Add Product */}
-      <div className="flex items-center gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 3xl:gap-3 mb-4 bg-admin-card border border-admin-border rounded-lg px-3 py-2">
         <div className="relative flex-1 max-w-xl">
           <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full ps-10 pe-4 py-2 3xl:py-2.5 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent" />
@@ -452,6 +480,14 @@ export default function Books() {
         <button onClick={fetchBooks} className="flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 text-admin-muted hover:text-admin-accent hover:bg-gray-100 rounded-lg transition-colors text-sm 3xl:text-base font-medium">
           <FiRefreshCw size={14} /> {t('common.refresh')}
         </button>
+        <Link
+          to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
+          className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap 3xl:order-[99]"
+        >
+          <FiPlus size={16} /> {t('books.addBook')}
+        </Link>
+        {/* Forces filters onto the next row below 3xl. Hidden (no-op) on 3xl+ so the row stays single-line. */}
+        <div className="basis-full h-0 3xl:hidden" aria-hidden="true" />
         {/* Quality Filters — 3 dropdowns */}
         {[
           { id: 'img', value: imageFilter, setter: setImageFilter, label: t('categories.image'), options: [
@@ -469,6 +505,11 @@ export default function Books() {
             { key: 'duplicateBarcode', label: t('books.duplicateBarcode') },
             { key: 'similarNames', label: t('books.similarNames') },
           ]},
+          { id: 'barcode', value: barcodeFilter, setter: setBarcodeFilter, label: t('books.filterBarcode'), options: [
+            { key: '', label: t('common.all') },
+            { key: 'with', label: t('books.withBarcode') },
+            { key: 'without', label: t('books.withoutBarcode') },
+          ]},
         ].map((filter) => (
           <div key={filter.id} className="relative">
             <button
@@ -481,7 +522,7 @@ export default function Books() {
               {filter.value ? filter.options.find((o) => o.key === filter.value)?.label || filter.label : filter.label}
             </button>
             {openFilterMenu === filter.id && (
-              <div className="absolute top-full mt-1 end-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
+              <div className="absolute top-full mt-1 start-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[200px] max-w-[calc(100vw-2rem)] py-1">
                 {filter.options.map((opt) => (
                   <button
                     key={opt.key}
@@ -497,10 +538,18 @@ export default function Books() {
                       const newImg = filter.id === 'img' ? opt.key : imageFilter;
                       const newDesc = filter.id === 'desc' ? opt.key : descFilter;
                       const newIssue = filter.id === 'issue' ? opt.key : issueFilter;
+                      const newBarcode = filter.id === 'barcode' ? opt.key : barcodeFilter;
                       if (newImg) params.set('img', newImg);
                       if (newDesc) params.set('desc', newDesc);
                       if (newIssue) params.set('issue', newIssue);
+                      if (newBarcode) params.set('barcode', newBarcode);
                       if (search) params.set('q', search);
+                      if (authorFilter) params.set('author', authorFilter);
+                      if (publisherFilter) params.set('publisher', publisherFilter);
+                      if (minPrice) params.set('minPrice', minPrice);
+                      if (maxPrice) params.set('maxPrice', maxPrice);
+                      if (minPurchasePrice) params.set('minPurchasePrice', minPurchasePrice);
+                      if (maxPurchasePrice) params.set('maxPurchasePrice', maxPurchasePrice);
                       setSearchParams(params, { replace: true });
                     }}
                     className={`w-full text-start px-4 py-2 text-sm transition-colors ${
@@ -514,12 +563,132 @@ export default function Books() {
             )}
           </div>
         ))}
-        <Link
-          to={selectedTab ? `/books/create?category=${selectedTab}` : '/books/create'}
-          className="flex items-center gap-2 px-4 py-2 3xl:px-5 3xl:py-2.5 bg-admin-accent text-white rounded-lg text-sm 3xl:text-base font-medium hover:bg-blue-600 transition-colors whitespace-nowrap"
-        >
-          <FiPlus size={16} /> {t('books.addBook')}
-        </Link>
+
+        {/* Author filter — searchable dropdown of distinct authors */}
+        {[
+          { id: 'author', label: t('books.filterAuthor'), value: authorFilter, set: setAuthorFilter, options: filterOptionAuthors, menuSearch: authorMenuSearch, setMenuSearch: setAuthorMenuSearch, searchPlaceholder: t('books.authorContains') },
+          { id: 'publisher', label: t('books.filterPublisher'), value: publisherFilter, set: setPublisherFilter, options: filterOptionPublishers, menuSearch: publisherMenuSearch, setMenuSearch: setPublisherMenuSearch, searchPlaceholder: t('books.publisherContains') },
+        ].map((f) => {
+          const q = f.menuSearch.trim().toLowerCase();
+          const filtered = q ? f.options.filter((o) => o.toLowerCase().includes(q)) : f.options;
+          return (
+            <div key={f.id} className="relative">
+              <button
+                onClick={() => setOpenFilterMenu(openFilterMenu === f.id ? null : f.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 border rounded-lg text-xs 3xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                  f.value ? 'border-admin-accent text-admin-accent bg-blue-50' : 'border-admin-input-border text-admin-muted hover:text-admin-accent hover:bg-gray-100'
+                }`}
+              >
+                <FiFilter size={12} />
+                {f.value ? `${f.label}: ${f.value.length > 18 ? f.value.slice(0, 18) + '…' : f.value}` : f.label}
+              </button>
+              {openFilterMenu === f.id && (
+                <div className="absolute top-full mt-1 start-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] max-w-[calc(100vw-2rem)] p-2">
+                  <div className="relative mb-1.5">
+                    <FiSearch className="absolute start-2.5 top-1/2 -translate-y-1/2 text-admin-muted" size={13} />
+                    <input
+                      type="text"
+                      autoFocus
+                      value={f.menuSearch}
+                      onChange={(e) => f.setMenuSearch(e.target.value)}
+                      placeholder={f.searchPlaceholder}
+                      className="w-full ps-8 pe-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+                    />
+                  </div>
+                  <div className="max-h-64 overflow-y-auto py-1">
+                    <button
+                      onClick={() => { f.set(''); setOpenFilterMenu(null); setPage(1); }}
+                      className={`w-full text-start px-3 py-1.5 rounded text-sm ${!f.value ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
+                    >
+                      {t('common.all')}
+                    </button>
+                    {filtered.length === 0 && (
+                      <p className="px-3 py-2 text-xs text-admin-muted text-center">{t('books.noCategoriesFound') || 'No matches'}</p>
+                    )}
+                    {filtered.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => { f.set(opt); setOpenFilterMenu(null); setPage(1); }}
+                        className={`w-full text-start px-3 py-1.5 rounded text-sm truncate ${f.value === opt ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Price filter (min/max for both selling & purchase) */}
+        {(() => {
+          const priceActive = !!(minPrice || maxPrice || minPurchasePrice || maxPurchasePrice);
+          return (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  if (openFilterMenu !== 'price') {
+                    setMinPriceDraft(minPrice); setMaxPriceDraft(maxPrice);
+                    setMinPurchasePriceDraft(minPurchasePrice); setMaxPurchasePriceDraft(maxPurchasePrice);
+                  }
+                  setOpenFilterMenu(openFilterMenu === 'price' ? null : 'price');
+                }}
+                className={`flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 border rounded-lg text-xs 3xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                  priceActive ? 'border-admin-accent text-admin-accent bg-blue-50' : 'border-admin-input-border text-admin-muted hover:text-admin-accent hover:bg-gray-100'
+                }`}
+              >
+                <FiFilter size={12} />
+                {t('books.filterPrice')}
+              </button>
+              {openFilterMenu === 'price' && (
+                <div className="absolute top-full mt-1 start-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 min-w-[280px] max-w-[calc(100vw-2rem)] p-3 space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-1.5">{t('books.sellingPriceRange')}</p>
+                    <div className="flex items-center gap-2">
+                      <input type="number" min="0" step="0.01" value={minPriceDraft} onChange={(e) => setMinPriceDraft(e.target.value)} placeholder={t('books.minPrice')} className="w-full px-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+                      <span className="text-admin-muted text-xs">—</span>
+                      <input type="number" min="0" step="0.01" value={maxPriceDraft} onChange={(e) => setMaxPriceDraft(e.target.value)} placeholder={t('books.maxPrice')} className="w-full px-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-1.5">{t('books.purchasePriceRange')}</p>
+                    <div className="flex items-center gap-2">
+                      <input type="number" min="0" step="0.01" value={minPurchasePriceDraft} onChange={(e) => setMinPurchasePriceDraft(e.target.value)} placeholder={t('books.minPrice')} className="w-full px-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+                      <span className="text-admin-muted text-xs">—</span>
+                      <input type="number" min="0" step="0.01" value={maxPurchasePriceDraft} onChange={(e) => setMaxPurchasePriceDraft(e.target.value)} placeholder={t('books.maxPrice')} className="w-full px-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-admin-border">
+                    <button
+                      onClick={() => {
+                        setMinPriceDraft(''); setMaxPriceDraft('');
+                        setMinPurchasePriceDraft(''); setMaxPurchasePriceDraft('');
+                        setMinPrice(''); setMaxPrice('');
+                        setMinPurchasePrice(''); setMaxPurchasePrice('');
+                        setPage(1);
+                      }}
+                      className="text-xs text-admin-muted hover:text-red-500 font-medium"
+                    >
+                      {t('common.clear') || 'Clear'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMinPrice(minPriceDraft); setMaxPrice(maxPriceDraft);
+                        setMinPurchasePrice(minPurchasePriceDraft); setMaxPurchasePrice(maxPurchasePriceDraft);
+                        setOpenFilterMenu(null);
+                        setPage(1);
+                      }}
+                      className="px-3 py-1.5 bg-admin-accent text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      {t('books.apply') || 'Apply'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Bulk Action Bar */}
@@ -888,7 +1057,14 @@ export default function Books() {
                         })()}
                       </div>
                     </td>
-                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {parseFloat(book.price).toFixed(2)}</td>
+                    <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
+                      <div>QAR {parseFloat(book.price).toFixed(2)}</div>
+                      {book.purchasePrice != null && book.purchasePrice !== '' && (
+                        <div className="text-[11px] text-admin-muted font-normal mt-0.5">
+                          {t('books.purchasePriceShort') || 'Cost'}: QAR {parseFloat(book.purchasePrice).toFixed(2)}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className={`font-medium ${book.stock <= 5 ? 'text-red-500' : 'text-admin-text'}`}>{book.stock}</span>
                     </td>
