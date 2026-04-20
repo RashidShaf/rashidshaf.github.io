@@ -44,7 +44,7 @@ export default function BookEdit() {
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
     description: '', descriptionAr: '', price: '', purchasePrice: '', compareAtPrice: '',
-    publisher: '', publisherAr: '', language: 'en', pages: '',
+    publisher: '', publisherAr: '', language: '', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
     publishedDate: '', weight: '',
     brand: '', brandAr: '', material: '', materialAr: '', color: '', colorAr: '', dimensions: '', ageRange: '',
@@ -115,7 +115,7 @@ export default function BookEdit() {
           compareAtPrice: book.compareAtPrice ? parseFloat(book.compareAtPrice).toString() : '',
           publisher: book.publisher || '',
           publisherAr: book.publisherAr || '',
-          language: book.language === 'ar' ? 'ar' : 'en',
+          language: (book.language === 'en' || book.language === 'ar') ? book.language : '',
           pages: book.pages ? book.pages.toString() : '',
           stock: book.stock != null ? book.stock.toString() : '0',
           parentCategoryId: cornerId,
@@ -522,6 +522,7 @@ export default function BookEdit() {
                     <div>
                       <label className={labelClass}>{t('books.language')}</label>
                       <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
+                        <option value="">{t('books.selectLanguage')}</option>
                         <option value="en">{t('books.langEnglish')}</option>
                         <option value="ar">{t('books.langArabic')}</option>
                       </select>

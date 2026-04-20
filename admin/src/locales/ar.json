@@ -137,6 +137,8 @@
     "language": "اللغة",
     "langEnglish": "إنجليزي",
     "langArabic": "عربي",
+    "selectLanguage": "اختر اللغة",
+    "languageRequired": "يرجى اختيار اللغة",
     "publishedDate": "تاريخ النشر",
     "brand": "العلامة التجارية",
     "brandAr": "العلامة التجارية (عربي)",

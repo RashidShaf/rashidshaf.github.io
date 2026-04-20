@@ -25,7 +25,7 @@ export default function BookCreate() {
   const [form, setForm] = useState({
     title: '', titleAr: '', author: '', authorAr: '', isbn: '', sku: '',
     description: '', descriptionAr: '', price: '', purchasePrice: '', compareAtPrice: '',
-    publisher: '', publisherAr: '', language: 'en', pages: '',
+    publisher: '', publisherAr: '', language: '', pages: '',
     stock: '0', parentCategoryId: '', tags: '',
     publishedDate: '', weight: '',
     brand: '', brandAr: '', material: '', materialAr: '', color: '', colorAr: '', dimensions: '', ageRange: '',
@@ -413,6 +413,7 @@ export default function BookCreate() {
                     <div>
                       <label className={labelClass}>{t('books.language')}</label>
                       <select name="language" value={form.language} onChange={handleChange} className={inputClass}>
+                        <option value="">{t('books.selectLanguage')}</option>
                         <option value="en">{t('books.langEnglish')}</option>
                         <option value="ar">{t('books.langArabic')}</option>
                       </select>

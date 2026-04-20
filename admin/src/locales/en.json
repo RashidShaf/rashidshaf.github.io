@@ -137,6 +137,8 @@
     "language": "Language",
     "langEnglish": "English",
     "langArabic": "Arabic",
+    "selectLanguage": "Select language",
+    "languageRequired": "Please select a language",
     "publishedDate": "Published Date",
     "brand": "Brand",
     "brandAr": "Brand (Arabic)",

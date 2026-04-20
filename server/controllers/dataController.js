@@ -4,12 +4,16 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const ExcelJS = require('exceljs');
 
-// Coerce any language-like input into the two values the schema/filter accept.
-function normalizeLanguage(value) {
-  if (!value || typeof value !== 'string') return 'en';
+// Validate a CSV language cell.
+// Empty cell → accepted with value '' ("nothing selected"). No silent default.
+// Known aliases (en/english/en-us or ar/arabic/ar-sa/عربية) → accepted, normalized to en or ar.
+// Anything else → rejected with a message listing accepted values so the admin can fix the CSV.
+function validateLanguage(value) {
+  if (!value || typeof value !== 'string' || !value.trim()) return { ok: true, value: '' };
   const v = value.trim().toLowerCase();
-  if (v === 'ar' || v.startsWith('ar-') || v === 'arabic' || v === 'عربية' || v === 'العربية') return 'ar';
-  return 'en';
+  if (['en', 'english', 'en-us'].includes(v)) return { ok: true, value: 'en' };
+  if (['ar', 'arabic', 'ar-sa'].includes(v) || v === 'عربية' || v === 'العربية') return { ok: true, value: 'ar' };
+  return { ok: false, error: 'Language must be one of: en, ar, English, Arabic (or leave blank)' };
 }
 
 // ==================== EXPORT ====================
@@ -287,6 +291,11 @@ exports.importProducts = async (req, res, next) => {
           results.errors.push({ row: rowNum, error: 'Valid price is required' });
           continue;
         }
+        const langCheck = validateLanguage(row.language);
+        if (!langCheck.ok) {
+          results.errors.push({ row: rowNum, error: langCheck.error });
+          continue;
+        }
 
         // Resolve category
         let categoryId = null;
@@ -335,7 +344,7 @@ exports.importProducts = async (req, res, next) => {
           compareAtPrice: row.compareAtPrice ? parseFloat(row.compareAtPrice) : null,
           publisher: row.publisher?.trim() || null,
           publisherAr: row.publisherAr?.trim() || null,
-          language: normalizeLanguage(row.language),
+          language: langCheck.value,
           pages: row.pages ? parseInt(row.pages) : null,
           weight: row.weight ? parseFloat(row.weight) : null,
           dimensions: row.dimensions?.trim() || null,
@@ -702,6 +711,8 @@ exports.importPreview = async (req, res, next) => {
       // Validate required fields (barcode is optional; enforced per-category via the detail-fields toggle)
       if (!row.nameEn || !row.nameEn.trim()) { errors.push({ row: rowNum, error: 'Name (English) is required' }); continue; }
       if (!row.sellingPrice || isNaN(parseFloat(row.sellingPrice))) { errors.push({ row: rowNum, error: 'Valid selling price is required' }); continue; }
+      const langResult = validateLanguage(row.language);
+      if (!langResult.ok) { errors.push({ row: rowNum, error: langResult.error }); continue; }
 
       // Resolve category by name (case-insensitive)
       let categoryId = null;
@@ -757,7 +768,7 @@ exports.importPreview = async (req, res, next) => {
         authorAr: row.authorAr?.trim() || row['Author AR']?.trim() || '',
         publisherEn: row.publisherEn?.trim() || row['Publisher (English)']?.trim() || '',
         publisherAr: row.publisherAr?.trim() || row['Publisher AR']?.trim() || '',
-        language: normalizeLanguage(row.language),
+        language: langResult.value,
         pages: row.pages?.trim() || '',
         isbn: row.isbn?.trim() || '',
         publishedDate: row.publishedDate?.trim() || '',
@@ -852,7 +863,7 @@ exports.importConfirm = async (req, res, next) => {
             descriptionAr: product.descriptionAr || null,
             publisher: product.publisherEn || null,
             publisherAr: product.publisherAr || null,
-            language: normalizeLanguage(product.language),
+            language: product.language || '',
             pages: pagesInt,
             isbn: product.isbn || null,
             publishedDate: publishedDateValue,
