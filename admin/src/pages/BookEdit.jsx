@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiUpload, FiX, FiChevronDown } from 'react-icons/fi';
+import { FiArrowLeft, FiUpload, FiX, FiChevronDown, FiSearch } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import AutocompleteInput from '../components/AutocompleteInput';
@@ -24,6 +24,7 @@ export default function BookEdit() {
   const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [expandedSubs, setExpandedSubs] = useState({});
+  const [categorySearch, setCategorySearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [suggestedAuthors, setSuggestedAuthors] = useState([]);
@@ -177,6 +178,34 @@ export default function BookEdit() {
     if (!form.parentCategoryId) return [];
     return allCategories.filter((c) => c.parentId === form.parentCategoryId);
   }, [form.parentCategoryId, allCategories]);
+
+  // Flat search results scoped to the currently-selected corner. Returns null when empty.
+  const searchedCategories = useMemo(() => {
+    const q = categorySearch.trim().toLowerCase();
+    if (!q || !form.parentCategoryId) return null;
+    const corner = allCategories.find((c) => c.id === form.parentCategoryId);
+    if (!corner) return null;
+    const descendantsOf = (parentId) => {
+      const direct = allCategories.filter((c) => c.parentId === parentId);
+      return direct.flatMap((c) => [c, ...descendantsOf(c.id)]);
+    };
+    const pool = descendantsOf(corner.id);
+    const matching = pool.filter((c) =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.nameAr || '').toLowerCase().includes(q)
+    );
+    const nameOf = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
+    return matching.map((c) => {
+      const chain = [];
+      let cur = c;
+      while (cur) {
+        chain.unshift(cur);
+        cur = allCategories.find((x) => x.id === cur.parentId);
+      }
+      return { ...c, _crumb: chain.map(nameOf).join(' › ') };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySearch, form.parentCategoryId, allCategories, language]);
 
   const selectedParent = parentCategories.find((c) => c.id === form.parentCategoryId);
   const cornerSlug = selectedParent?.slug?.toLowerCase() || '';
@@ -368,7 +397,43 @@ export default function BookEdit() {
 
               {cornerChildren.length > 0 && (
                 <div>
-                  <label className={labelClass}>{t('books.selectCategories')}</label>
+                  <div className="flex items-center gap-3 mb-2">
+                    <label className={labelClass + ' !mb-0'}>{t('books.selectCategories')}</label>
+                    <div className="relative flex-1 max-w-xs">
+                      <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 text-admin-muted pointer-events-none" size={14} />
+                      <input
+                        type="text"
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        placeholder={t('books.searchCategories')}
+                        className="w-full ps-9 pe-3 py-1.5 bg-white border border-admin-input-border rounded-lg text-xs 3xl:text-sm text-admin-text focus:outline-none focus:border-admin-accent"
+                      />
+                    </div>
+                  </div>
+                  {searchedCategories && (
+                    <div className="border border-admin-input-border rounded-lg max-h-64 overflow-y-auto">
+                      {searchedCategories.length === 0 ? (
+                        <p className="p-4 text-xs text-admin-muted text-center">{t('books.noCategoriesFound')}</p>
+                      ) : searchedCategories.map((cat) => {
+                        const isChecked = selectedCategoryIds.includes(cat.id);
+                        return (
+                          <div key={cat.id} className="flex items-start gap-2 px-3 py-2 hover:bg-gray-50 border-b border-admin-border last:border-0">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleCategorySelect(cat.id)}
+                              className="mt-0.5 w-4 h-4 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-admin-text">{getName(cat)}</p>
+                              <p className="text-[11px] text-admin-muted mt-0.5 truncate">{cat._crumb}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!searchedCategories && (
                   <div className="border border-admin-input-border rounded-lg max-h-64 overflow-y-auto">
                     {cornerChildren.map((sub) => {
                       const subChildren = allCategories.filter((c) => c.parentId === sub.id);
@@ -437,6 +502,7 @@ export default function BookEdit() {
                       );
                     })}
                   </div>
+                  )}
                   {selectedCategoryIds.length > 0 && (
                     <p className="text-xs text-admin-muted mt-2">{selectedCategoryIds.length} {selectedCategoryIds.length === 1 ? t('books.category_one') : t('books.category_other')} {t('common.selected')}</p>
                   )}

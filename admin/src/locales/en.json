@@ -117,6 +117,8 @@
     "corner": "Corner *",
     "selectCorner": "— Select Corner —",
     "selectCategories": "Select Categories",
+    "searchCategories": "Search categories...",
+    "noCategoriesFound": "No categories match",
     "category_one": "category",
     "category_other": "categories",
     "productDetails": "Product Details",

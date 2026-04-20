@@ -117,6 +117,8 @@
     "corner": "الركن *",
     "selectCorner": "— اختر الركن —",
     "selectCategories": "اختر التصنيفات",
+    "searchCategories": "ابحث في التصنيفات...",
+    "noCategoriesFound": "لا توجد تصنيفات مطابقة",
     "category_one": "تصنيف",
     "category_other": "تصنيفات",
     "productDetails": "تفاصيل المنتج",
