@@ -506,10 +506,12 @@ export default function BookEdit() {
                       <input name="isbn" value={form.isbn} onChange={handleChange} className={inputClass} />
                     </div>
                   )}
-                  <div>
-                    <label className={labelClass}>{t('books.barcode')}</label>
-                    <input name="sku" value={form.sku} onChange={handleChange} placeholder={t('books.barcodePlaceholder')} className={inputClass} />
-                  </div>
+                  {show('barcode') && (
+                    <div>
+                      <label className={labelClass}>{t('books.barcode')}</label>
+                      <input name="sku" value={form.sku} onChange={handleChange} placeholder={t('books.barcodePlaceholder')} className={inputClass} />
+                    </div>
+                  )}
                   {show('pages') && (
                     <div>
                       <label className={labelClass}>{t('books.pages')}</label>

@@ -44,8 +44,11 @@ exports.exportProducts = async (req, res, next) => {
       weight: b.weight?.toString() || '',
       dimensions: b.dimensions || '',
       brand: b.brand || '',
+      brandAr: b.brandAr || '',
       color: b.color || '',
+      colorAr: b.colorAr || '',
       material: b.material || '',
+      materialAr: b.materialAr || '',
       ageRange: b.ageRange || '',
       stock: b.stock?.toString() || '0',
       lowStockThreshold: b.lowStockThreshold?.toString() || '5',
@@ -420,33 +423,40 @@ exports.importTemplate = async (req, res, next) => {
       }
     }
 
-    const headers = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr'];
-    const sample = { barcode: '978316148410', nameEn: 'Sample Product', nameAr: 'منتج تجريبي', descriptionEn: '', descriptionAr: '' };
+    // Default template (no saved order): build from the category's enabled detail fields.
+    const category = req.query.category
+      ? await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } })
+      : null;
+    const optional = buildOptionalFields(category);
 
-    // If category provided, add category-specific columns
-    let detailArr = null;
-    let customDefs = [];
-    if (req.query.category) {
-      const category = await prisma.category.findUnique({ where: { id: req.query.category }, select: { detailFields: true, customFields: true } });
-      if (category?.detailFields) {
-        try {
-          const parsed = JSON.parse(category.detailFields);
-          detailArr = Array.isArray(parsed) ? parsed : parsed.detail || null;
-        } catch {}
-      }
-      if (category?.customFields) {
-        try { customDefs = JSON.parse(category.customFields); } catch {}
+    const sampleFor = {
+      barcode: '978316148410',
+      nameEn: 'Sample Product',
+      nameAr: 'منتج تجريبي',
+      descriptionEn: '',
+      descriptionAr: '',
+      purchasePrice: '30.00',
+      sellingPrice: '49.99',
+      mainCategory: '',
+      subCategory: '',
+      subSubCategory: '',
+    };
+
+    const headers = [];
+    const sample = {};
+
+    // Required columns (TEMPLATE_REQUIRED is the canonical order)
+    for (const id of TEMPLATE_REQUIRED) {
+      headers.push(id);
+      sample[id] = sampleFor[id] || '';
+    }
+    // Optional columns — only those the category has ticked (including Barcode and custom fields)
+    for (const field of optional) {
+      for (const col of field.columns) {
+        headers.push(col);
+        sample[col] = '';
       }
     }
-
-    const hasField = (key) => !detailArr || detailArr.includes(key);
-
-    if (hasField('author')) { headers.push('authorEn', 'authorAr'); sample.authorEn = ''; sample.authorAr = ''; }
-    if (hasField('publisher')) { headers.push('publisherEn', 'publisherAr'); sample.publisherEn = ''; sample.publisherAr = ''; }
-    if (hasField('language')) { headers.push('language'); sample.language = ''; }
-
-    headers.push('purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory');
-    sample.purchasePrice = '30.00'; sample.sellingPrice = '49.99'; sample.mainCategory = ''; sample.subCategory = ''; sample.subSubCategory = '';
 
     const csv = stringify([sample], { header: true, columns: headers });
     res.setHeader('Content-Type', 'text/csv');
@@ -504,6 +514,23 @@ exports.importTemplateAll = async (req, res, next) => {
   }
 };
 
+// Source-of-truth map for every built-in Product Detail Field and its CSV column(s).
+// Keys match the keys in admin CategoryEdit's ALL_DETAIL_FIELDS.
+const DETAIL_FIELD_COLUMNS = {
+  author:        { labelEn: 'Author',         labelAr: 'المؤلف',           columns: ['authorEn', 'authorAr'] },
+  publisher:     { labelEn: 'Publisher',      labelAr: 'الناشر',           columns: ['publisherEn', 'publisherAr'] },
+  pages:         { labelEn: 'Pages',          labelAr: 'الصفحات',          columns: ['pages'] },
+  isbn:          { labelEn: 'ISBN',           labelAr: 'ISBN',             columns: ['isbn'] },
+  barcode:       { labelEn: 'Barcode',        labelAr: 'الباركود',          columns: ['barcode'] },
+  language:      { labelEn: 'Language',       labelAr: 'اللغة',            columns: ['language'] },
+  publishedDate: { labelEn: 'Published Date', labelAr: 'تاريخ النشر',       columns: ['publishedDate'] },
+  brand:         { labelEn: 'Brand',          labelAr: 'العلامة التجارية',   columns: ['brandEn', 'brandAr'] },
+  color:         { labelEn: 'Color',          labelAr: 'اللون',            columns: ['colorEn', 'colorAr'] },
+  material:      { labelEn: 'Material',       labelAr: 'المادة',           columns: ['materialEn', 'materialAr'] },
+  dimensions:    { labelEn: 'Dimensions',     labelAr: 'الأبعاد',          columns: ['dimensions'] },
+  ageRange:      { labelEn: 'Age Range',      labelAr: 'الفئة العمرية',     columns: ['ageRange'] },
+};
+
 // Build the list of optional field toggles available for a category
 // Used by the Edit Template modal to render checkboxes and by template-custom to resolve them back to columns.
 function buildOptionalFields(category) {
@@ -523,11 +550,14 @@ function buildOptionalFields(category) {
     } catch {}
   }
   const hasField = (key) => !detailArr || detailArr.includes(key);
-  if (hasField('author')) optional.push({ id: 'author', labelEn: 'Author', labelAr: 'المؤلف', columns: ['authorEn', 'authorAr'] });
-  if (hasField('publisher')) optional.push({ id: 'publisher', labelEn: 'Publisher', labelAr: 'الناشر', columns: ['publisherEn', 'publisherAr'] });
-  if (hasField('language')) optional.push({ id: 'language', labelEn: 'Language', labelAr: 'اللغة', columns: ['language'] });
+
+  for (const [key, meta] of Object.entries(DETAIL_FIELD_COLUMNS)) {
+    if (hasField(key)) optional.push({ id: key, ...meta });
+  }
   customDefs.forEach((cf) => {
     if (!cf?.key || !cf?.name) return;
+    // Custom fields participate in detailFields under the key "cf_<key>" — respect the toggle.
+    if (!hasField(`cf_${cf.key}`)) return;
     const labelEn = cf.name;
     const labelAr = cf.nameAr || cf.name;
     optional.push({ id: `cf_${cf.key}`, labelEn, labelAr, columns: [`${labelEn} EN`, `${labelEn} Ar`] });
@@ -535,7 +565,7 @@ function buildOptionalFields(category) {
   return optional;
 }
 
-const TEMPLATE_REQUIRED = ['barcode', 'nameEn', 'nameAr', 'descriptionEn', 'descriptionAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'];
+const TEMPLATE_REQUIRED = ['nameEn', 'nameAr', 'descriptionEn', 'descriptionAr', 'purchasePrice', 'sellingPrice', 'mainCategory', 'subCategory', 'subSubCategory'];
 
 // Returns the checkbox metadata for the Edit Template modal
 exports.importTemplateInfo = async (req, res, next) => {
@@ -669,10 +699,9 @@ exports.importPreview = async (req, res, next) => {
       const row = records[i];
       const rowNum = i + 2;
 
-      // Validate required fields
+      // Validate required fields (barcode is optional; enforced per-category via the detail-fields toggle)
       if (!row.nameEn || !row.nameEn.trim()) { errors.push({ row: rowNum, error: 'Name (English) is required' }); continue; }
       if (!row.sellingPrice || isNaN(parseFloat(row.sellingPrice))) { errors.push({ row: rowNum, error: 'Valid selling price is required' }); continue; }
-      if (!row.barcode || !row.barcode.trim()) { errors.push({ row: rowNum, error: 'Barcode is required' }); continue; }
 
       // Resolve category by name (case-insensitive)
       let categoryId = null;
@@ -719,7 +748,7 @@ exports.importPreview = async (req, res, next) => {
 
       const product = {
         row: rowNum,
-        barcode: row.barcode.trim(),
+        barcode: row.barcode?.trim() || '',
         nameEn: row.nameEn.trim(),
         nameAr: row.nameAr?.trim() || '',
         descriptionEn: row.descriptionEn?.trim() || row['Description EN']?.trim() || '',
@@ -729,11 +758,14 @@ exports.importPreview = async (req, res, next) => {
         publisherEn: row.publisherEn?.trim() || row['Publisher (English)']?.trim() || '',
         publisherAr: row.publisherAr?.trim() || row['Publisher AR']?.trim() || '',
         language: normalizeLanguage(row.language),
-        brand: row.brand?.trim() || '',
+        pages: row.pages?.trim() || '',
+        isbn: row.isbn?.trim() || '',
+        publishedDate: row.publishedDate?.trim() || '',
+        brand: row.brandEn?.trim() || row.brand?.trim() || '',
         brandAr: row.brandAr?.trim() || '',
-        color: row.color?.trim() || '',
+        color: row.colorEn?.trim() || row.color?.trim() || '',
         colorAr: row.colorAr?.trim() || '',
-        material: row.material?.trim() || '',
+        material: row.materialEn?.trim() || row.material?.trim() || '',
         materialAr: row.materialAr?.trim() || '',
         dimensions: row.dimensions?.trim() || '',
         ageRange: row.ageRange?.trim() || '',
@@ -746,28 +778,27 @@ exports.importPreview = async (req, res, next) => {
         categoryId,
       };
 
-      // Check for duplicate barcode
-      if (barcodeSet.has(product.barcode)) {
-        // Exists in database
+      // Only dedupe on barcode when the row actually has one — empty barcodes do not collide.
+      if (product.barcode && barcodeSet.has(product.barcode)) {
         product.duplicateReason = 'exists';
         product.existingProduct = barcodeMap[product.barcode];
         duplicates.push(product);
-      } else {
-        // Check within the file itself for duplicate barcodes
+      } else if (product.barcode) {
         const existingInValid = valid.findIndex((v) => v.barcode === product.barcode);
         if (existingInValid !== -1) {
-          // Move the first one from valid to duplicates too
           const first = valid.splice(existingInValid, 1)[0];
           first.duplicateReason = 'file';
           product.duplicateReason = 'file';
           duplicates.push(first);
           duplicates.push(product);
-        } else if (duplicates.some((d) => d.barcode === product.barcode)) {
+        } else if (duplicates.some((d) => d.barcode && d.barcode === product.barcode)) {
           product.duplicateReason = 'file';
           duplicates.push(product);
         } else {
           valid.push(product);
         }
+      } else {
+        valid.push(product);
       }
     }
 
@@ -807,6 +838,9 @@ exports.importConfirm = async (req, res, next) => {
         const existingSlug = await prisma.book.findFirst({ where: { slug } });
         if (existingSlug) slug = `${slug}-${Date.now()}`;
 
+        const pagesInt = (() => { const n = parseInt(product.pages, 10); return Number.isFinite(n) ? n : null; })();
+        const publishedDateValue = (() => { if (!product.publishedDate) return null; const d = new Date(product.publishedDate); return isNaN(d.getTime()) ? null : d; })();
+
         await prisma.book.create({
           data: {
             title: product.nameEn,
@@ -819,6 +853,9 @@ exports.importConfirm = async (req, res, next) => {
             publisher: product.publisherEn || null,
             publisherAr: product.publisherAr || null,
             language: normalizeLanguage(product.language),
+            pages: pagesInt,
+            isbn: product.isbn || null,
+            publishedDate: publishedDateValue,
             brand: product.brand || null,
             brandAr: product.brandAr || null,
             color: product.color || null,

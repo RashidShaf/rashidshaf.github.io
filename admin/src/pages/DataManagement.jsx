@@ -92,10 +92,12 @@ export default function DataManagement() {
 
   const exportDuplicates = () => {
     if (!preview?.duplicates?.length) return;
-    const headers = 'barcode,nameEn,nameAr,purchasePrice,sellingPrice,mainCategory,subCategory,subSubCategory\n';
-    const rows = preview.duplicates.map((d) =>
-      `${d.barcode},"${d.nameEn}","${d.nameAr}",${d.purchasePrice || ''},${d.sellingPrice},${d.mainCategory},${d.subCategory},${d.subSubCategory || ''}`
-    ).join('\n');
+    const hasBarcode = preview.duplicates.some((d) => d.barcode && String(d.barcode).trim() !== '');
+    const headers = (hasBarcode ? 'barcode,' : '') + 'nameEn,nameAr,purchasePrice,sellingPrice,mainCategory,subCategory,subSubCategory\n';
+    const rows = preview.duplicates.map((d) => {
+      const rest = `"${d.nameEn}","${d.nameAr}",${d.purchasePrice || ''},${d.sellingPrice},${d.mainCategory},${d.subCategory},${d.subSubCategory || ''}`;
+      return hasBarcode ? `${d.barcode || ''},${rest}` : rest;
+    }).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -285,7 +287,9 @@ export default function DataManagement() {
         )}
 
         {/* Preview Results */}
-        {preview && (
+        {preview && (() => {
+          const hasBarcode = [...preview.valid, ...preview.duplicates].some((p) => p.barcode && String(p.barcode).trim() !== '');
+          return (
           <div className="mt-5 space-y-4">
             {/* Valid Products */}
             {preview.valid.length > 0 && (
@@ -299,7 +303,7 @@ export default function DataManagement() {
                     <thead>
                       <tr className="text-left text-green-700">
                         <th className="pb-2 pe-3">#</th>
-                        <th className="pb-2 pe-3">{t('books.barcode')}</th>
+                        {hasBarcode && <th className="pb-2 pe-3">{t('books.barcode')}</th>}
                         <th className="pb-2 pe-3">{t('books.titleEn')}</th>
                         <th className="pb-2 pe-3">{t('books.titleAr')}</th>
                         <th className="pb-2 pe-3">{t('books.price')}</th>
@@ -310,7 +314,7 @@ export default function DataManagement() {
                       {preview.valid.slice(0, 20).map((p, i) => (
                         <tr key={i} className="border-t border-green-200">
                           <td className="py-1.5 pe-3 text-green-600">{p.row}</td>
-                          <td className="py-1.5 pe-3 font-mono">{p.barcode}</td>
+                          {hasBarcode && <td className="py-1.5 pe-3 font-mono">{p.barcode}</td>}
                           <td className="py-1.5 pe-3">{p.nameEn}</td>
                           <td className="py-1.5 pe-3" dir="rtl">{p.nameAr}</td>
                           <td className="py-1.5 pe-3">{p.sellingPrice}</td>
@@ -335,32 +339,34 @@ export default function DataManagement() {
                     <h3 className="text-sm font-semibold text-red-800">{preview.duplicates.length} {t('data.duplicatesFound')}</h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        const generate13 = () => {
-                          const digits = Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
-                          return digits;
-                        };
-                        const existingBarcodes = new Set([
-                          ...preview.valid.map((v) => v.barcode),
-                          ...preview.duplicates.map((d) => d.barcode),
-                        ]);
-                        const fixed = preview.duplicates.map((d) => {
-                          let newBarcode;
-                          do { newBarcode = generate13(); } while (existingBarcodes.has(newBarcode));
-                          existingBarcodes.add(newBarcode);
-                          return { ...d, barcode: newBarcode, duplicateReason: undefined, existingProduct: undefined };
-                        });
-                        setPreview((prev) => ({
-                          ...prev,
-                          valid: [...prev.valid, ...fixed],
-                          duplicates: [],
-                        }));
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      {t('data.generateBarcodes')}
-                    </button>
+                    {hasBarcode && (
+                      <button
+                        onClick={() => {
+                          const generate13 = () => {
+                            const digits = Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                            return digits;
+                          };
+                          const existingBarcodes = new Set([
+                            ...preview.valid.map((v) => v.barcode).filter(Boolean),
+                            ...preview.duplicates.map((d) => d.barcode).filter(Boolean),
+                          ]);
+                          const fixed = preview.duplicates.map((d) => {
+                            let newBarcode;
+                            do { newBarcode = generate13(); } while (existingBarcodes.has(newBarcode));
+                            existingBarcodes.add(newBarcode);
+                            return { ...d, barcode: newBarcode, duplicateReason: undefined, existingProduct: undefined };
+                          });
+                          setPreview((prev) => ({
+                            ...prev,
+                            valid: [...prev.valid, ...fixed],
+                            duplicates: [],
+                          }));
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        {t('data.generateBarcodes')}
+                      </button>
+                    )}
                     <button onClick={exportDuplicates} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors">
                       <FiDownload size={14} /> {t('data.exportDuplicates')}
                     </button>
@@ -370,7 +376,7 @@ export default function DataManagement() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-left text-red-700">
-                        <th className="pb-2 pe-3">{t('books.barcode')}</th>
+                        {hasBarcode && <th className="pb-2 pe-3">{t('books.barcode')}</th>}
                         <th className="pb-2 pe-3">{t('books.titleEn')}</th>
                         <th className="pb-2 pe-3">{t('books.price')}</th>
                         <th className="pb-2">{t('data.reason')}</th>
@@ -379,7 +385,7 @@ export default function DataManagement() {
                     <tbody>
                       {preview.duplicates.map((d, i) => (
                         <tr key={i} className="border-t border-red-200">
-                          <td className="py-1.5 pe-3 font-mono">{d.barcode}</td>
+                          {hasBarcode && <td className="py-1.5 pe-3 font-mono">{d.barcode}</td>}
                           <td className="py-1.5 pe-3">{d.nameEn}</td>
                           <td className="py-1.5 pe-3">{d.sellingPrice}</td>
                           <td className="py-1.5 text-red-600">
@@ -451,7 +457,8 @@ export default function DataManagement() {
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {/* Final Import Results */}
         {importResult && (
