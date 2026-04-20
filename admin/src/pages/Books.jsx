@@ -73,12 +73,16 @@ export default function Books() {
       setCategories(all.filter((c) => !c.parentId));
     }).catch(() => {});
     api.get('/admin/books/filter-options').then((res) => {
-      setFilterOptionAuthors(res.data.authors || []);
-      setFilterOptionPublishers(res.data.publishers || []);
+      setFilterOptionAuthorsEn(res.data.authors || []);
+      setFilterOptionAuthorsAr(res.data.authorsAr || []);
+      setFilterOptionPublishersEn(res.data.publishers || []);
+      setFilterOptionPublishersAr(res.data.publishersAr || []);
     }).catch(() => {});
   }, []);
-  const [filterOptionAuthors, setFilterOptionAuthors] = useState([]);
-  const [filterOptionPublishers, setFilterOptionPublishers] = useState([]);
+  const [filterOptionAuthorsEn, setFilterOptionAuthorsEn] = useState([]);
+  const [filterOptionAuthorsAr, setFilterOptionAuthorsAr] = useState([]);
+  const [filterOptionPublishersEn, setFilterOptionPublishersEn] = useState([]);
+  const [filterOptionPublishersAr, setFilterOptionPublishersAr] = useState([]);
   const [authorMenuSearch, setAuthorMenuSearch] = useState('');
   const [publisherMenuSearch, setPublisherMenuSearch] = useState('');
 
@@ -566,8 +570,8 @@ export default function Books() {
 
         {/* Author filter — searchable dropdown of distinct authors */}
         {[
-          { id: 'author', label: t('books.filterAuthor'), value: authorFilter, set: setAuthorFilter, options: filterOptionAuthors, menuSearch: authorMenuSearch, setMenuSearch: setAuthorMenuSearch, searchPlaceholder: t('books.authorContains') },
-          { id: 'publisher', label: t('books.filterPublisher'), value: publisherFilter, set: setPublisherFilter, options: filterOptionPublishers, menuSearch: publisherMenuSearch, setMenuSearch: setPublisherMenuSearch, searchPlaceholder: t('books.publisherContains') },
+          { id: 'author', label: t('books.filterAuthor'), value: authorFilter, set: setAuthorFilter, options: language === 'ar' ? filterOptionAuthorsAr : filterOptionAuthorsEn, menuSearch: authorMenuSearch, setMenuSearch: setAuthorMenuSearch, searchPlaceholder: t('books.authorContains') },
+          { id: 'publisher', label: t('books.filterPublisher'), value: publisherFilter, set: setPublisherFilter, options: language === 'ar' ? filterOptionPublishersAr : filterOptionPublishersEn, menuSearch: publisherMenuSearch, setMenuSearch: setPublisherMenuSearch, searchPlaceholder: t('books.publisherContains') },
         ].map((f) => {
           const q = f.menuSearch.trim().toLowerCase();
           const filtered = q ? f.options.filter((o) => o.toLowerCase().includes(q)) : f.options;

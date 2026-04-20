@@ -147,7 +147,8 @@ exports.list = async (req, res, next) => {
   }
 };
 
-// GET /admin/books/filter-options — returns distinct authors and publishers for the filter dropdowns
+// GET /admin/books/filter-options — returns distinct authors and publishers for the filter
+// dropdowns, split by language so the UI can show only the list matching the current admin locale.
 exports.filterOptions = async (req, res, next) => {
   try {
     const books = await prisma.book.findMany({
@@ -155,15 +156,11 @@ exports.filterOptions = async (req, res, next) => {
       select: { author: true, authorAr: true, publisher: true, publisherAr: true },
     });
     const dedupe = (arr) => Array.from(new Set(arr.filter((s) => s && s.trim()))).sort((a, b) => a.localeCompare(b));
-    const authors = dedupe([
-      ...books.map((b) => b.author),
-      ...books.map((b) => b.authorAr),
-    ]);
-    const publishers = dedupe([
-      ...books.map((b) => b.publisher),
-      ...books.map((b) => b.publisherAr),
-    ]);
-    res.json({ authors, publishers });
+    const authors      = dedupe(books.map((b) => b.author));
+    const authorsAr    = dedupe(books.map((b) => b.authorAr));
+    const publishers   = dedupe(books.map((b) => b.publisher));
+    const publishersAr = dedupe(books.map((b) => b.publisherAr));
+    res.json({ authors, authorsAr, publishers, publishersAr });
   } catch (error) {
     next(error);
   }
