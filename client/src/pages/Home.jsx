@@ -83,42 +83,15 @@ const Home = () => {
   const [searchParams] = useSearchParams();
   const cornerParam = searchParams.get('corner') || '';
 
-  const [featured, setFeatured] = useState([]);
-  const [newArrivals, setNewArrivals] = useState([]);
-  const [bestsellers, setBestsellers] = useState([]);
-  const [trending, setTrending] = useState([]);
-  const [comingSoon, setComingSoon] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [cornerData, setCornerData] = useState(null);
-  const [cornerSlug, setCornerSlug] = useState('');
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch categories first to resolve the corner slug
-        const catRes = await api.get('/categories').catch(() => ({ data: [] }));
-        const allCats = catRes.data;
-        setCategories(allCats);
-        const corner = cornerParam || allCats[0]?.slug || '';
-        setCornerSlug(corner);
-        const selectedCorner = allCats.find((c) => c.slug === corner);
-        setCornerData(selectedCorner);
-
-        const q = `?corner=${corner}`;
-        const [featuredRes, newRes, bestRes, trendRes, soonRes] = await Promise.all([
-          api.get(`/books/featured${q}`).catch(() => ({ data: [] })),
-          api.get(`/books/new-arrivals${q}`).catch(() => ({ data: [] })),
-          api.get(`/books/bestsellers${q}`).catch(() => ({ data: [] })),
-          api.get(`/books/trending${q}`).catch(() => ({ data: [] })),
-          api.get(`/books/coming-soon${q}`).catch(() => ({ data: [] })),
-        ]);
-        setFeatured(featuredRes.data);
-        setNewArrivals(newRes.data);
-        setBestsellers(bestRes.data);
-        setTrending(trendRes.data);
-        setComingSoon(soonRes.data);
+        const res = await api.get('/home/layout').catch(() => ({ data: { sections: [] } }));
+        setSections(res.data.sections || []);
       } catch (err) {
         console.error('Failed to load home data:', err);
       } finally {
@@ -130,129 +103,110 @@ const Home = () => {
 
   const getName = (item) => language === 'ar' && item.nameAr ? item.nameAr : item.name;
 
+  const GLOBAL_TITLES = {
+    featured:     t('home.featured'),
+    newArrivals:  t('home.newArrivals'),
+    bestsellers:  t('home.bestsellers'),
+    trending:     t('home.trending'),
+    comingSoon:   t('home.comingSoon'),
+  };
+  const GLOBAL_SEEALL_SECTION = {
+    featured: 'featured',
+    newArrivals: 'new',
+    bestsellers: 'bestseller',
+    trending: 'trending',
+    comingSoon: 'comingSoon',
+  };
+
   return (
     <PageTransition>
       {/* Hero Banner Carousel */}
       <HeroBanner />
 
-      {/* Featured Books */}
-      {!loading && featured.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
-              {t('home.featured')}
-            </h2>
-            <Link to={`/books?category=${cornerSlug}&section=featured`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
-              {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
-            </Link>
-          </div>
-          <BookCarousel>
-            {featured.map((book) => <BookCard key={book.id} book={book} />)}
-          </BookCarousel>
-        </section>
-      )}
-
-      {/* Sub-categories of selected corner */}
-      {cornerData?.children && cornerData.children.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
-              {t('nav.categories')}
-            </h2>
-          </div>
-          <BookCarousel>
-            {cornerData.children.map((cat) => {
-              const coverUrl = cat.image ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${cat.image}` : null;
-              return (
-                <Link
-                  key={cat.id}
-                  to={`/books?category=${cat.slug}`}
-                  className="group bg-surface rounded-lg overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
-                >
-                  <div className="relative aspect-[5/6] bg-surface-alt overflow-hidden">
-                    {coverUrl ? (
-                      <img src={coverUrl} alt={getName(cat)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
-                        <FiBookOpen className="w-10 h-10 text-accent/30" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-[15px] font-bold text-white line-clamp-1 leading-tight">
-                        {getName(cat)}
-                      </h3>
-                      <p className="text-[12px] text-white/70 mt-0.5">
-                        {cat._count?.books || 0} {t('common.results').toLowerCase()}
-                      </p>
-                    </div>
-                  </div>
+      {/* Driven by /home/layout — sections appear in admin-controlled order */}
+      {!loading && sections.map((section, sIdx) => {
+        if (section.type === 'corner') {
+          const l1 = section.corner;
+          if (!l1) return null;
+          const hasChildren = l1.children && l1.children.length > 0;
+          const hasBooks = section.books && section.books.length > 0;
+          if (!hasChildren && !hasBooks) return null;
+          return (
+            <section key={`corner-${l1.id}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
+                  {getName(l1)}
+                </h2>
+                <Link to={`/books?category=${l1.slug}`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
+                  {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
                 </Link>
-              );
-            })}
-          </BookCarousel>
-        </section>
-      )}
-
-      {/* New Arrivals */}
-      {!loading && newArrivals.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
-              {t('home.newArrivals')}
-            </h2>
-            <Link to={`/books?category=${cornerSlug}&section=new`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
-              {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
-            </Link>
-          </div>
-          <BookCarousel>
-            {newArrivals.map((book) => <BookCard key={book.id} book={book} />)}
-          </BookCarousel>
-        </section>
-      )}
-
-      {/* Bestsellers */}
-      {!loading && bestsellers.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
-              {t('home.bestsellers')}
-            </h2>
-            <Link to={`/books?category=${cornerSlug}&section=bestseller`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
-              {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
-            </Link>
-          </div>
-          <BookCarousel>
-            {bestsellers.map((book) => <BookCard key={book.id} book={book} />)}
-          </BookCarousel>
-        </section>
-      )}
-
-      {/* Everyone's Talking About */}
-      {!loading && trending.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
-              {t('home.trending')}
-            </h2>
-          </div>
-          <BookCarousel>
-            {trending.map((book) => <BookCard key={book.id} book={book} />)}
-          </BookCarousel>
-        </section>
-      )}
-
-      {/* Coming Soon */}
-      {!loading && comingSoon.length > 0 && (
-        <section className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-          <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground mb-8">
-            {t('home.comingSoon')}
-          </h2>
-          <BookCarousel>
-            {comingSoon.map((book) => <BookCard key={book.id} book={book} comingSoon />)}
-          </BookCarousel>
-        </section>
-      )}
+              </div>
+              {hasChildren && (
+                <BookCarousel>
+                  {l1.children.map((cat) => {
+                    const coverUrl = cat.image ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${cat.image}` : null;
+                    return (
+                      <Link
+                        key={cat.id}
+                        to={`/books?category=${cat.slug}`}
+                        className="group bg-surface rounded-lg overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
+                      >
+                        <div className="relative aspect-[5/6] bg-surface-alt overflow-hidden">
+                          {coverUrl ? (
+                            <img src={coverUrl} alt={getName(cat)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
+                              <FiBookOpen className="w-10 h-10 text-accent/30" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="text-[15px] font-bold text-white line-clamp-1 leading-tight">
+                              {getName(cat)}
+                            </h3>
+                            <p className="text-[12px] text-white/70 mt-0.5">
+                              {cat._count?.books || 0} {t('common.results').toLowerCase()}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </BookCarousel>
+              )}
+              {hasBooks && (
+                <div className={hasChildren ? 'mt-6 3xl:mt-10' : ''}>
+                  <BookCarousel>
+                    {section.books.map((book) => <BookCard key={book.id} book={book} />)}
+                  </BookCarousel>
+                </div>
+              )}
+            </section>
+          );
+        }
+        // Global section (featured/newArrivals/bestsellers/trending/comingSoon)
+        if (!section.books || section.books.length === 0) return null;
+        const title = GLOBAL_TITLES[section.type];
+        const seeAllSection = GLOBAL_SEEALL_SECTION[section.type];
+        const hasSeeAll = !!seeAllSection && section.type !== 'comingSoon' && section.type !== 'trending';
+        return (
+          <section key={`g-${section.type}-${sIdx}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">{title}</h2>
+              {hasSeeAll && (
+                <Link to={`/books?section=${seeAllSection}`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
+                  {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
+                </Link>
+              )}
+            </div>
+            <BookCarousel>
+              {section.books.map((book) => (
+                <BookCard key={book.id} book={book} comingSoon={section.type === 'comingSoon'} />
+              ))}
+            </BookCarousel>
+          </section>
+        );
+      })}
 
     </PageTransition>
   );

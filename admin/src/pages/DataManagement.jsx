@@ -314,7 +314,7 @@ export default function DataManagement() {
                       {preview.valid.slice(0, 20).map((p, i) => (
                         <tr key={i} className="border-t border-green-200">
                           <td className="py-1.5 pe-3 text-green-600">{p.row}</td>
-                          {hasBarcode && <td className="py-1.5 pe-3 font-mono">{p.barcode}</td>}
+                          {hasBarcode && <td className="py-1.5 pe-3 ">{p.barcode}</td>}
                           <td className="py-1.5 pe-3">{p.nameEn}</td>
                           <td className="py-1.5 pe-3" dir="rtl">{p.nameAr}</td>
                           <td className="py-1.5 pe-3">{p.sellingPrice}</td>
@@ -385,7 +385,7 @@ export default function DataManagement() {
                     <tbody>
                       {preview.duplicates.map((d, i) => (
                         <tr key={i} className="border-t border-red-200">
-                          {hasBarcode && <td className="py-1.5 pe-3 font-mono">{d.barcode}</td>}
+                          {hasBarcode && <td className="py-1.5 pe-3 ">{d.barcode}</td>}
                           <td className="py-1.5 pe-3">{d.nameEn}</td>
                           <td className="py-1.5 pe-3">{d.sellingPrice}</td>
                           <td className="py-1.5 text-red-600">
@@ -524,7 +524,7 @@ export default function DataManagement() {
                   <p className="text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('data.csvPreview')}</p>
                   <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                     {activeColumns.map((col, i) => (
-                      <span key={`${col}-${i}`} className="px-2 py-0.5 bg-white border border-admin-border text-[11px] text-admin-text rounded font-mono">
+                      <span key={`${col}-${i}`} className="px-2 py-0.5 bg-white border border-admin-border text-[11px] text-admin-text rounded ">
                         {col}
                       </span>
                     ))}
@@ -558,7 +558,7 @@ export default function DataManagement() {
                             }`}
                           >
                             {/* Position index */}
-                            <span className="text-[11px] font-mono font-semibold text-admin-muted w-6 text-center select-none">
+                            <span className="text-[11px] font-semibold text-admin-muted w-6 text-center select-none">
                               {String(idx + 1).padStart(2, '0')}
                             </span>
 
@@ -582,7 +582,7 @@ export default function DataManagement() {
                             {/* Label + column preview */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className={`text-sm font-medium ${isActive ? 'text-admin-text' : 'text-admin-muted'} ${it.locked ? 'font-mono' : ''}`}>
+                                <p className={`text-sm font-medium ${isActive ? 'text-admin-text' : 'text-admin-muted'} ${it.locked ? '' : ''}`}>
                                   {it.locked ? it.id : (language === 'ar' ? it.labelAr : it.labelEn)}
                                 </p>
                                 {it.locked && (
@@ -592,7 +592,7 @@ export default function DataManagement() {
                                 )}
                               </div>
                               {!it.locked && (
-                                <p className="text-[11px] text-admin-muted font-mono mt-0.5 truncate">{it.columns.join('  ·  ')}</p>
+                                <p className="text-[11px] text-admin-muted mt-0.5 truncate">{it.columns.join('  ·  ')}</p>
                               )}
                             </div>
 

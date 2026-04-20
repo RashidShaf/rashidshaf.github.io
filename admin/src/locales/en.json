@@ -87,6 +87,7 @@
     "reviews": "Reviews",
     "settings": "Settings",
     "banners": "Banners",
+    "homeLayout": "Home Layout",
     "data": "Data",
     "logout": "Logout"
   },
@@ -503,5 +504,24 @@
     "password": "Password",
     "signIn": "Sign In",
     "error": "Invalid credentials or insufficient permissions"
+  },
+  "homeLayout": {
+    "title": "Home Layout",
+    "description": "Reorder sections and pick products shown under each corner on the Home page.",
+    "picks": "picks",
+    "global": "global section",
+    "managePicks": "Manage Picks",
+    "close": "Close",
+    "currentPicks": "Current picks",
+    "noPicks": "No products picked for this corner yet.",
+    "addProduct": "Add product",
+    "searchPlaceholder": "Search by title or barcode",
+    "noResults": "No matching products in this corner.",
+    "added": "Added",
+    "unknownCorner": "Unknown corner",
+    "saved": "Layout saved.",
+    "saveFailed": "Failed to save layout.",
+    "loadFailed": "Failed to load layout.",
+    "inactive": "Inactive"
   }
 }

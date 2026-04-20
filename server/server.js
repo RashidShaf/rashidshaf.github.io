@@ -26,8 +26,10 @@ const adminSettingsRoutes = require('./routes/admin/settings');
 const adminNotificationRoutes = require('./routes/admin/notifications');
 const adminBannerRoutes = require('./routes/admin/banners');
 const adminDataRoutes = require('./routes/admin/data');
+const adminHomeRoutes = require('./routes/admin/home');
 const bannerRoutes = require('./routes/banners');
 const settingsRoutes = require('./routes/settings');
+const homeRoutes = require('./routes/home');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -65,6 +67,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reading-lists', readingListRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/home', homeRoutes);
 
 // Admin Routes
 app.use('/api/admin/books', adminBookRoutes);
@@ -79,6 +82,7 @@ app.use('/api/admin/settings', adminSettingsRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/admin/banners', adminBannerRoutes);
 app.use('/api/admin/data', adminDataRoutes);
+app.use('/api/admin/home', adminHomeRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Health check

@@ -98,6 +98,7 @@ model Category {
   bookCategories BookCategory[]
   banners        Banner[]
   filters        CategoryFilter[]
+  homeSectionProducts HomeSectionProduct[]
 
   @@map("categories")
 }
@@ -167,6 +168,7 @@ model Book {
   wishlistItems   WishlistItem[]
   readingListItems ReadingListItem[]
   inventoryLogs    InventoryLog[]
+  homeSectionProducts HomeSectionProduct[]
 
   @@index([categoryId])
   @@index([author])
@@ -360,6 +362,23 @@ model Setting {
   key   String @unique
   value String @db.Text
   @@map("settings")
+}
+
+// ==================== HOME SECTION PRODUCTS ====================
+
+model HomeSectionProduct {
+  id           String   @id @default(uuid())
+  cornerId     String   @map("corner_id")
+  bookId       String   @map("book_id")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  corner Category @relation(fields: [cornerId], references: [id], onDelete: Cascade)
+  book   Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([cornerId, bookId])
+  @@index([cornerId])
+  @@map("home_section_products")
 }
 
 // ==================== NOTIFICATIONS ====================
