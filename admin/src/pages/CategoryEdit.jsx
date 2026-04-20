@@ -29,6 +29,7 @@ export default function CategoryEdit() {
     { key: 'publisher', label: t('books.publisher') },
     { key: 'pages', label: t('books.pages') },
     { key: 'isbn', label: t('books.isbn') },
+    { key: 'barcode', label: t('books.barcode') },
     { key: 'language', label: t('books.language') },
     { key: 'publishedDate', label: t('books.publishedDate') },
     { key: 'brand', label: t('books.brand') },

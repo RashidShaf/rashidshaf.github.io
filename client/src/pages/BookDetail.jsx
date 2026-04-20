@@ -334,10 +334,11 @@ const BookDetail = () => {
               const show = (key) => !allowed || allowed.includes(key);
 
               const items = [
+                show('author') && author && author !== 'Unknown' && author.trim() !== '' && { label: t('books.author'), value: author },
                 show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
                 show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
                 show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
-                book.sku && { label: t('books.barcode'), value: book.sku },
+                show('barcode') && book.sku && { label: t('books.barcode'), value: book.sku },
                 show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
                 show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
                 show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
@@ -398,10 +399,11 @@ const BookDetail = () => {
             const show = (key) => !allowed || allowed.includes(key);
 
             const items = [
+              show('author') && author && author !== 'Unknown' && author.trim() !== '' && { label: t('books.author'), value: author },
               show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
               show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
               show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
-              book.sku && { label: t('books.barcode'), value: book.sku },
+              show('barcode') && book.sku && { label: t('books.barcode'), value: book.sku },
               show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
               show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
               show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
