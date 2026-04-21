@@ -157,6 +157,7 @@ model Book {
   isActive      Boolean    @default(true) @map("is_active")
   viewCount     Int        @default(0) @map("view_count")
   salesCount    Int        @default(0) @map("sales_count")
+  searchIndex   String?    @map("search_index") @db.Text
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 

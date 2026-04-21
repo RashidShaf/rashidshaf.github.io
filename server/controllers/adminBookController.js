@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateSlug } = require('../utils/helpers');
 const { generateVariantsSafe } = require('../utils/images');
+const { normalize, buildSearchIndex } = require('../utils/arabicNormalize');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,16 +12,10 @@ const buildBooksWhere = async (query) => {
   const where = { AND: [] };
 
   if (search) {
-    where.AND.push({
-      OR: [
-        { title: { contains: search, mode: 'insensitive' } },
-        { titleAr: { contains: search, mode: 'insensitive' } },
-        { author: { contains: search, mode: 'insensitive' } },
-        { authorAr: { contains: search, mode: 'insensitive' } },
-        { isbn: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-      ],
-    });
+    const normalized = normalize(search);
+    if (normalized) {
+      where.AND.push({ searchIndex: { contains: normalized } });
+    }
   }
 
   if (category) {
@@ -235,6 +230,9 @@ exports.create = async (req, res, next) => {
     const additionalCategoryIds = data.additionalCategoryIds;
     delete data.additionalCategoryIds;
 
+    // Compute normalized search index so Arabic/English variants match during search
+    data.searchIndex = buildSearchIndex(data);
+
     const book = await prisma.book.create({ data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } } });
 
     // Create BookCategory records for additional categories
@@ -292,6 +290,16 @@ exports.update = async (req, res, next) => {
     // Extract additionalCategoryIds before updating (not a Book field)
     const additionalCategoryIds = data.additionalCategoryIds;
     delete data.additionalCategoryIds;
+
+    // Rebuild searchIndex if any searchable field is being updated
+    const searchFields = ['title', 'titleAr', 'author', 'authorAr', 'publisher', 'publisherAr', 'isbn', 'sku'];
+    if (searchFields.some((f) => f in data)) {
+      const current = await prisma.book.findUnique({
+        where: { id: req.params.id },
+        select: { title: true, titleAr: true, author: true, authorAr: true, publisher: true, publisherAr: true, isbn: true, sku: true },
+      });
+      data.searchIndex = buildSearchIndex({ ...current, ...data });
+    }
 
     const book = await prisma.book.update({
       where: { id: req.params.id }, data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },

@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { BOOK_SORT_OPTIONS } = require('../config/constants');
+const { normalize } = require('../utils/arabicNormalize');
 
 exports.list = async (req, res, next) => {
   try {
@@ -14,20 +15,14 @@ exports.list = async (req, res, next) => {
       ],
     };
 
-    // Search
+    // Search — match against the normalized searchIndex (flattens Arabic
+    // letter variants, strips diacritics, lowercases English) so customers
+    // can search with or without hamzas/tashkeel and still find results.
     if (search) {
-      where.AND.push({
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { titleAr: { contains: search, mode: 'insensitive' } },
-          { author: { contains: search, mode: 'insensitive' } },
-          { authorAr: { contains: search, mode: 'insensitive' } },
-          { publisher: { contains: search, mode: 'insensitive' } },
-          { publisherAr: { contains: search, mode: 'insensitive' } },
-          { isbn: { contains: search, mode: 'insensitive' } },
-          { sku: { contains: search, mode: 'insensitive' } },
-        ],
-      });
+      const normalized = normalize(search);
+      if (normalized) {
+        where.AND.push({ searchIndex: { contains: normalized } });
+      }
     }
 
     // Category filter — supports multiple comma-separated slugs, includes sub-categories (4 levels)
