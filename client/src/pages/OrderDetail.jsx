@@ -29,8 +29,6 @@ const OrderDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-
   useEffect(() => {
     api.get(`/orders/${id}`).then((res) => setOrder(res.data)).catch(() => {}).finally(() => setLoading(false));
   }, [id]);

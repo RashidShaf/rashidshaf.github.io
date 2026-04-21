@@ -9,7 +9,7 @@ exports.get = async (req, res, next) => {
           select: {
             id: true, title: true, titleAr: true, slug: true, author: true,
             authorAr: true, price: true, compareAtPrice: true, coverImage: true,
-            stock: true, isActive: true,
+            stock: true, isActive: true, isOutOfStock: true,
           },
         },
       },
@@ -30,8 +30,8 @@ exports.add = async (req, res, next) => {
       return res.status(404).json({ message: 'Book not found.' });
     }
 
-    if (book.stock < quantity) {
-      return res.status(400).json({ message: 'Not enough stock.' });
+    if (book.isOutOfStock) {
+      return res.status(400).json({ message: `"${book.title}" is currently out of stock.` });
     }
 
     const item = await prisma.cartItem.upsert({
@@ -61,8 +61,8 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Cart item not found.' });
     }
 
-    if (item.book.stock < quantity) {
-      return res.status(400).json({ message: 'Not enough stock.' });
+    if (item.book.isOutOfStock) {
+      return res.status(400).json({ message: `"${item.book.title}" is currently out of stock.` });
     }
 
     const updated = await prisma.cartItem.update({

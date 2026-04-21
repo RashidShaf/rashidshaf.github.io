@@ -47,7 +47,9 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
           books.map((b) => ({
             id: b.id,
             title: b.title,
+            titleAr: b.titleAr,
             author: b.author,
+            authorAr: b.authorAr,
             slug: b.slug,
             cover: b.coverImage || null,
           }))
@@ -163,25 +165,29 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
             </div>
           ) : (
             <div className="py-1">
-              {suggestions.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSuggestionClick(item.slug)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
-                >
-                  {item.cover ? (
-                    <Image src={item.cover} alt="" width={36} height={48} sizes="36px" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" />
-                  ) : (
-                    <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">
-                      {item.title?.charAt(0)}
+              {suggestions.map((item) => {
+                const displayTitle = language === 'ar' && item.titleAr ? item.titleAr : item.title;
+                const displayAuthor = language === 'ar' && item.authorAr ? item.authorAr : item.author;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSuggestionClick(item.slug)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
+                  >
+                    {item.cover ? (
+                      <Image src={item.cover} alt="" width={36} height={48} sizes="36px" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" />
+                    ) : (
+                      <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">
+                        {displayTitle?.charAt(0)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground line-clamp-1">{displayTitle}</p>
+                      <p className="text-xs text-foreground/60 line-clamp-1">{displayAuthor}</p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
-                    <p className="text-xs text-foreground/60 line-clamp-1">{item.author}</p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
               <button
                 onClick={() => {
                   const params = new URLSearchParams({ search: searchQuery.trim() });

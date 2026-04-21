@@ -28,8 +28,6 @@ const TrackOrder = () => {
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-
   const handleTrack = async (e) => {
     e.preventDefault();
     if (!phone.trim()) return;
