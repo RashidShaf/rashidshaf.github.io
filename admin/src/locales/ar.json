@@ -176,6 +176,8 @@
     "withoutBarcode": "بدون باركود",
     "filterAuthor": "المؤلف",
     "filterPublisher": "الناشر",
+    "filterNoAuthor": "بدون مؤلف",
+    "filterNoPublisher": "بدون ناشر",
     "filterPrice": "السعر",
     "authorContains": "المؤلف يحتوي على...",
     "publisherContains": "الناشر يحتوي على...",

@@ -85,6 +85,8 @@ export default function Books() {
   const [filterOptionPublishersAr, setFilterOptionPublishersAr] = useState([]);
   const [authorMenuSearch, setAuthorMenuSearch] = useState('');
   const [publisherMenuSearch, setPublisherMenuSearch] = useState('');
+  const [noAuthorFilter, setNoAuthorFilter] = useState(false);
+  const [noPublisherFilter, setNoPublisherFilter] = useState(false);
 
   const [suggestedBrands, setSuggestedBrands] = useState([]);
   const [suggestedBrandsAr, setSuggestedBrandsAr] = useState([]);
@@ -139,6 +141,8 @@ export default function Books() {
       if (barcodeFilter === 'without') params.set('hasBarcode', 'false');
       if (authorFilter)    params.set('author', authorFilter);
       if (publisherFilter) params.set('publisher', publisherFilter);
+      if (noAuthorFilter)    params.set('noAuthor', '1');
+      if (noPublisherFilter) params.set('noPublisher', '1');
       if (minPrice)         params.set('minPrice', minPrice);
       if (maxPrice)         params.set('maxPrice', maxPrice);
       if (minPurchasePrice) params.set('minPurchasePrice', minPurchasePrice);
@@ -191,6 +195,8 @@ export default function Books() {
         if (descFilter === 'noDescAr') params.set('hasDescAr', 'false');
         if (issueFilter === 'duplicateBarcode') params.set('duplicateBarcode', 'true');
         if (issueFilter === 'similarNames') params.set('similarNames', 'true');
+        if (noAuthorFilter)    params.set('noAuthor', '1');
+        if (noPublisherFilter) params.set('noPublisher', '1');
         const res = await api.get(`/admin/books?${params}`);
         setSelectedIds(res.data.data.map((b) => b.id));
       } catch {
@@ -215,7 +221,7 @@ export default function Books() {
     }
   };
 
-  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter, barcodeFilter, authorFilter, publisherFilter, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice]);
+  useEffect(() => { fetchBooks(); }, [page, limit, selectedTab, selectedSub, selectedL3, selectedL4, imageFilter, descFilter, issueFilter, barcodeFilter, authorFilter, publisherFilter, noAuthorFilter, noPublisherFilter, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice]);
 
   const firstSearchRun = useRef(true);
   useEffect(() => {
@@ -570,8 +576,8 @@ export default function Books() {
 
         {/* Author filter — searchable dropdown of distinct authors */}
         {[
-          { id: 'author', label: t('books.filterAuthor'), value: authorFilter, set: setAuthorFilter, options: language === 'ar' ? filterOptionAuthorsAr : filterOptionAuthorsEn, menuSearch: authorMenuSearch, setMenuSearch: setAuthorMenuSearch, searchPlaceholder: t('books.authorContains') },
-          { id: 'publisher', label: t('books.filterPublisher'), value: publisherFilter, set: setPublisherFilter, options: language === 'ar' ? filterOptionPublishersAr : filterOptionPublishersEn, menuSearch: publisherMenuSearch, setMenuSearch: setPublisherMenuSearch, searchPlaceholder: t('books.publisherContains') },
+          { id: 'author', label: t('books.filterAuthor'), value: authorFilter, set: setAuthorFilter, options: language === 'ar' ? filterOptionAuthorsAr : filterOptionAuthorsEn, menuSearch: authorMenuSearch, setMenuSearch: setAuthorMenuSearch, searchPlaceholder: t('books.authorContains'), noValue: noAuthorFilter, setNoValue: setNoAuthorFilter, noLabel: t('books.filterNoAuthor') },
+          { id: 'publisher', label: t('books.filterPublisher'), value: publisherFilter, set: setPublisherFilter, options: language === 'ar' ? filterOptionPublishersAr : filterOptionPublishersEn, menuSearch: publisherMenuSearch, setMenuSearch: setPublisherMenuSearch, searchPlaceholder: t('books.publisherContains'), noValue: noPublisherFilter, setNoValue: setNoPublisherFilter, noLabel: t('books.filterNoPublisher') },
         ].map((f) => {
           const q = f.menuSearch.trim().toLowerCase();
           const filtered = q ? f.options.filter((o) => o.toLowerCase().includes(q)) : f.options;
@@ -580,11 +586,11 @@ export default function Books() {
               <button
                 onClick={() => setOpenFilterMenu(openFilterMenu === f.id ? null : f.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 3xl:px-4 3xl:py-2.5 border rounded-lg text-xs 3xl:text-sm font-medium transition-colors whitespace-nowrap ${
-                  f.value ? 'border-admin-accent text-admin-accent bg-blue-50' : 'border-admin-input-border text-admin-muted hover:text-admin-accent hover:bg-gray-100'
+                  (f.value || f.noValue) ? 'border-admin-accent text-admin-accent bg-blue-50' : 'border-admin-input-border text-admin-muted hover:text-admin-accent hover:bg-gray-100'
                 }`}
               >
                 <FiFilter size={12} />
-                {f.value ? `${f.label}: ${f.value.length > 18 ? f.value.slice(0, 18) + '…' : f.value}` : f.label}
+                {f.noValue ? `${f.label}: ${f.noLabel}` : (f.value ? `${f.label}: ${f.value.length > 18 ? f.value.slice(0, 18) + '…' : f.value}` : f.label)}
               </button>
               {openFilterMenu === f.id && (
                 <div className="absolute top-full mt-1 start-0 bg-white border border-admin-border rounded-lg shadow-xl z-50 w-[280px] max-w-[calc(100vw-2rem)] p-2">
@@ -601,8 +607,14 @@ export default function Books() {
                   </div>
                   <div className="max-h-64 overflow-y-auto py-1">
                     <button
-                      onClick={() => { f.set(''); setOpenFilterMenu(null); setPage(1); }}
-                      className={`w-full text-start px-3 py-1.5 rounded text-sm ${!f.value ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
+                      onClick={() => { f.setNoValue(true); f.set(''); setOpenFilterMenu(null); setPage(1); }}
+                      className={`w-full text-start px-3 py-1.5 rounded text-sm ${f.noValue ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
+                    >
+                      {f.noLabel}
+                    </button>
+                    <button
+                      onClick={() => { f.set(''); f.setNoValue(false); setOpenFilterMenu(null); setPage(1); }}
+                      className={`w-full text-start px-3 py-1.5 rounded text-sm ${!f.value && !f.noValue ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
                     >
                       {t('common.all')}
                     </button>
@@ -612,7 +624,7 @@ export default function Books() {
                     {filtered.map((opt) => (
                       <button
                         key={opt}
-                        onClick={() => { f.set(opt); setOpenFilterMenu(null); setPage(1); }}
+                        onClick={() => { f.set(opt); f.setNoValue(false); setOpenFilterMenu(null); setPage(1); }}
                         className={`w-full text-start px-3 py-1.5 rounded text-sm truncate ${f.value === opt ? 'bg-admin-accent text-white font-medium' : 'text-admin-text hover:bg-gray-50'}`}
                       >
                         {opt}

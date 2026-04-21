@@ -176,6 +176,8 @@
     "withoutBarcode": "Without barcode",
     "filterAuthor": "Author",
     "filterPublisher": "Publisher",
+    "filterNoAuthor": "No author",
+    "filterNoPublisher": "No publisher",
     "filterPrice": "Price",
     "authorContains": "Author contains...",
     "publisherContains": "Publisher contains...",

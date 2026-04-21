@@ -6,7 +6,7 @@ const path = require('path');
 
 const buildBooksWhere = async (query) => {
   const { search, category, hasImage, hasDesc, hasDescAr, duplicateBarcode, similarNames,
-    hasBarcode, author, publisher, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice } = query;
+    hasBarcode, author, publisher, noAuthor, noPublisher, minPrice, maxPrice, minPurchasePrice, maxPurchasePrice } = query;
   const where = { AND: [] };
 
   if (search) {
@@ -59,6 +59,22 @@ const buildBooksWhere = async (query) => {
     OR: [
       { publisher:   { contains: publisher.trim(), mode: 'insensitive' } },
       { publisherAr: { contains: publisher.trim(), mode: 'insensitive' } },
+    ],
+  });
+
+  if (noAuthor === '1') where.AND.push({
+    OR: [
+      { author: '' },
+      { authorAr: null },
+      { authorAr: '' },
+    ],
+  });
+  if (noPublisher === '1') where.AND.push({
+    OR: [
+      { publisher: null },
+      { publisher: '' },
+      { publisherAr: null },
+      { publisherAr: '' },
     ],
   });
 
