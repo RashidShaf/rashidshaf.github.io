@@ -55,8 +55,13 @@ app.use(cors({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
-// Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static files for uploads — filenames are timestamp+random, so contents
+// never change under the same URL. Safe to cache aggressively.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1y',
+  immutable: true,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'),
+}));
 
 // SEO — sitemap.xml served at root (Nginx must route /sitemap.xml to API)
 app.use('/', sitemapRoutes);

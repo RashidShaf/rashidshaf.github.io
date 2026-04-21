@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateSlug } = require('../utils/helpers');
+const { generateVariantsSafe } = require('../utils/images');
 const fs = require('fs');
 const path = require('path');
 
@@ -358,6 +359,9 @@ exports.uploadCover = async (req, res, next) => {
       fs.unlink(oldPath, () => {});
     }
 
+    // Generate responsive WebP variants (best-effort, non-blocking for response)
+    await generateVariantsSafe(req.file.path);
+
     res.json({ coverImage: book.coverImage });
   } catch (error) {
     next(error);
@@ -373,6 +377,10 @@ exports.uploadImages = async (req, res, next) => {
     const updated = await prisma.book.update({
       where: { id: req.params.id }, data: { images },
     });
+
+    // Generate variants for each new file (best-effort)
+    await Promise.all(req.files.map((f) => generateVariantsSafe(f.path)));
+
     res.json({ images: updated.images });
   } catch (error) {
     next(error);

@@ -6,6 +6,7 @@ import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Image from '../components/common/Image';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
@@ -176,13 +177,13 @@ const OrderDetail = () => {
               </div>
               <div className="divide-y divide-muted/10">
                 {order.items.map((item) => {
-                  const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                  const coverPath = item.book?.coverImage || null;
                   const title = isRTL && item.book?.titleAr ? item.book.titleAr : item.title;
                   return (
                     <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                       <div className="w-14 h-[72px] rounded-lg bg-surface-alt overflow-hidden flex-shrink-0">
-                        {cover ? (
-                          <img src={cover} alt={title} className="w-full h-full object-cover" />
+                        {coverPath ? (
+                          <Image src={coverPath} alt={title} width={56} height={72} sizes="56px" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-accent/20 font-bold text-lg">{item.title.charAt(0)}</div>
                         )}

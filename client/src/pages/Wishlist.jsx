@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
+import Image from '../components/common/Image';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import useWishlistStore from '../stores/useWishlistStore';
@@ -83,14 +84,14 @@ const Wishlist = () => {
             {books.map((book) => {
               const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
               const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
-              const cover = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
+              const coverPath = book.coverImage || null;
 
               return (
                 <div key={book.id} className="group bg-surface rounded-lg border border-muted/10 overflow-hidden hover:shadow-lg transition-all">
                   {/* Cover */}
                   <Link to={`/books/${book.slug}`} className="block relative aspect-[5/6] bg-surface-alt overflow-hidden">
-                    {cover ? (
-                      <img src={cover} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {coverPath ? (
+                      <Image src={coverPath} alt={title} width={500} height={600} sizes="(max-width: 640px) 45vw, 240px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                         <span className="text-4xl font-display font-bold text-accent/30">{title.charAt(0)}</span>

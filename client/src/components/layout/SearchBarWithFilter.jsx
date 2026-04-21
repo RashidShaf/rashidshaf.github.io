@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiChevronDown } from 'react-icons/fi';
 import useLanguageStore from '../../stores/useLanguageStore';
 import api from '../../utils/api';
+import Image from '../common/Image';
 
 const SearchBarWithFilter = ({ categories = [], className = '' }) => {
   const { t, language } = useLanguageStore();
@@ -48,9 +49,7 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
             title: b.title,
             author: b.author,
             slug: b.slug,
-            cover: b.coverImage
-              ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${b.coverImage}`
-              : null,
+            cover: b.coverImage || null,
           }))
         );
       } catch {
@@ -171,7 +170,7 @@ const SearchBarWithFilter = ({ categories = [], className = '' }) => {
                   className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt transition-colors text-start"
                 >
                   {item.cover ? (
-                    <img src={item.cover} alt="" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" />
+                    <Image src={item.cover} alt="" width={36} height={48} sizes="36px" className="w-9 h-12 rounded object-cover bg-surface-alt flex-shrink-0" />
                   ) : (
                     <div className="w-9 h-12 rounded bg-surface-alt flex-shrink-0 flex items-center justify-center text-accent/30 font-bold text-xs">
                       {item.title?.charAt(0)}

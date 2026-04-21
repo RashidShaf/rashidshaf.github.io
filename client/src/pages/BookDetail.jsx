@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import ReviewSection from '../components/books/ReviewSection';
+import Image from '../components/common/Image';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -113,13 +114,14 @@ const BookDetail = () => {
   const inWishlist = wishlistItems.includes(book.id);
 
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-  const coverUrl = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
-  const placeholderUrl = (() => {
-    if (coverUrl) return null;
+  const coverPath = book.coverImage || null;
+  const placeholderPath = (() => {
+    if (coverPath) return null;
     const cat = book.category;
-    const ph = cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage;
-    return ph ? `${API_BASE}/${ph}` : null;
+    return cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage || null;
   })();
+  const coverUrl = coverPath ? `${API_BASE}/${coverPath}` : null;
+  const placeholderUrl = placeholderPath ? `${API_BASE}/${placeholderPath}` : null;
 
   const hasDiscount = book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price);
   const discountPercent = hasDiscount
@@ -226,10 +228,16 @@ const BookDetail = () => {
             <div className="flex flex-col gap-3 sm:gap-4 items-center sm:items-start">
               {/* Main cover */}
               <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
-                {(selectedImage || coverUrl) ? (
-                  <img src={selectedImage || coverUrl} alt={title} className="w-full h-full object-cover" />
-                ) : placeholderUrl ? (
-                  <img src={placeholderUrl} alt={title} className="w-full h-full object-cover" />
+                {(selectedImage || coverPath || placeholderPath) ? (
+                  <Image
+                    src={selectedImage || coverPath || placeholderPath}
+                    alt={title}
+                    width={405}
+                    height={600}
+                    sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 405px"
+                    priority
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                     <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>
@@ -245,13 +253,13 @@ const BookDetail = () => {
               {/* Thumbnail strip — below main image */}
               {book.images && book.images.length > 0 && (
                 <div className="flex flex-row gap-2 sm:gap-2.5 flex-wrap">
-                  {[coverUrl, ...book.images.map((img) => `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${img}`)].filter(Boolean).slice(0, 4).map((img, i) => (
+                  {[coverPath, ...book.images].filter(Boolean).slice(0, 4).map((imgPath, i) => (
                     <div
                       key={i}
-                      onClick={() => setSelectedImage(img)}
-                      className={`w-14 h-16 sm:w-16 sm:h-20 3xl:w-20 3xl:h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverUrl) === img ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
+                      onClick={() => setSelectedImage(imgPath)}
+                      className={`w-14 h-16 sm:w-16 sm:h-20 3xl:w-20 3xl:h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverPath) === imgPath ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <Image src={imgPath} alt="" width={80} height={96} sizes="80px" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

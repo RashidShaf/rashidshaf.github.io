@@ -10,17 +10,34 @@ import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import LogoOverlay from '../components/common/LogoOverlay';
+import Image from '../components/common/Image';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-
-const BannerSlide = ({ desktop, mobile, alt, link }) => {
+const BannerSlide = ({ desktop, mobile, alt, link, priority = false }) => {
   const content = (
     <>
-      <img src={desktop} alt={alt} className="hidden sm:block w-full h-auto object-cover" />
-      <img src={mobile || desktop} alt={alt} className="block sm:hidden w-full h-auto object-cover" />
+      <Image
+        src={desktop}
+        alt={alt}
+        width={2400}
+        height={900}
+        widths={[800, 1600, 2400]}
+        sizes="100vw"
+        priority={priority}
+        className="hidden sm:block w-full h-auto object-cover"
+      />
+      <Image
+        src={mobile || desktop}
+        alt={alt}
+        width={800}
+        height={600}
+        widths={mobile ? [400, 800, 1600] : [800, 1600, 2400]}
+        sizes="100vw"
+        priority={priority}
+        className="block sm:hidden w-full h-auto object-cover"
+      />
     </>
   );
   if (link) {
@@ -51,7 +68,7 @@ const HeroBanner = () => {
     const b = banners[0];
     return (
       <section className="relative overflow-hidden">
-        <BannerSlide desktop={`${API_BASE}/${b.desktopImage}`} mobile={b.mobileImage ? `${API_BASE}/${b.mobileImage}` : null} alt={b.title || 'Arkaan Bookstore'} link={b.link} />
+        <BannerSlide desktop={b.desktopImage} mobile={b.mobileImage} alt={b.title || 'Arkaan Bookstore'} link={b.link} priority />
         {b.showLogo !== false && <LogoOverlay position={b.logoPosition || 'center-left'} hideMobile={b.showMobileLogo === false} />}
       </section>
     );
@@ -68,9 +85,9 @@ const HeroBanner = () => {
         className="w-full arkaan-banner-swiper"
         onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
       >
-        {banners.map((b) => (
+        {banners.map((b, idx) => (
           <SwiperSlide key={b.id}>
-            <BannerSlide desktop={`${API_BASE}/${b.desktopImage}`} mobile={b.mobileImage ? `${API_BASE}/${b.mobileImage}` : null} alt={b.title || 'Arkaan Bookstore'} link={b.link} />
+            <BannerSlide desktop={b.desktopImage} mobile={b.mobileImage} alt={b.title || 'Arkaan Bookstore'} link={b.link} priority={idx === 0} />
           </SwiperSlide>
         ))}
       </Swiper>
@@ -186,7 +203,7 @@ const Home = () => {
               {hasChildren && (
                 <BookCarousel>
                   {l1.children.map((cat) => {
-                    const coverUrl = cat.image ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${cat.image}` : null;
+                    const coverPath = cat.image || null;
                     return (
                       <Link
                         key={cat.id}
@@ -194,8 +211,8 @@ const Home = () => {
                         className="group bg-surface rounded-lg overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
                       >
                         <div className="relative aspect-[5/6] bg-surface-alt overflow-hidden">
-                          {coverUrl ? (
-                            <img src={coverUrl} alt={getName(cat)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          {coverPath ? (
+                            <Image src={coverPath} alt={getName(cat)} width={500} height={600} sizes="(max-width: 640px) 45vw, 240px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                               <FiBookOpen className="w-10 h-10 text-accent/30" />

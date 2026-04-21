@@ -3,6 +3,7 @@ import { FiSearch, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCale
 import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
+import Image from '../components/common/Image';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
@@ -116,10 +117,10 @@ const TrackOrder = () => {
                     {/* Thumbnails */}
                     <div className="hidden sm:flex -space-x-2 flex-shrink-0">
                       {(order.items || []).slice(0, 3).map((item, i) => {
-                        const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                        const coverPath = item.book?.coverImage || null;
                         return (
                           <div key={i} className="w-10 h-13 rounded-lg overflow-hidden border-2 border-background bg-surface-alt flex-shrink-0">
-                            {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-[10px] font-bold">{item.title?.[0]}</div>}
+                            {coverPath ? <Image src={coverPath} alt="" width={40} height={52} sizes="40px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-[10px] font-bold">{item.title?.[0]}</div>}
                           </div>
                         );
                       })}
@@ -192,12 +193,12 @@ const TrackOrder = () => {
                         </h3>
                         <div className="space-y-2">
                           {order.items.map((item) => {
-                            const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                            const coverPath = item.book?.coverImage || null;
                             const title = isRTL && item.book?.titleAr ? item.book.titleAr : item.title;
                             return (
                               <div key={item.id} className="flex items-center gap-3 p-3 bg-surface-alt/30 rounded-xl">
                                 <div className="w-11 h-14 rounded-lg bg-surface-alt overflow-hidden flex-shrink-0">
-                                  {cover ? <img src={cover} alt={title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/20 font-bold text-sm">{item.title.charAt(0)}</div>}
+                                  {coverPath ? <Image src={coverPath} alt={title} width={44} height={56} sizes="44px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/20 font-bold text-sm">{item.title.charAt(0)}</div>}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-foreground line-clamp-1">{title}</p>

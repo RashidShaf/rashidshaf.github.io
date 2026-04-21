@@ -4,6 +4,7 @@ import { FiPackage, FiShoppingBag, FiChevronRight, FiCalendar } from 'react-icon
 import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
+import Image from '../components/common/Image';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
 import api from '../utils/api';
@@ -59,10 +60,10 @@ const OrderHistory = () => {
                 {/* Item Thumbnails */}
                 <div className="hidden sm:flex -space-x-3 flex-shrink-0">
                   {(order.items || []).slice(0, 3).map((item, i) => {
-                    const cover = item.book?.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                    const coverPath = item.book?.coverImage || null;
                     return (
                       <div key={i} className="w-12 h-16 rounded-lg overflow-hidden border-2 border-background bg-surface-alt flex-shrink-0">
-                        {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-xs font-bold">{item.title?.[0]}</div>}
+                        {coverPath ? <Image src={coverPath} alt="" width={48} height={64} sizes="48px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-xs font-bold">{item.title?.[0]}</div>}
                       </div>
                     );
                   })}

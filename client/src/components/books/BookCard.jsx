@@ -6,6 +6,7 @@ import useLanguageStore from '../../stores/useLanguageStore';
 import useCartStore from '../../stores/useCartStore';
 import useWishlistStore from '../../stores/useWishlistStore';
 import { formatPrice } from '../../utils/formatters';
+import Image from '../common/Image';
 
 const BookCard = ({ book, comingSoon = false }) => {
   const { t, language } = useLanguageStore();
@@ -17,13 +18,11 @@ const BookCard = ({ book, comingSoon = false }) => {
   const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
   const inWishlist = wishlistItems.includes(book.id);
 
-  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
-  const coverUrl = book.coverImage ? `${API_BASE}/${book.coverImage}` : null;
-  const placeholderUrl = (() => {
-    if (coverUrl) return null;
+  const coverPath = book.coverImage || null;
+  const placeholderPath = (() => {
+    if (coverPath) return null;
     const cat = book.category;
-    const ph = cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage;
-    return ph ? `${API_BASE}/${ph}` : null;
+    return cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage || null;
   })();
   const isOutOfStock = !comingSoon && book.isOutOfStock;
 
@@ -36,16 +35,13 @@ const BookCard = ({ book, comingSoon = false }) => {
     >
       {/* Cover Image */}
       <Link to={comingSoon ? '#' : `/books/${book.slug}`} className="block relative aspect-[5/6] bg-surface-alt overflow-hidden">
-        {coverUrl ? (
-          <img
-            src={coverUrl}
+        {coverPath || placeholderPath ? (
+          <Image
+            src={coverPath || placeholderPath}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : placeholderUrl ? (
-          <img
-            src={placeholderUrl}
-            alt={title}
+            width={500}
+            height={600}
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 240px"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (

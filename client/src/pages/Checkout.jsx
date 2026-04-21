@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
+import Image from '../components/common/Image';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -202,11 +203,11 @@ const Checkout = () => {
 
                 <div className="space-y-3 mb-5">
                   {items.map((item) => {
-                    const cover = item.book.coverImage ? `${API_BASE}/${item.book.coverImage}` : null;
+                    const coverPath = item.book.coverImage || null;
                     return (
                       <div key={item.bookId} className="flex items-center gap-3">
                         <div className="w-10 h-13 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
-                          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-accent/30">{item.book.title?.[0]}</div>}
+                          {coverPath ? <Image src={coverPath} alt="" width={40} height={52} sizes="40px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-accent/30">{item.book.title?.[0]}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground font-medium line-clamp-1">

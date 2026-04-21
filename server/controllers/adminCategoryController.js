@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const { generateSlug } = require('../utils/helpers');
+const { generateVariantsSafe } = require('../utils/images');
 const fs = require('fs');
 const path = require('path');
 
@@ -52,6 +53,7 @@ exports.create = async (req, res, next) => {
     const category = await prisma.category.create({
       data: { name: name.trim(), nameAr: nameAr?.trim() || null, slug, description, descriptionAr, parentId: parentId || null, displayOrder: parseInt(displayOrder) || 0, image },
     });
+    if (req.file) await generateVariantsSafe(req.file.path);
     res.status(201).json(category);
   } catch (error) {
     next(error);
@@ -106,6 +108,7 @@ exports.update = async (req, res, next) => {
     if (req.file) { data.image = `uploads/categories/${req.file.filename}`; }
 
     const category = await prisma.category.update({ where: { id: req.params.id }, data });
+    if (req.file) await generateVariantsSafe(req.file.path);
     res.json(category);
   } catch (error) {
     next(error);
@@ -183,6 +186,7 @@ exports.uploadPlaceholder = async (req, res, next) => {
 
     const placeholderImage = `uploads/categories/${req.file.filename}`;
     const updated = await prisma.category.update({ where: { id: req.params.id }, data: { placeholderImage } });
+    await generateVariantsSafe(req.file.path);
     res.json(updated);
   } catch (error) { next(error); }
 };

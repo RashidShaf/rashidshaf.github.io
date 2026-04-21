@@ -1,6 +1,10 @@
 const prisma = require('../config/database');
+const { generateVariantsSafe } = require('../utils/images');
 const fs = require('fs');
 const path = require('path');
+
+// Banners are hero-sized — use wider variants.
+const BANNER_WIDTHS = [800, 1600, 2400];
 
 // Public: Get active banners
 exports.listPublic = async (req, res, next) => {
@@ -71,6 +75,10 @@ exports.create = async (req, res, next) => {
         isActive: isActive === 'true' || isActive === true,
       },
     });
+
+    const bannerFiles = [req.files?.desktopImage?.[0], req.files?.mobileImage?.[0]].filter(Boolean);
+    await Promise.all(bannerFiles.map((f) => generateVariantsSafe(f.path, BANNER_WIDTHS)));
+
     res.status(201).json(banner);
   } catch (error) {
     next(error);
@@ -105,6 +113,10 @@ exports.update = async (req, res, next) => {
     }
 
     const banner = await prisma.banner.update({ where: { id: req.params.id }, data });
+
+    const newBannerFiles = [req.files?.desktopImage?.[0], req.files?.mobileImage?.[0]].filter(Boolean);
+    await Promise.all(newBannerFiles.map((f) => generateVariantsSafe(f.path, BANNER_WIDTHS)));
+
     res.json(banner);
   } catch (error) {
     next(error);

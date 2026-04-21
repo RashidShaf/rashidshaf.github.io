@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import Image from '../components/common/Image';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
@@ -50,7 +51,7 @@ const Cart = () => {
             {items.map((item) => {
               const title = language === 'ar' && item.book.titleAr ? item.book.titleAr : item.book.title;
               const author = language === 'ar' && item.book.authorAr ? item.book.authorAr : item.book.author;
-              const cover = item.book.coverImage ? `${import.meta.env.VITE_API_URL?.replace('/api', '')}/${item.book.coverImage}` : null;
+              const coverPath = item.book.coverImage || null;
 
               return (
                 <motion.div
@@ -63,8 +64,8 @@ const Cart = () => {
                 >
                   {/* Cover */}
                   <Link to={`/books/${item.book.slug}`} className="w-20 h-28 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
-                    {cover ? (
-                      <img src={cover} alt={title} className="w-full h-full object-cover" />
+                    {coverPath ? (
+                      <Image src={coverPath} alt={title} width={80} height={112} sizes="80px" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-accent/30 font-display font-bold text-2xl">
                         {title.charAt(0)}
