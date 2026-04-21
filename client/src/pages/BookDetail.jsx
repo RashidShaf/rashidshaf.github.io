@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import ReviewSection from '../components/books/ReviewSection';
 import Image from '../components/common/Image';
@@ -73,26 +71,24 @@ const BookDetail = () => {
 
   if (loading) {
     return (
-      <PageTransition>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid lg:grid-cols-2 gap-10 animate-pulse">
-            <div className="aspect-[3/4] bg-surface-alt rounded-2xl" />
-            <div className="space-y-4 py-4">
-              <div className="h-4 bg-surface-alt rounded w-1/4" />
-              <div className="h-8 bg-surface-alt rounded w-3/4" />
-              <div className="h-4 bg-surface-alt rounded w-1/3" />
-              <div className="h-6 bg-surface-alt rounded w-1/4 mt-6" />
-              <div className="h-20 bg-surface-alt rounded mt-6" />
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid lg:grid-cols-2 gap-10 animate-pulse">
+          <div className="aspect-[3/4] bg-surface-alt rounded-2xl" />
+          <div className="space-y-4 py-4">
+            <div className="h-4 bg-surface-alt rounded w-1/4" />
+            <div className="h-8 bg-surface-alt rounded w-3/4" />
+            <div className="h-4 bg-surface-alt rounded w-1/3" />
+            <div className="h-6 bg-surface-alt rounded w-1/4 mt-6" />
+            <div className="h-20 bg-surface-alt rounded mt-6" />
           </div>
         </div>
-      </PageTransition>
+      </div>
     );
   }
 
   if (!book) {
     return (
-      <PageTransition>
+      <>
         <SEO title="Book not found" noindex />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <p className="text-xl text-foreground/60">{t('common.noResults')}</p>
@@ -100,7 +96,7 @@ const BookDetail = () => {
             <FiArrowLeft /> {t('common.back')}
           </Link>
         </div>
-      </PageTransition>
+      </>
     );
   }
 
@@ -181,7 +177,7 @@ const BookDetail = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO
         title={`${title}${author && author !== 'Unknown' && author.trim() !== '' ? ` by ${author}` : ''}`}
         description={seoDescription}
@@ -219,12 +215,7 @@ const BookDetail = () => {
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Image Gallery */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex-shrink-0 lg:mx-0"
-          >
+          <div className="flex-shrink-0 lg:mx-0">
             <div className="flex flex-col gap-3 sm:gap-4 items-center sm:items-start">
               {/* Main cover */}
               <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
@@ -266,13 +257,10 @@ const BookDetail = () => {
               )}
             </div>
 
-          </motion.div>
+          </div>
 
           {/* Details */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
+          <div
             className="flex-1 min-w-0 lg:max-w-md 3xl:max-w-lg lg:h-[460px] 3xl:h-[600px] lg:flex lg:flex-col"
           >
             {/* Category */}
@@ -339,33 +327,31 @@ const BookDetail = () => {
                 <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 sm:w-12 sm:h-11 3xl:w-16 3xl:h-14 flex items-center justify-center text-foreground hover:bg-surface-alt transition-colors rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-sm sm:text-base 3xl:text-lg">+</button>
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={() => {
                   toggleWishlist(book.id);
                   toast.success(inWishlist ? t('book.removedFromWishlistToast') : t('book.addedToWishlistToast'));
                 }}
-                className={`ms-auto me-6 sm:me-10 w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all ${
+                className={`ms-auto me-6 sm:me-10 w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all active:scale-90 ${
                   inWishlist
                     ? 'border-red-500 bg-red-500 text-white'
                     : 'border-gray-300 text-gray-400 hover:border-red-500 hover:text-red-500'
                 }`}
               >
                 <FiHeart size={15} className={`sm:w-[18px] sm:h-[18px] ${inWishlist ? 'fill-white' : ''}`} />
-              </motion.button>
+              </button>
             </div>
 
             {/* Add to Cart + Buy Now */}
             <div className="flex items-center gap-2">
-              <motion.button
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
                 disabled={book.isOutOfStock}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 3xl:px-8 py-2 sm:py-2.5 3xl:py-3 bg-[#A39666] text-white text-xs sm:text-sm 3xl:text-base font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 3xl:px-8 py-2 sm:py-2.5 3xl:py-3 bg-[#A39666] text-white text-xs sm:text-sm 3xl:text-base font-medium rounded-lg hover:bg-[#B8AB7E] active:scale-[0.97] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart size={14} />
                 {t('common.addToCart')}
-              </motion.button>
+              </button>
 
               {!book.isOutOfStock ? (
                 <Link
@@ -459,7 +445,7 @@ const BookDetail = () => {
               </div>
             )}
 
-          </motion.div>
+          </div>
 
           {/* Product Details — right column */}
           {(() => {
@@ -568,7 +554,7 @@ const BookDetail = () => {
           </section>
         )}
       </div>
-    </PageTransition>
+    </>
   );
 };
 

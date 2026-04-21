@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -35,63 +34,61 @@ const AnimatedRoutes = () => {
   }, [location.pathname]);
 
   return (
-    <AnimatePresence>
-      <Routes location={location} key={location.pathname}>
-        <Route element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="books" element={<Books />} />
-          <Route path="books/:slug" element={<BookDetail />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route
-            path="profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="orders"
-            element={
-              <PrivateRoute>
-                <OrderHistory />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="orders/:id"
-            element={
-              <PrivateRoute>
-                <OrderDetail />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="wishlist"
-            element={
-              <PrivateRoute>
-                <Wishlist />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="change-password"
-            element={
-              <PrivateRoute>
-                <ChangePassword />
-              </PrivateRoute>
-            }
-          />
-          <Route path="track-order" element={<TrackOrder />} />
-          <Route path="about" element={<About />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </AnimatePresence>
+    <Routes location={location} key={location.pathname}>
+      <Route element={<MainLayout />}>
+        <Route index element={<Home />} />
+        <Route path="books" element={<Books />} />
+        <Route path="books/:slug" element={<BookDetail />} />
+        <Route path="cart" element={<Cart />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route
+          path="profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <PrivateRoute>
+              <OrderHistory />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="orders/:id"
+          element={
+            <PrivateRoute>
+              <OrderDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="wishlist"
+          element={
+            <PrivateRoute>
+              <Wishlist />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="change-password"
+          element={
+            <PrivateRoute>
+              <ChangePassword />
+            </PrivateRoute>
+          }
+        />
+        <Route path="track-order" element={<TrackOrder />} />
+        <Route path="about" element={<About />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 };
 

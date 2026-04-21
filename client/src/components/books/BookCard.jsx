@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiStar, FiClock } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../../stores/useLanguageStore';
@@ -27,10 +26,7 @@ const BookCard = ({ book, comingSoon = false }) => {
   const isOutOfStock = !comingSoon && book.isOutOfStock;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <div
       className={`group bg-surface rounded-lg border border-muted/10 overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300${isOutOfStock ? ' opacity-60' : ''}`}
     >
       {/* Cover Image */}
@@ -172,7 +168,7 @@ const BookCard = ({ book, comingSoon = false }) => {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

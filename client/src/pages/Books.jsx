@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
-import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import LogoOverlay from '../components/common/LogoOverlay';
 import SEO from '../components/SEO';
@@ -579,7 +578,7 @@ const Books = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO
         title={seoTitle === t('books.title') ? 'All Books' : seoTitle}
         description={seoDescription}
@@ -942,7 +941,7 @@ const Books = () => {
           </div>
         </div>
       </div>
-    </PageTransition>
+    </>
   );
 };
 

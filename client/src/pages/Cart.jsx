@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
-import PageTransition from '../animations/PageTransition';
 import Image from '../components/common/Image';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -23,7 +21,7 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <PageTransition>
+      <>
         <SEO title="Cart" noindex />
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <FiShoppingBag className="w-16 h-16 text-muted/30 mx-auto mb-6" />
@@ -33,12 +31,12 @@ const Cart = () => {
             {t('cart.continueShopping')} <FiArrowRight />
           </Link>
         </div>
-      </PageTransition>
+      </>
     );
   }
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Cart" noindex />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground mb-8">
@@ -54,12 +52,8 @@ const Cart = () => {
               const coverPath = item.book.coverImage || null;
 
               return (
-                <motion.div
+                <div
                   key={item.bookId}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
                   className="flex gap-4 p-4 bg-surface rounded-xl border border-muted/10"
                 >
                   {/* Cover */}
@@ -114,7 +108,7 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
 
@@ -212,7 +206,7 @@ const Cart = () => {
           </div>
         </div>
       </div>
-    </PageTransition>
+    </>
   );
 };
 

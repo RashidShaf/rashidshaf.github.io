@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiPackage, FiShoppingBag, FiChevronRight, FiCalendar } from 'react-icons/fi';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import Image from '../components/common/Image';
@@ -32,7 +31,7 @@ const OrderHistory = () => {
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
   return (
-    <PageTransition>
+    <>
       <SEO title="My Orders" noindex />
       <AccountLayout>
         <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('orders.title')}</h1>
@@ -98,7 +97,7 @@ const OrderHistory = () => {
           </div>
         )}
       </AccountLayout>
-    </PageTransition>
+    </>
   );
 };
 

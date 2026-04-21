@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiUser, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -44,10 +42,10 @@ const Register = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Register" noindex />
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md 3xl:max-w-lg">
+        <div className="w-full max-w-md 3xl:max-w-lg">
           <div className="text-center mb-8">
             <Link to="/" className="inline-block text-3xl 3xl:text-4xl font-display font-bold text-foreground tracking-[0.15em] mb-2">
               ARKAAN
@@ -113,9 +111,9 @@ const Register = () => {
               <Link to="/login" className="text-accent font-medium hover:underline">{t('nav.login')}</Link>
             </p>
           </form>
-        </motion.div>
+        </div>
       </div>
-    </PageTransition>
+    </>
   );
 };
 

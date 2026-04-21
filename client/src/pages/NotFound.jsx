@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 
@@ -8,7 +7,7 @@ const NotFound = () => {
   const { t } = useLanguageStore();
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Page not found" noindex />
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
         <FiAlertCircle className="w-20 h-20 3xl:w-24 3xl:h-24 text-accent mb-6" />
@@ -21,7 +20,7 @@ const NotFound = () => {
           {t('nav.home')}
         </Link>
       </div>
-    </PageTransition>
+    </>
   );
 };
 

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FiSearch, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCalendar, FiHash, FiPackage, FiChevronDown } from 'react-icons/fi';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import Image from '../components/common/Image';
@@ -54,7 +53,7 @@ const TrackOrder = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO
         title="Track Order"
         description="Track your Arkaan Bookstore order status — enter your order number and phone to see delivery progress."
@@ -238,7 +237,7 @@ const TrackOrder = () => {
           </div>
         )}
       </div>
-    </PageTransition>
+    </>
   );
 };
 

@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft, FiCreditCard, FiLogIn } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import Image from '../components/common/Image';
@@ -72,17 +70,12 @@ const Checkout = () => {
 
   if (success) {
     return (
-      <PageTransition>
+      <>
         <SEO title="Order placed" noindex />
         <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-20 text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-8"
-          >
+          <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-8">
             <FiCheck className="w-12 h-12 text-emerald-600" />
-          </motion.div>
+          </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-3">
             {t('checkout.orderPlaced')}
           </h1>
@@ -107,14 +100,14 @@ const Checkout = () => {
             </Link>
           </div>
         </div>
-      </PageTransition>
+      </>
     );
   }
 
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Checkout" noindex />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         <Link to="/cart" className="inline-flex items-center gap-2 text-2xl 3xl:text-4xl font-display font-bold text-foreground hover:text-accent transition-colors mb-8">
@@ -281,7 +274,7 @@ const Checkout = () => {
           </div>
         </form>
       </div>
-    </PageTransition>
+    </>
   );
 };
 

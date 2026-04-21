@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCalendar, FiHash } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -50,7 +49,7 @@ const OrderDetail = () => {
 
   if (loading) {
     return (
-      <PageTransition>
+      <>
         <AccountLayout>
           <div className="space-y-4">
             <div className="h-8 bg-surface-alt rounded-lg w-1/3 animate-pulse" />
@@ -58,13 +57,13 @@ const OrderDetail = () => {
             <div className="h-64 bg-surface-alt rounded-2xl animate-pulse" />
           </div>
         </AccountLayout>
-      </PageTransition>
+      </>
     );
   }
 
   if (!order) {
     return (
-      <PageTransition>
+      <>
         <AccountLayout>
           <div className="text-center py-20">
             <p className="text-foreground/50 text-lg">{t('common.noResults')}</p>
@@ -73,7 +72,7 @@ const OrderDetail = () => {
             </Link>
           </div>
         </AccountLayout>
-      </PageTransition>
+      </>
     );
   }
 
@@ -81,7 +80,7 @@ const OrderDetail = () => {
   const isCancelled = order.status === 'CANCELLED';
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Order Details" noindex />
       <AccountLayout>
         {/* Back */}
@@ -280,7 +279,7 @@ const OrderDetail = () => {
         onConfirm={handleCancel}
         onCancel={() => setShowCancelModal(false)}
       />
-    </PageTransition>
+    </>
   );
 };
 

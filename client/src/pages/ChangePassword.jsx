@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FiLock } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -29,7 +28,7 @@ const ChangePassword = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Change Password" noindex />
       <AccountLayout>
         <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('profile.changePassword')}</h1>
@@ -69,7 +68,7 @@ const ChangePassword = () => {
           </button>
         </form>
       </AccountLayout>
-    </PageTransition>
+    </>
   );
 };
 

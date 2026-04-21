@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import Image from '../components/common/Image';
@@ -52,7 +51,7 @@ const Wishlist = () => {
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Wishlist" noindex />
       <AccountLayout>
         <div className="flex items-center justify-between mb-8">
@@ -133,7 +132,7 @@ const Wishlist = () => {
           </div>
         )}
       </AccountLayout>
-    </PageTransition>
+    </>
   );
 };
 

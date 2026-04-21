@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiArrowRight, FiArrowLeft, FiBookOpen } from 'react-icons/fi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import LogoOverlay from '../components/common/LogoOverlay';
@@ -177,7 +175,7 @@ const Home = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO url="https://arkaan.qa/" jsonLd={homeJsonLd} />
       {/* Hero Banner Carousel */}
       <HeroBanner />
@@ -267,7 +265,7 @@ const Home = () => {
         );
       })}
 
-    </PageTransition>
+    </>
   );
 };
 

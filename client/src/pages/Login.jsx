@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -45,14 +43,10 @@ const Login = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO title="Login" noindex />
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md 3xl:max-w-lg"
-        >
+        <div className="w-full max-w-md 3xl:max-w-lg">
           <div className="text-center mb-8">
             <Link to="/" className="inline-block text-3xl 3xl:text-4xl font-display font-bold text-foreground tracking-[0.15em] mb-2">
               ARKAAN
@@ -115,17 +109,13 @@ const Login = () => {
               </Link>
             </p>
           </form>
-        </motion.div>
+        </div>
       </div>
 
       {/* Blocked Account Modal */}
       {blockedModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center relative"
-          >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center relative">
             <button
               onClick={() => setBlockedModal(false)}
               className="absolute top-3 right-3 rtl:right-auto rtl:left-3 text-gray-400 hover:text-gray-600"
@@ -145,10 +135,10 @@ const Login = () => {
             >
               OK
             </button>
-          </motion.div>
+          </div>
         </div>
       )}
-    </PageTransition>
+    </>
   );
 };
 

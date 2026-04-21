@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { FiPhone, FiMail, FiMapPin, FiSend, FiInstagram } from 'react-icons/fi';
 import { FaWhatsapp, FaFacebookF, FaTiktok, FaLinkedinIn, FaXTwitter, FaPinterestP } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
-import PageTransition from '../animations/PageTransition';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -51,7 +50,7 @@ const Contact = () => {
   };
 
   return (
-    <PageTransition>
+    <>
       <SEO
         title="Contact Us"
         description="Get in touch with Arkaan Bookstore in Doha, Qatar. Phone, email, WhatsApp — we're here to help with books, stationery and printing orders."
@@ -154,7 +153,7 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </PageTransition>
+    </>
   );
 };
 
