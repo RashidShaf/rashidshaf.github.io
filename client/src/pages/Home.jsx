@@ -10,6 +10,7 @@ import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import LogoOverlay from '../components/common/LogoOverlay';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
@@ -118,8 +119,49 @@ const Home = () => {
     comingSoon: 'comingSoon',
   };
 
+  const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://arkaan.qa/#organization',
+        name: 'Arkaan Bookstore',
+        url: 'https://arkaan.qa/',
+        logo: 'https://arkaan.qa/arkaan-banner-logo.png',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: '+974-5994-3131',
+          contactType: 'customer service',
+          areaServed: 'QA',
+          availableLanguage: ['English', 'Arabic'],
+        },
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Doha',
+          addressCountry: 'QA',
+        },
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://arkaan.qa/#website',
+        url: 'https://arkaan.qa/',
+        name: 'Arkaan Bookstore',
+        publisher: { '@id': 'https://arkaan.qa/#organization' },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://arkaan.qa/books?search={search_term_string}',
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+    ],
+  };
+
   return (
     <PageTransition>
+      <SEO url="https://arkaan.qa/" jsonLd={homeJsonLd} />
       {/* Hero Banner Carousel */}
       <HeroBanner />
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FiMail, FiPhone, FiMapPin, FiSave } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -38,6 +39,7 @@ const Profile = () => {
 
   return (
     <PageTransition>
+      <SEO title="Profile" noindex />
       <AccountLayout>
         <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('profile.editProfile')}</h1>
 

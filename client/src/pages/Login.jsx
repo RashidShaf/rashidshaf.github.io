@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
 import useCartStore from '../stores/useCartStore';
@@ -45,6 +46,7 @@ const Login = () => {
 
   return (
     <PageTransition>
+      <SEO title="Login" noindex />
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

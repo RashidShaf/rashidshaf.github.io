@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
@@ -51,6 +52,7 @@ const Wishlist = () => {
 
   return (
     <PageTransition>
+      <SEO title="Wishlist" noindex />
       <AccountLayout>
         <div className="flex items-center justify-between mb-8">
           <div>

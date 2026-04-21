@@ -1,0 +1,22 @@
+# Arkaan Bookstore — robots.txt
+# https://arkaan.qa
+
+User-agent: *
+Allow: /
+
+# Private routes (account area, transactional)
+Disallow: /cart
+Disallow: /checkout
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Disallow: /orders
+Disallow: /orders/
+Disallow: /wishlist
+Disallow: /change-password
+Disallow: /track-order
+
+# Don't index internal search result pages (duplicate content)
+Disallow: /*?search=
+
+Sitemap: https://arkaan.qa/sitemap.xml

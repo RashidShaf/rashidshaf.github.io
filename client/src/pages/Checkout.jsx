@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMapPin, FiUser, FiFileText, FiCheck, FiShoppingBag, FiArrowRight, FiArrowLeft, FiCreditCard, FiLogIn } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
@@ -71,6 +72,7 @@ const Checkout = () => {
   if (success) {
     return (
       <PageTransition>
+        <SEO title="Order placed" noindex />
         <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-20 text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -112,6 +114,7 @@ const Checkout = () => {
 
   return (
     <PageTransition>
+      <SEO title="Checkout" noindex />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         <Link to="/cart" className="inline-flex items-center gap-2 text-2xl 3xl:text-4xl font-display font-bold text-foreground hover:text-accent transition-colors mb-8">
           {language === 'ar' ? <FiArrowRight size={22} /> : <FiArrowLeft size={22} />} {t('checkout.title')}

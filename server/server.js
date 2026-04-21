@@ -30,6 +30,7 @@ const adminHomeRoutes = require('./routes/admin/home');
 const bannerRoutes = require('./routes/banners');
 const settingsRoutes = require('./routes/settings');
 const homeRoutes = require('./routes/home');
+const sitemapRoutes = require('./routes/sitemap');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -56,6 +57,9 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// SEO — sitemap.xml served at root (Nginx must route /sitemap.xml to API)
+app.use('/', sitemapRoutes);
 
 // API Routes
 app.use('/api/auth', authRoutes);

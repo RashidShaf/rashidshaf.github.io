@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import ReviewSection from '../components/books/ReviewSection';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useAuthStore from '../stores/useAuthStore';
 import useCartStore from '../stores/useCartStore';
@@ -91,6 +92,7 @@ const BookDetail = () => {
   if (!book) {
     return (
       <PageTransition>
+        <SEO title="Book not found" noindex />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <p className="text-xl text-foreground/60">{t('common.noResults')}</p>
           <Link to="/books" className="mt-4 inline-flex items-center gap-2 text-accent hover:text-accent-light">
@@ -124,8 +126,68 @@ const BookDetail = () => {
     ? Math.round((1 - parseFloat(book.price) / parseFloat(book.compareAtPrice)) * 100)
     : 0;
 
+  const bookUrl = `https://arkaan.qa/books/${book.slug}`;
+  const seoImage = coverUrl || placeholderUrl || `https://arkaan.qa/arkaan-banner-logo.png`;
+  const seoDescription = (description || `${title}${author ? ` by ${author}` : ''}. Available at Arkaan Bookstore in Doha, Qatar.`).slice(0, 300);
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': bookUrl,
+    name: title,
+    description: description || undefined,
+    image: seoImage,
+    sku: book.sku || book.id,
+    ...(book.isbn && {
+      gtin13: book.isbn.replace(/[^0-9]/g, '').length === 13 ? book.isbn.replace(/[^0-9]/g, '') : undefined,
+    }),
+    ...(author && author !== 'Unknown' && author.trim() !== '' && {
+      brand: { '@type': 'Brand', name: author },
+      author: { '@type': 'Person', name: author },
+    }),
+    ...(publisher && {
+      publisher: { '@type': 'Organization', name: publisher },
+    }),
+    aggregateRating: book.reviewCount > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: parseFloat(book.averageRating).toFixed(1),
+      reviewCount: book.reviewCount,
+    } : undefined,
+    offers: {
+      '@type': 'Offer',
+      url: bookUrl,
+      priceCurrency: 'QAR',
+      price: parseFloat(book.price).toFixed(2),
+      availability: book.isOutOfStock || book.stock <= 0
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@type': 'Organization', name: 'Arkaan Bookstore' },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://arkaan.qa/' },
+      { '@type': 'ListItem', position: 2, name: 'Books', item: 'https://arkaan.qa/books' },
+      ...(parentCat ? [{ '@type': 'ListItem', position: 3, name: parentCatName, item: `https://arkaan.qa/books?category=${parentCat.slug}` }] : []),
+      ...(book.category ? [{ '@type': 'ListItem', position: parentCat ? 4 : 3, name: catName, item: `https://arkaan.qa/books?category=${book.category.slug}` }] : []),
+      { '@type': 'ListItem', position: parentCat && book.category ? 5 : (book.category || parentCat ? 4 : 3), name: title, item: bookUrl },
+    ],
+  };
+
   return (
     <PageTransition>
+      <SEO
+        title={`${title}${author && author !== 'Unknown' && author.trim() !== '' ? ` by ${author}` : ''}`}
+        description={seoDescription}
+        image={seoImage}
+        url={bookUrl}
+        type="product"
+        jsonLd={{ '@context': 'https://schema.org', '@graph': [productJsonLd, breadcrumbJsonLd] }}
+      />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4 pb-16">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm 3xl:text-lg text-foreground/60 mb-6">

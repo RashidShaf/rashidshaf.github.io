@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FiSearch, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCalendar, FiHash, FiPackage, FiChevronDown } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import PhoneInput from '../components/common/PhoneInput';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
@@ -53,6 +54,11 @@ const TrackOrder = () => {
 
   return (
     <PageTransition>
+      <SEO
+        title="Track Order"
+        description="Track your Arkaan Bookstore order status — enter your order number and phone to see delivery progress."
+        url="https://arkaan.qa/track-order"
+      />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         {/* Lookup Form */}
         <div className="max-w-md 3xl:max-w-lg mx-auto mb-10">

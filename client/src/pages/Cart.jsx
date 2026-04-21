@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiArrowRight, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import useCartStore from '../stores/useCartStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -22,6 +23,7 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <PageTransition>
+        <SEO title="Cart" noindex />
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <FiShoppingBag className="w-16 h-16 text-muted/30 mx-auto mb-6" />
           <h1 className="text-2xl font-display font-bold text-foreground mb-2">{t('cart.empty')}</h1>
@@ -36,6 +38,7 @@ const Cart = () => {
 
   return (
     <PageTransition>
+      <SEO title="Cart" noindex />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-10">
         <h1 className="text-2xl 3xl:text-4xl font-display font-bold text-foreground mb-8">
           {t('cart.title')} ({items.length})

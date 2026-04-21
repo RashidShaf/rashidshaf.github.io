@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiCheck, FiX, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCalendar, FiHash } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import ConfirmModal from '../components/common/ConfirmModal';
 import useLanguageStore from '../stores/useLanguageStore';
@@ -80,6 +81,7 @@ const OrderDetail = () => {
 
   return (
     <PageTransition>
+      <SEO title="Order Details" noindex />
       <AccountLayout>
         {/* Back */}
         <Link to="/orders" className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-accent transition-colors mb-4">

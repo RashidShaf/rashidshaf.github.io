@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FiBookOpen, FiGlobe, FiTruck, FiHeart, FiDollarSign, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 
 const About = () => {
@@ -22,6 +23,11 @@ const About = () => {
 
   return (
     <PageTransition>
+      <SEO
+        title="About Us"
+        description="Learn about Arkaan Bookstore — your trusted bookstore in Doha, Qatar. Serving Arabic & English readers with cash-on-delivery across Qatar."
+        url="https://arkaan.qa/about"
+      />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-12 lg:py-16">
         {/* Hero */}
         <div className="text-center mb-16">

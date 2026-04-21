@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiPackage, FiShoppingBag, FiChevronRight, FiCalendar } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
+import SEO from '../components/SEO';
 import AccountLayout from '../components/common/AccountLayout';
 import useLanguageStore from '../stores/useLanguageStore';
 import { formatPrice, formatDate, formatDateAr } from '../utils/formatters';
@@ -31,6 +32,7 @@ const OrderHistory = () => {
 
   return (
     <PageTransition>
+      <SEO title="My Orders" noindex />
       <AccountLayout>
         <h1 className="text-2xl 3xl:text-3xl font-display font-bold text-foreground mb-6">{t('orders.title')}</h1>
 

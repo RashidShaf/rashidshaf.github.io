@@ -4,6 +4,7 @@ import { FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
 import PageTransition from '../animations/PageTransition';
 import BookCard from '../components/books/BookCard';
 import LogoOverlay from '../components/common/LogoOverlay';
+import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
 
@@ -561,8 +562,30 @@ const Books = () => {
 
   const visibleFilters = getVisibleFilters();
 
+  const seoTitle = getPageTitle();
+  const seoDescription = search
+    ? `Search results for "${search}" at Arkaan Bookstore — books, stationery and more in Doha, Qatar.`
+    : selectedCategories.length > 0
+      ? `Browse ${seoTitle.replace(/^browse\s*/i, '')} at Arkaan Bookstore in Doha, Qatar. Arabic & English titles, cash on delivery.`
+      : "Browse books, stationery and printing products at Arkaan Bookstore in Doha, Qatar. Arabic & English titles, cash on delivery.";
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://arkaan.qa/' },
+      { '@type': 'ListItem', position: 2, name: 'Books', item: 'https://arkaan.qa/books' },
+    ],
+  };
+
   return (
     <PageTransition>
+      <SEO
+        title={seoTitle === t('books.title') ? 'All Books' : seoTitle}
+        description={seoDescription}
+        noindex={!!search}
+        jsonLd={breadcrumbJsonLd}
+      />
       <div className="mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 3xl:px-12 py-4">
         <div className="flex gap-4 lg:gap-8">
           {/* Sidebar Filters */}
