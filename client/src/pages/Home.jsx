@@ -101,23 +101,14 @@ const Home = () => {
   const cornerParam = searchParams.get('corner') || '';
 
   const [sections, setSections] = useState([]);
-  const [cornerData, setCornerData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        if (cornerParam) {
-          // Per-corner page: fetch only the 5 curated sections for this corner
-          const res = await api.get(`/home/corner-sections/${encodeURIComponent(cornerParam)}`).catch(() => ({ data: null }));
-          setCornerData(res.data);
-          setSections([]);
-        } else {
-          const res = await api.get('/home/layout').catch(() => ({ data: { sections: [] } }));
-          setSections(res.data.sections || []);
-          setCornerData(null);
-        }
+        const res = await api.get('/home/layout').catch(() => ({ data: { sections: [] } }));
+        setSections(res.data.sections || []);
       } catch (err) {
         console.error('Failed to load home data:', err);
       } finally {
@@ -206,41 +197,16 @@ const Home = () => {
       {/* Hero Banner Carousel */}
       <HeroBanner />
 
-      {/* Per-corner page: 2-per-row grid of admin-curated sections with auto-scroll carousels */}
-      {!loading && cornerParam && cornerData && cornerData.sections && cornerData.sections.length > 0 && (
-        <div className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 3xl:gap-8">
-            {cornerData.sections.map((s, idx) => {
-              const isLast = idx === cornerData.sections.length - 1;
-              const oddCount = cornerData.sections.length % 2 === 1;
-              const fullWidth = isLast && oddCount;
-              const flag = SECTION_FLAG[s.type];
-              const seeAllUrl = flag
-                ? `/books?category=${encodeURIComponent(cornerData.corner.slug)}&${flag}=1`
-                : `/books?category=${encodeURIComponent(cornerData.corner.slug)}`;
-              return (
-                <div key={s.type} className={fullWidth ? 'lg:col-span-2' : ''}>
-                  <CornerSection
-                    title={SECTION_TITLES[s.type] || s.type}
-                    books={s.books || []}
-                    seeAllUrl={seeAllUrl}
-                    comingSoon={s.type === 'comingSoon'}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Root home / generic layout — unchanged, only renders when cornerParam is not set */}
-      {!loading && !cornerParam && sections.map((section, sIdx) => {
+      {/* Driven by /home/layout — sections appear in admin-controlled order.
+          Each corner block now renders: L1 title + L2 subcategories + 5-section grid. */}
+      {!loading && sections.map((section, sIdx) => {
         if (section.type === 'corner') {
           const l1 = section.corner;
           if (!l1) return null;
           const hasChildren = l1.children && l1.children.length > 0;
-          const hasBooks = section.books && section.books.length > 0;
-          if (!hasChildren && !hasBooks) return null;
+          const cornerSections = (section.cornerSections || []).filter((s) => s.books && s.books.length > 0);
+          const hasCornerSections = cornerSections.length > 0;
+          if (!hasChildren && !hasCornerSections) return null;
           return (
             <section key={`corner-${l1.id}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
               <div className="flex items-center justify-between mb-8">
@@ -284,11 +250,29 @@ const Home = () => {
                   })}
                 </BookCarousel>
               )}
-              {hasBooks && (
+              {hasCornerSections && (
                 <div className={hasChildren ? 'mt-6 3xl:mt-10' : ''}>
-                  <BookCarousel>
-                    {section.books.map((book) => <BookCard key={book.id} book={book} />)}
-                  </BookCarousel>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 3xl:gap-8">
+                    {cornerSections.map((s, idx) => {
+                      const isLast = idx === cornerSections.length - 1;
+                      const oddCount = cornerSections.length % 2 === 1;
+                      const fullWidth = isLast && oddCount;
+                      const flag = SECTION_FLAG[s.type];
+                      const seeAllUrl = flag
+                        ? `/books?category=${encodeURIComponent(l1.slug)}&${flag}=1`
+                        : `/books?category=${encodeURIComponent(l1.slug)}`;
+                      return (
+                        <div key={s.type} className={fullWidth ? 'lg:col-span-2' : ''}>
+                          <CornerSection
+                            title={SECTION_TITLES[s.type] || s.type}
+                            books={s.books || []}
+                            seeAllUrl={seeAllUrl}
+                            comingSoon={s.type === 'comingSoon'}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </section>
