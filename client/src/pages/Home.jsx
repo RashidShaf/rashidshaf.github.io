@@ -9,6 +9,7 @@ import BookCard from '../components/books/BookCard';
 import BookCarousel from '../components/common/BookCarousel';
 import LogoOverlay from '../components/common/LogoOverlay';
 import Image from '../components/common/Image';
+import CornerSection from '../components/common/CornerSection';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -100,14 +101,23 @@ const Home = () => {
   const cornerParam = searchParams.get('corner') || '';
 
   const [sections, setSections] = useState([]);
+  const [cornerData, setCornerData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await api.get('/home/layout').catch(() => ({ data: { sections: [] } }));
-        setSections(res.data.sections || []);
+        if (cornerParam) {
+          // Per-corner page: fetch only the 5 curated sections for this corner
+          const res = await api.get(`/home/corner-sections/${encodeURIComponent(cornerParam)}`).catch(() => ({ data: null }));
+          setCornerData(res.data);
+          setSections([]);
+        } else {
+          const res = await api.get('/home/layout').catch(() => ({ data: { sections: [] } }));
+          setSections(res.data.sections || []);
+          setCornerData(null);
+        }
       } catch (err) {
         console.error('Failed to load home data:', err);
       } finally {
@@ -174,14 +184,57 @@ const Home = () => {
     ],
   };
 
+  // Labels and see-all flags per section type. Flag maps to the server's `?isFeatured=1` etc.
+  const SECTION_TITLES = {
+    featured:    t('home.featured'),
+    bestsellers: t('home.bestsellers'),
+    newArrivals: t('home.newArrivals'),
+    trending:    t('home.trending'),
+    comingSoon:  t('home.comingSoon'),
+  };
+  const SECTION_FLAG = {
+    featured:    'isFeatured',
+    bestsellers: 'isBestseller',
+    newArrivals: 'isNewArrival',
+    trending:    'isTrending',
+    comingSoon:  'isComingSoon',
+  };
+
   return (
     <>
       <SEO url="https://arkaan.qa/" jsonLd={homeJsonLd} />
       {/* Hero Banner Carousel */}
       <HeroBanner />
 
-      {/* Driven by /home/layout — sections appear in admin-controlled order */}
-      {!loading && sections.map((section, sIdx) => {
+      {/* Per-corner page: 2-per-row grid of admin-curated sections with auto-scroll carousels */}
+      {!loading && cornerParam && cornerData && cornerData.sections && cornerData.sections.length > 0 && (
+        <div className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 3xl:gap-8">
+            {cornerData.sections.map((s, idx) => {
+              const isLast = idx === cornerData.sections.length - 1;
+              const oddCount = cornerData.sections.length % 2 === 1;
+              const fullWidth = isLast && oddCount;
+              const flag = SECTION_FLAG[s.type];
+              const seeAllUrl = flag
+                ? `/books?category=${encodeURIComponent(cornerData.corner.slug)}&${flag}=1`
+                : `/books?category=${encodeURIComponent(cornerData.corner.slug)}`;
+              return (
+                <div key={s.type} className={fullWidth ? 'lg:col-span-2' : ''}>
+                  <CornerSection
+                    title={SECTION_TITLES[s.type] || s.type}
+                    books={s.books || []}
+                    seeAllUrl={seeAllUrl}
+                    comingSoon={s.type === 'comingSoon'}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Root home / generic layout — unchanged, only renders when cornerParam is not set */}
+      {!loading && !cornerParam && sections.map((section, sIdx) => {
         if (section.type === 'corner') {
           const l1 = section.corner;
           if (!l1) return null;

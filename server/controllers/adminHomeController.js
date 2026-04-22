@@ -1,11 +1,15 @@
 const prisma = require('../config/database');
 
 const ALLOWED_GLOBAL_TYPES = ['featured', 'newArrivals', 'bestsellers', 'trending', 'comingSoon'];
+const ALLOWED_SECTION_TYPES = ['featured', 'bestsellers', 'newArrivals', 'trending', 'comingSoon'];
+const DEFAULT_CORNER_SECTION_CONFIG = ALLOWED_SECTION_TYPES.map((type) => ({ type, enabled: true }));
 
 // GET /api/admin/home/config
-// Returns the saved section order + the picks for every corner referenced in the config.
+// Returns the saved section order + picks per corner per section type + the per-corner section config
+// (visibility + order of the 5 per-corner sections that render on `/?corner=<slug>`).
 exports.getConfig = async (req, res, next) => {
   try {
+    // --- home layout (global + corner section ordering on the root home page) ---
     const setting = await prisma.setting.findUnique({ where: { key: 'homeLayout' } });
     let sections = [];
     if (setting?.value) {
@@ -14,7 +18,6 @@ exports.getConfig = async (req, res, next) => {
         if (Array.isArray(parsed)) sections = parsed;
       } catch {}
     }
-    // Ensure every active corner appears somewhere in the list (seed newly-created ones).
     const corners = await prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: { displayOrder: 'asc' },
@@ -24,44 +27,81 @@ exports.getConfig = async (req, res, next) => {
     corners.forEach((c) => {
       if (!knownCornerIds.has(c.id)) sections.push({ type: 'corner', cornerId: c.id, enabled: true });
     });
-    // Ensure all global types are present (so admin can toggle them even if they aren't saved yet).
     const knownGlobalTypes = new Set(sections.filter((s) => ALLOWED_GLOBAL_TYPES.includes(s.type)).map((s) => s.type));
     ALLOWED_GLOBAL_TYPES.forEach((t) => {
       if (!knownGlobalTypes.has(t)) sections.push({ type: t, enabled: true });
     });
 
-    // Fetch picks for every corner in the config.
-    // We include isActive so the admin UI can mark inactive books — we do NOT filter them out,
-    // because the admin should see everything they've picked (inactive books are hidden on the
-    // storefront by homeController, but admin needs visibility to heal them).
-    const cornerIds = sections.filter((s) => s.type === 'corner').map((s) => s.cornerId);
+    // --- picks grouped by (corner, sectionType) ---
+    const cornerIds = corners.map((c) => c.id);
     const picks = await prisma.homeSectionProduct.findMany({
       where: { cornerId: { in: cornerIds } },
-      orderBy: { displayOrder: 'asc' },
+      orderBy: [{ cornerId: 'asc' }, { sectionType: 'asc' }, { displayOrder: 'asc' }],
       include: { book: { select: { id: true, title: true, titleAr: true, coverImage: true, sku: true, price: true, isActive: true } } },
     });
     const cornerPicks = {};
-    cornerIds.forEach((id) => { cornerPicks[id] = []; });
+    cornerIds.forEach((id) => {
+      cornerPicks[id] = {};
+      ALLOWED_SECTION_TYPES.forEach((t) => { cornerPicks[id][t] = []; });
+    });
     picks.forEach((p) => {
-      if (!cornerPicks[p.cornerId]) cornerPicks[p.cornerId] = [];
-      cornerPicks[p.cornerId].push(p.book);
+      const cornerBucket = cornerPicks[p.cornerId] || (cornerPicks[p.cornerId] = {});
+      const type = ALLOWED_SECTION_TYPES.includes(p.sectionType) ? p.sectionType : 'featured';
+      if (!cornerBucket[type]) cornerBucket[type] = [];
+      cornerBucket[type].push(p.book);
     });
 
-    res.json({ sections, cornerPicks, corners });
+    // --- per-corner section config (visibility + order) ---
+    const configSetting = await prisma.setting.findUnique({ where: { key: 'cornerSectionConfig' } });
+    let cornerSectionConfig = {};
+    if (configSetting?.value) {
+      try {
+        const parsed = JSON.parse(configSetting.value);
+        if (parsed && typeof parsed === 'object') cornerSectionConfig = parsed;
+      } catch {}
+    }
+    // Ensure every corner has a config entry — fill in default when missing or malformed.
+    corners.forEach((c) => {
+      const existing = cornerSectionConfig[c.slug];
+      if (!Array.isArray(existing) || existing.length === 0) {
+        cornerSectionConfig[c.slug] = DEFAULT_CORNER_SECTION_CONFIG.map((s) => ({ ...s }));
+      } else {
+        // Normalize: ensure all 5 types present, preserve user-specified order + enabled state.
+        const seen = new Set();
+        const normalized = [];
+        existing.forEach((s) => {
+          if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
+            seen.add(s.type);
+            normalized.push({ type: s.type, enabled: s.enabled !== false });
+          }
+        });
+        ALLOWED_SECTION_TYPES.forEach((t) => {
+          if (!seen.has(t)) normalized.push({ type: t, enabled: true });
+        });
+        cornerSectionConfig[c.slug] = normalized;
+      }
+    });
+
+    res.json({ sections, cornerPicks, cornerSectionConfig, corners });
   } catch (error) {
     next(error);
   }
 };
 
 // PUT /api/admin/home/config
-// Body: { sections: [...], cornerPicks: { [cornerId]: [bookId, bookId, ...] } }
+// Body: {
+//   sections: [...],                                           // home layout (unchanged)
+//   cornerPicks: { [cornerId]: { [sectionType]: [bookId, ...] } },   // new nested shape
+//   cornerSectionConfig: { [cornerSlug]: [{type, enabled}, ...] }    // new
+// }
+// Backward compatibility: if cornerPicks[cornerId] is a flat array (old format), treat as 'featured'.
 exports.saveConfig = async (req, res, next) => {
   try {
-    const { sections, cornerPicks } = req.body;
+    const { sections, cornerPicks, cornerSectionConfig } = req.body;
     if (!Array.isArray(sections)) return res.status(400).json({ message: 'sections must be an array' });
     if (cornerPicks && typeof cornerPicks !== 'object') return res.status(400).json({ message: 'cornerPicks must be an object' });
+    if (cornerSectionConfig && typeof cornerSectionConfig !== 'object') return res.status(400).json({ message: 'cornerSectionConfig must be an object' });
 
-    // Validate section shapes
     const cleanSections = sections
       .filter((s) => s && typeof s.type === 'string')
       .map((s) => {
@@ -71,8 +111,6 @@ exports.saveConfig = async (req, res, next) => {
       })
       .filter(Boolean);
 
-    // Run all writes inside a single transaction so a partial failure doesn't leave some corners
-    // updated while others are still on the old picks.
     const ops = [];
     ops.push(prisma.setting.upsert({
       where: { key: 'homeLayout' },
@@ -81,16 +119,56 @@ exports.saveConfig = async (req, res, next) => {
     }));
 
     if (cornerPicks) {
-      for (const [cornerId, bookIds] of Object.entries(cornerPicks)) {
-        if (!Array.isArray(bookIds)) continue;
+      for (const [cornerId, sectionsOrArray] of Object.entries(cornerPicks)) {
+        // Wipe this corner's picks entirely, then recreate from the submitted shape.
         ops.push(prisma.homeSectionProduct.deleteMany({ where: { cornerId } }));
-        const rows = bookIds
-          .filter((id) => typeof id === 'string' && id)
-          .map((bookId, i) => ({ cornerId, bookId, displayOrder: i }));
+
+        let perSection;
+        if (Array.isArray(sectionsOrArray)) {
+          // Legacy shape: a flat array — treat as featured picks only
+          perSection = { featured: sectionsOrArray };
+        } else if (sectionsOrArray && typeof sectionsOrArray === 'object') {
+          perSection = sectionsOrArray;
+        } else {
+          continue;
+        }
+
+        const rows = [];
+        for (const [sectionType, bookIds] of Object.entries(perSection)) {
+          if (!ALLOWED_SECTION_TYPES.includes(sectionType)) continue;
+          if (!Array.isArray(bookIds)) continue;
+          bookIds
+            .filter((id) => typeof id === 'string' && id)
+            .forEach((bookId, i) => rows.push({ cornerId, sectionType, bookId, displayOrder: i }));
+        }
         if (rows.length > 0) {
           ops.push(prisma.homeSectionProduct.createMany({ data: rows, skipDuplicates: true }));
         }
       }
+    }
+
+    if (cornerSectionConfig) {
+      const cleanConfig = {};
+      for (const [slug, arr] of Object.entries(cornerSectionConfig)) {
+        if (!Array.isArray(arr)) continue;
+        const seen = new Set();
+        const normalized = [];
+        arr.forEach((s) => {
+          if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
+            seen.add(s.type);
+            normalized.push({ type: s.type, enabled: s.enabled !== false });
+          }
+        });
+        ALLOWED_SECTION_TYPES.forEach((t) => {
+          if (!seen.has(t)) normalized.push({ type: t, enabled: true });
+        });
+        cleanConfig[slug] = normalized;
+      }
+      ops.push(prisma.setting.upsert({
+        where: { key: 'cornerSectionConfig' },
+        update: { value: JSON.stringify(cleanConfig) },
+        create: { key: 'cornerSectionConfig', value: JSON.stringify(cleanConfig) },
+      }));
     }
 
     await prisma.$transaction(ops);
@@ -115,7 +193,6 @@ exports.searchBooks = async (req, res, next) => {
       ];
     }
     if (cornerId) {
-      // Resolve the corner's entire category subtree
       const collect = async (parentId) => {
         const children = await prisma.category.findMany({ where: { parentId }, select: { id: true } });
         if (children.length === 0) return [];

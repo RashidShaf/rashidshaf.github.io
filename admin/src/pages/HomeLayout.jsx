@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiChevronUp, FiChevronDown, FiX, FiPlus, FiSearch, FiGrid, FiLayers, FiStar, FiTrendingUp, FiClock, FiAward, FiGlobe } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiX, FiPlus, FiSearch, FiGrid, FiLayers, FiStar, FiTrendingUp, FiClock, FiAward, FiGlobe, FiEye, FiEyeOff } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -13,14 +13,21 @@ const GLOBAL_SECTION_META = {
   comingSoon:   { icon: FiGlobe,      labelKey: 'books.comingSoon' },
 };
 
+const SECTION_TYPES = ['featured', 'bestsellers', 'newArrivals', 'trending', 'comingSoon'];
+const DEFAULT_CORNER_CONFIG = SECTION_TYPES.map((type) => ({ type, enabled: true }));
+
 export default function HomeLayout() {
   const { t, language } = useLanguageStore();
   const [sections, setSections] = useState([]);
-  const [cornerPicks, setCornerPicks] = useState({}); // cornerId -> [book objects]
+  // cornerPicks is now { [cornerId]: { [sectionType]: [book objects] } }
+  const [cornerPicks, setCornerPicks] = useState({});
+  // cornerSectionConfig is { [cornerSlug]: [{type, enabled}, ...] } — per-corner section order + visibility
+  const [cornerSectionConfig, setCornerSectionConfig] = useState({});
   const [corners, setCorners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(null); // cornerId
+  const [activeTab, setActiveTab] = useState({}); // { [cornerId]: sectionType }
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -31,7 +38,26 @@ export default function HomeLayout() {
     try {
       const res = await api.get('/admin/home/config');
       setSections(res.data.sections || []);
-      setCornerPicks(res.data.cornerPicks || {});
+      // Normalize cornerPicks — if server sends a flat array (old shape), bucket it as 'featured'
+      const rawPicks = res.data.cornerPicks || {};
+      const normalizedPicks = {};
+      Object.entries(rawPicks).forEach(([cornerId, v]) => {
+        if (Array.isArray(v)) {
+          normalizedPicks[cornerId] = { featured: v, bestsellers: [], newArrivals: [], trending: [], comingSoon: [] };
+        } else if (v && typeof v === 'object') {
+          normalizedPicks[cornerId] = {
+            featured:    Array.isArray(v.featured)    ? v.featured    : [],
+            bestsellers: Array.isArray(v.bestsellers) ? v.bestsellers : [],
+            newArrivals: Array.isArray(v.newArrivals) ? v.newArrivals : [],
+            trending:    Array.isArray(v.trending)    ? v.trending    : [],
+            comingSoon:  Array.isArray(v.comingSoon)  ? v.comingSoon  : [],
+          };
+        } else {
+          normalizedPicks[cornerId] = { featured: [], bestsellers: [], newArrivals: [], trending: [], comingSoon: [] };
+        }
+      });
+      setCornerPicks(normalizedPicks);
+      setCornerSectionConfig(res.data.cornerSectionConfig || {});
       setCorners(res.data.corners || []);
     } catch {
       toast.error(t('homeLayout.loadFailed') || 'Failed to load');
@@ -44,6 +70,10 @@ export default function HomeLayout() {
 
   const cornersById = Object.fromEntries(corners.map((c) => [c.id, c]));
   const cornerName = (c) => (language === 'ar' && c?.nameAr) ? c.nameAr : c?.name;
+  const sectionLabel = (type) => {
+    const meta = GLOBAL_SECTION_META[type];
+    return meta ? t(meta.labelKey) : type;
+  };
 
   const moveSection = (idx, dir) => {
     setSections((prev) => {
@@ -59,29 +89,55 @@ export default function HomeLayout() {
     setSections((prev) => prev.map((s, i) => i === idx ? { ...s, enabled: !s.enabled } : s));
   };
 
-  const moveBook = (cornerId, idx, dir) => {
+  const moveBook = (cornerId, sectionType, idx, dir) => {
     setCornerPicks((prev) => {
-      const arr = [...(prev[cornerId] || [])];
+      const bucket = prev[cornerId]?.[sectionType] || [];
+      const arr = [...bucket];
       const target = idx + dir;
       if (target < 0 || target >= arr.length) return prev;
       [arr[idx], arr[target]] = [arr[target], arr[idx]];
-      return { ...prev, [cornerId]: arr };
+      return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: arr } };
     });
   };
 
-  const removeBook = (cornerId, bookId) => {
-    setCornerPicks((prev) => ({ ...prev, [cornerId]: (prev[cornerId] || []).filter((b) => b.id !== bookId) }));
-  };
-
-  const addBook = (cornerId, book) => {
+  const removeBook = (cornerId, sectionType, bookId) => {
     setCornerPicks((prev) => {
-      const arr = prev[cornerId] || [];
-      if (arr.some((b) => b.id === book.id)) return prev;
-      return { ...prev, [cornerId]: [...arr, book] };
+      const bucket = prev[cornerId]?.[sectionType] || [];
+      return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: bucket.filter((b) => b.id !== bookId) } };
     });
   };
 
-  // Debounced search when a corner is expanded
+  const addBook = (cornerId, sectionType, book) => {
+    setCornerPicks((prev) => {
+      const bucket = prev[cornerId]?.[sectionType] || [];
+      if (bucket.some((b) => b.id === book.id)) return prev;
+      return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: [...bucket, book] } };
+    });
+  };
+
+  // Per-corner section order/visibility controls
+  const moveCornerSection = (slug, idx, dir) => {
+    setCornerSectionConfig((prev) => {
+      const current = Array.isArray(prev[slug]) ? prev[slug] : DEFAULT_CORNER_CONFIG;
+      const next = [...current];
+      const target = idx + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return { ...prev, [slug]: next };
+    });
+  };
+
+  const toggleCornerSectionEnabled = (slug, sectionType) => {
+    setCornerSectionConfig((prev) => {
+      const current = Array.isArray(prev[slug]) ? prev[slug] : DEFAULT_CORNER_CONFIG;
+      return {
+        ...prev,
+        [slug]: current.map((s) => s.type === sectionType ? { ...s, enabled: !s.enabled } : s),
+      };
+    });
+  };
+
+  // Debounced book search
   useEffect(() => {
     if (!expanded) { setSearchResults([]); return; }
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -102,13 +158,15 @@ export default function HomeLayout() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = {
-        sections,
-        cornerPicks: Object.fromEntries(
-          Object.entries(cornerPicks).map(([cornerId, books]) => [cornerId, books.map((b) => b.id)])
-        ),
-      };
-      await api.put('/admin/home/config', payload);
+      // Flatten picks from {cornerId: {sectionType: [book]}} → {cornerId: {sectionType: [bookId]}}
+      const flatPicks = {};
+      Object.entries(cornerPicks).forEach(([cornerId, buckets]) => {
+        flatPicks[cornerId] = {};
+        Object.entries(buckets).forEach(([sectionType, books]) => {
+          flatPicks[cornerId][sectionType] = books.map((b) => b.id);
+        });
+      });
+      await api.put('/admin/home/config', { sections, cornerPicks: flatPicks, cornerSectionConfig });
       toast.success(t('homeLayout.saved') || 'Saved');
     } catch {
       toast.error(t('homeLayout.saveFailed') || 'Failed to save');
@@ -150,8 +208,11 @@ export default function HomeLayout() {
           const Icon = isCorner ? FiLayers : (meta?.icon || FiGrid);
           const corner = isCorner ? cornersById[s.cornerId] : null;
           const label = isCorner ? (corner ? cornerName(corner) : (t('homeLayout.unknownCorner') || 'Unknown corner')) : (meta ? t(meta.labelKey) : s.type);
-          const picks = isCorner ? (cornerPicks[s.cornerId] || []) : null;
+          const cornerBuckets = isCorner ? (cornerPicks[s.cornerId] || {}) : null;
+          const totalPicks = isCorner ? SECTION_TYPES.reduce((sum, t) => sum + (cornerBuckets[t]?.length || 0), 0) : 0;
           const isOpen = isCorner && expanded === s.cornerId;
+          const currentTab = isCorner ? (activeTab[s.cornerId] || 'featured') : null;
+          const cornerConfigArr = isCorner && corner ? (Array.isArray(cornerSectionConfig[corner.slug]) ? cornerSectionConfig[corner.slug] : DEFAULT_CORNER_CONFIG) : null;
 
           return (
             <div key={isCorner ? `c-${s.cornerId}` : `g-${s.type}`} className={`bg-admin-card border rounded-lg transition-colors ${s.enabled ? 'border-admin-border' : 'border-admin-border/50 opacity-70'}`}>
@@ -169,7 +230,7 @@ export default function HomeLayout() {
                   <p className="text-sm font-semibold text-admin-text truncate">{label}</p>
                   <p className="text-[11px] text-admin-muted mt-0.5">
                     {isCorner
-                      ? `${picks.length} ${t('homeLayout.picks') || 'picks'}`
+                      ? `${totalPicks} ${t('homeLayout.picks') || 'picks'} across 5 sections`
                       : (t('homeLayout.global') || 'global section')}
                   </p>
                 </div>
@@ -183,52 +244,109 @@ export default function HomeLayout() {
                 )}
               </div>
 
-              {isOpen && (
-                <div className="px-4 pb-4 pt-2 border-t border-admin-border space-y-3">
-                  {/* Current picks */}
+              {isOpen && corner && (
+                <div className="px-4 pb-4 pt-2 border-t border-admin-border space-y-4">
+                  {/* Per-corner section order + visibility */}
                   <div>
-                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('homeLayout.currentPicks') || 'Current picks'}</h4>
-                    {picks.length === 0 ? (
-                      <p className="text-sm text-admin-muted italic">{t('homeLayout.noPicks') || 'No products picked for this corner yet.'}</p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {picks.map((book, bIdx) => (
-                          <div key={book.id} className="flex items-center gap-3 px-3 py-2 bg-admin-bg border border-admin-border rounded-lg">
-                            <div className="flex flex-col gap-0.5">
-                              <button onClick={() => moveBook(s.cornerId, bIdx, -1)} disabled={bIdx === 0} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronUp size={12} /></button>
-                              <button onClick={() => moveBook(s.cornerId, bIdx, 1)} disabled={bIdx === picks.length - 1} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronDown size={12} /></button>
-                            </div>
-                            {book.coverImage ? (
-                              <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} alt="" width="32" height="40" className="w-8 h-10 object-cover rounded flex-shrink-0" />
-                            ) : (
-                              <div className="w-8 h-10 bg-admin-accent/10 rounded flex-shrink-0" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-medium text-admin-text truncate">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</p>
-                                {book.isActive === false && (
-                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex-shrink-0">{t('homeLayout.inactive')}</span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-admin-muted mt-0.5 truncate">{book.sku || '—'}</p>
-                            </div>
-                            <button onClick={() => removeBook(s.cornerId, book.id)} className="p-1.5 text-admin-muted hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"><FiX size={14} /></button>
+                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">
+                      {t('homeLayout.sectionOrder') || 'Section order on corner page'}
+                    </h4>
+                    <div className="space-y-1.5">
+                      {cornerConfigArr.map((entry, eIdx) => (
+                        <div key={entry.type} className={`flex items-center gap-3 px-3 py-2 border border-admin-border rounded-lg ${entry.enabled ? 'bg-admin-bg' : 'bg-admin-bg/40 opacity-60'}`}>
+                          <span className="text-[11px] font-semibold text-admin-muted w-5 text-center select-none">{eIdx + 1}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <button onClick={() => moveCornerSection(corner.slug, eIdx, -1)} disabled={eIdx === 0} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronUp size={12} /></button>
+                            <button onClick={() => moveCornerSection(corner.slug, eIdx, 1)} disabled={eIdx === cornerConfigArr.length - 1} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronDown size={12} /></button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            onClick={() => toggleCornerSectionEnabled(corner.slug, entry.type)}
+                            className={`p-1.5 rounded-md transition-colors ${entry.enabled ? 'text-admin-accent bg-admin-accent/10 hover:bg-admin-accent/20' : 'text-admin-muted bg-admin-bg hover:bg-admin-bg/60'}`}
+                            title={entry.enabled ? (t('homeLayout.hideSection') || 'Hide section') : (t('homeLayout.showSection') || 'Show section')}
+                          >
+                            {entry.enabled ? <FiEye size={14} /> : <FiEyeOff size={14} />}
+                          </button>
+                          <p className="flex-1 text-sm font-medium text-admin-text">{sectionLabel(entry.type)}</p>
+                          <p className="text-[11px] text-admin-muted flex-shrink-0">{cornerBuckets[entry.type]?.length || 0} {t('homeLayout.picks') || 'picks'}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Search + add */}
+                  {/* Section tabs for picks */}
                   <div>
-                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">{t('homeLayout.addProduct') || 'Add product'}</h4>
+                    <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">
+                      {t('homeLayout.pickPerSection') || 'Pick products per section'}
+                    </h4>
+                    <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
+                      {SECTION_TYPES.map((type) => {
+                        const count = cornerBuckets[type]?.length || 0;
+                        const isActive = currentTab === type;
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => setActiveTab((prev) => ({ ...prev, [s.cornerId]: type }))}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap ${
+                              isActive
+                                ? 'bg-admin-accent text-white border-admin-accent'
+                                : 'bg-admin-bg text-admin-text border-admin-border hover:border-admin-accent hover:text-admin-accent'
+                            }`}
+                          >
+                            {sectionLabel(type)}
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-white/20' : 'bg-admin-accent/10 text-admin-accent'}`}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Current picks for the active tab */}
+                    {(() => {
+                      const picks = cornerBuckets[currentTab] || [];
+                      return (
+                        <>
+                          {picks.length === 0 ? (
+                            <p className="text-sm text-admin-muted italic mb-3">{t('homeLayout.noPicksInSection') || 'No products picked for this section yet. The storefront will fall back to flag-based books if this section is enabled.'}</p>
+                          ) : (
+                            <div className="space-y-1.5 mb-3">
+                              {picks.map((book, bIdx) => (
+                                <div key={book.id} className="flex items-center gap-3 px-3 py-2 bg-admin-bg border border-admin-border rounded-lg">
+                                  <div className="flex flex-col gap-0.5">
+                                    <button onClick={() => moveBook(s.cornerId, currentTab, bIdx, -1)} disabled={bIdx === 0} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronUp size={12} /></button>
+                                    <button onClick={() => moveBook(s.cornerId, currentTab, bIdx, 1)} disabled={bIdx === picks.length - 1} className="p-0.5 text-admin-muted hover:text-admin-accent disabled:opacity-25"><FiChevronDown size={12} /></button>
+                                  </div>
+                                  {book.coverImage ? (
+                                    <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} alt="" width="32" height="40" className="w-8 h-10 object-cover rounded flex-shrink-0" />
+                                  ) : (
+                                    <div className="w-8 h-10 bg-admin-accent/10 rounded flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="text-sm font-medium text-admin-text truncate">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</p>
+                                      {book.isActive === false && (
+                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex-shrink-0">{t('homeLayout.inactive') || 'Inactive'}</span>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] text-admin-muted mt-0.5 truncate">{book.sku || '—'}</p>
+                                  </div>
+                                  <button onClick={() => removeBook(s.cornerId, currentTab, book.id)} className="p-1.5 text-admin-muted hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"><FiX size={14} /></button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    {/* Search + add (adds to the currently active tab) */}
                     <div className="relative mb-2">
                       <FiSearch className="absolute start-3 top-1/2 -translate-y-1/2 text-admin-muted" size={14} />
                       <input
                         type="text"
                         value={searchQ}
                         onChange={(e) => setSearchQ(e.target.value)}
-                        placeholder={t('homeLayout.searchPlaceholder') || 'Search by title or barcode'}
+                        placeholder={`${t('homeLayout.searchPlaceholder') || 'Search by title or barcode'} (${sectionLabel(currentTab)})`}
                         className="w-full ps-9 pe-3 py-2 bg-white border border-admin-border rounded-lg text-sm text-admin-text focus:outline-none focus:border-admin-accent"
                       />
                     </div>
@@ -239,7 +357,7 @@ export default function HomeLayout() {
                     ) : (
                       <div className="space-y-1.5 max-h-72 overflow-y-auto">
                         {searchResults.map((book) => {
-                          const isAdded = picks.some((p) => p.id === book.id);
+                          const isAdded = (cornerBuckets[currentTab] || []).some((p) => p.id === book.id);
                           return (
                             <div key={book.id} className={`flex items-center gap-3 px-3 py-2 bg-white border border-admin-border rounded-lg ${isAdded ? 'opacity-50' : ''}`}>
                               {book.coverImage ? (
@@ -252,7 +370,7 @@ export default function HomeLayout() {
                                 <p className="text-[11px] text-admin-muted mt-0.5 truncate">{book.sku || '—'}</p>
                               </div>
                               <button
-                                onClick={() => addBook(s.cornerId, book)}
+                                onClick={() => addBook(s.cornerId, currentTab, book)}
                                 disabled={isAdded}
                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-admin-accent bg-admin-accent/10 hover:bg-admin-accent/20 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                               >

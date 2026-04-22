@@ -6,7 +6,8 @@ const { normalize } = require('../utils/arabicNormalize');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
-    const { search, category, minPrice, maxPrice, author, publisher, language, sort, brand, color, material } = req.query;
+    const { search, category, minPrice, maxPrice, author, publisher, language, sort, brand, color, material,
+      isFeatured, isBestseller, isNewArrival, isTrending, isComingSoon } = req.query;
 
     const where = {
       isActive: true,
@@ -83,6 +84,15 @@ exports.list = async (req, res, next) => {
     if (language) {
       where.language = language;
     }
+
+    // Flag filters — used by the storefront "See All" links on corner-section pages.
+    // Each accepts `?isFeatured=1` (truthy) and applies a boolean equality.
+    const truthy = (v) => v === '1' || v === 1 || v === 'true' || v === true;
+    if (truthy(isFeatured))   where.isFeatured   = true;
+    if (truthy(isBestseller)) where.isBestseller = true;
+    if (truthy(isNewArrival)) where.isNewArrival = true;
+    if (truthy(isTrending))   where.isTrending   = true;
+    if (truthy(isComingSoon)) where.isComingSoon = true;
 
     // Brand filter (comma-separated multi-select)
     if (brand) {

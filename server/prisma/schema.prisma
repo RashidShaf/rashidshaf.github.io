@@ -370,6 +370,7 @@ model Setting {
 model HomeSectionProduct {
   id           String   @id @default(uuid())
   cornerId     String   @map("corner_id")
+  sectionType  String   @default("featured") @map("section_type")
   bookId       String   @map("book_id")
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -377,8 +378,8 @@ model HomeSectionProduct {
   corner Category @relation(fields: [cornerId], references: [id], onDelete: Cascade)
   book   Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@unique([cornerId, bookId])
-  @@index([cornerId])
+  @@unique([cornerId, sectionType, bookId])
+  @@index([cornerId, sectionType])
   @@map("home_section_products")
 }
 
