@@ -20,3 +20,6 @@ uploads/categories/*
 
 # Claude
 .claude/
+
+# Local backups from image-optimization work
+*.original
