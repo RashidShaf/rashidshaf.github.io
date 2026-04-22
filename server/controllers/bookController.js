@@ -147,6 +147,7 @@ exports.list = async (req, res, next) => {
     if (section === 'bestseller') where.isBestseller = true;
     if (section === 'new') where.isNewArrival = true;
     if (section === 'trending') where.isTrending = true;
+    if (section === 'comingSoon') where.isComingSoon = true;
 
     // Sort
     let sortBy = { createdAt: 'desc' };

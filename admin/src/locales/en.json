@@ -549,6 +549,6 @@
     "showSection": "Show section",
     "fromFlag": "Flag",
     "fromFlagTooltip": "Added from the product page flag. Save to convert to an explicit pick.",
-    "flagMergeHint": "Books you marked as Featured / Bestseller / New Arrival etc. on the product page show up here automatically under the matching tab. If you leave them alone, they stay linked to the flag — unchecking the flag on the product page later removes them. If you move or reorder a book here, it becomes a pinned pick that stays regardless of the flag."
+    "flagMergeHint": "Books you mark as Featured / Bestseller / etc. on a product page show up here automatically in the matching tab. Picking or reordering a book here also ticks the matching checkbox on that product's edit page. Unchecking a flag on the product page — or removing the book from every corner's tab here — takes it out of that section everywhere."
   }
 }

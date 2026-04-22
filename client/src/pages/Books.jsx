@@ -23,6 +23,7 @@ const sectionOptions = [
   { value: 'bestseller', labelKey: 'home.bestsellers' },
   { value: 'new', labelKey: 'home.newArrivals' },
   { value: 'trending', labelKey: 'home.trending' },
+  { value: 'comingSoon', labelKey: 'home.comingSoon' },
 ];
 
 const Books = () => {

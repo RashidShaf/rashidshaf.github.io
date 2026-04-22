@@ -291,18 +291,50 @@ exports.update = async (req, res, next) => {
     const additionalCategoryIds = data.additionalCategoryIds;
     delete data.additionalCategoryIds;
 
+    // Fetch current state so we can
+    //   (a) rebuild searchIndex from merged old + new field values
+    //   (b) only delete Home Layout picks when a section flag TRANSITIONED true → false
+    //       (not on every save that happens to carry `flag: false` in the payload)
+    const existing = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      select: {
+        title: true, titleAr: true, author: true, authorAr: true, publisher: true, publisherAr: true, isbn: true, sku: true,
+        isFeatured: true, isBestseller: true, isNewArrival: true, isTrending: true, isComingSoon: true,
+      },
+    });
+
     // Rebuild searchIndex if any searchable field is being updated
     const searchFields = ['title', 'titleAr', 'author', 'authorAr', 'publisher', 'publisherAr', 'isbn', 'sku'];
     if (searchFields.some((f) => f in data)) {
-      const current = await prisma.book.findUnique({
-        where: { id: req.params.id },
-        select: { title: true, titleAr: true, author: true, authorAr: true, publisher: true, publisherAr: true, isbn: true, sku: true },
-      });
-      data.searchIndex = buildSearchIndex({ ...current, ...data });
+      data.searchIndex = buildSearchIndex({ ...existing, ...data });
     }
 
-    const book = await prisma.book.update({
-      where: { id: req.params.id }, data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
+    // Determine which section picks to delete based on flag TRANSITIONS (true → false).
+    const FLAG_TO_SECTION = {
+      isFeatured:    'featured',
+      isBestseller:  'bestsellers',
+      isNewArrival:  'newArrivals',
+      isTrending:    'trending',
+      isComingSoon:  'comingSoon',
+    };
+    const picksToDelete = [];
+    for (const [flagName, sectionType] of Object.entries(FLAG_TO_SECTION)) {
+      if (flagName in data && existing?.[flagName] === true && data[flagName] === false) {
+        picksToDelete.push(sectionType);
+      }
+    }
+
+    // Atomic: book update + dependent pick deletes run in the same transaction.
+    const book = await prisma.$transaction(async (tx) => {
+      const updated = await tx.book.update({
+        where: { id: req.params.id }, data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
+      });
+      for (const sectionType of picksToDelete) {
+        await tx.homeSectionProduct.deleteMany({
+          where: { bookId: req.params.id, sectionType },
+        });
+      }
+      return updated;
     });
 
     // Update BookCategory records if additionalCategoryIds provided

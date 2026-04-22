@@ -89,17 +89,12 @@ export default function HomeLayout() {
     setSections((prev) => prev.map((s, i) => i === idx ? { ...s, enabled: !s.enabled } : s));
   };
 
-  // When the admin "touches" a book (drag/reorder/add), we clear `_fromFlag` so it becomes
-  // an explicit pick. Untouched flag-merged books stay transient and are NOT persisted on save.
   const moveBook = (cornerId, sectionType, idx, dir) => {
     setCornerPicks((prev) => {
       const bucket = prev[cornerId]?.[sectionType] || [];
       const arr = [...bucket];
       const target = idx + dir;
       if (target < 0 || target >= arr.length) return prev;
-      // Both books involved in the swap become explicit picks
-      arr[idx] = { ...arr[idx], _fromFlag: false };
-      arr[target] = { ...arr[target], _fromFlag: false };
       [arr[idx], arr[target]] = [arr[target], arr[idx]];
       return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: arr } };
     });
@@ -116,8 +111,7 @@ export default function HomeLayout() {
     setCornerPicks((prev) => {
       const bucket = prev[cornerId]?.[sectionType] || [];
       if (bucket.some((b) => b.id === book.id)) return prev;
-      // Newly added books from search are explicit picks by definition.
-      return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: [...bucket, { ...book, _fromFlag: false }] } };
+      return { ...prev, [cornerId]: { ...prev[cornerId], [sectionType]: [...bucket, book] } };
     });
   };
 
@@ -165,15 +159,15 @@ export default function HomeLayout() {
     setSaving(true);
     try {
       // Flatten picks from {cornerId: {sectionType: [book]}} → {cornerId: {sectionType: [bookId]}}.
-      // Only persist books the admin TOUCHED — books merged in from product-page flags
-      // (`_fromFlag === true`) are transient and must not be promoted to explicit picks on save.
+      // Every book shown in the list becomes an explicit pick. Flag-merged books are
+      // promoted to explicit picks on save; the server's two-way sync keeps flags in step,
+      // and the flag-uncheck path on the product edit page cleans up picks if the admin
+      // later changes their mind.
       const flatPicks = {};
       Object.entries(cornerPicks).forEach(([cornerId, buckets]) => {
         flatPicks[cornerId] = {};
         Object.entries(buckets).forEach(([sectionType, books]) => {
-          flatPicks[cornerId][sectionType] = books
-            .filter((b) => !b._fromFlag)
-            .map((b) => b.id);
+          flatPicks[cornerId][sectionType] = books.map((b) => b.id);
         });
       });
       await api.put('/admin/home/config', { sections, cornerPicks: flatPicks, cornerSectionConfig });

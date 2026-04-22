@@ -175,7 +175,7 @@ const Home = () => {
     ],
   };
 
-  // Labels and see-all flags per section type. Flag maps to the server's `?isFeatured=1` etc.
+  // Labels per section type.
   const SECTION_TITLES = {
     featured:    t('home.featured'),
     bestsellers: t('home.bestsellers'),
@@ -183,12 +183,15 @@ const Home = () => {
     trending:    t('home.trending'),
     comingSoon:  t('home.comingSoon'),
   };
-  const SECTION_FLAG = {
-    featured:    'isFeatured',
-    bestsellers: 'isBestseller',
-    newArrivals: 'isNewArrival',
-    trending:    'isTrending',
-    comingSoon:  'isComingSoon',
+  // Maps section type to the catalog page's section-filter query param value.
+  // The catalog dropdown UI (Books.jsx) reads `?section=` and highlights the matching option,
+  // so using this param keeps the dropdown in sync on See All.
+  const SECTION_SEE_ALL = {
+    featured:    'featured',
+    bestsellers: 'bestseller',   // singular — matches existing dropdown value
+    newArrivals: 'new',          // short form — matches existing dropdown value
+    trending:    'trending',
+    comingSoon:  'comingSoon',
   };
 
   return (
@@ -259,9 +262,9 @@ const Home = () => {
                       const isLast = idx === cornerSections.length - 1;
                       const oddCount = cornerSections.length % 2 === 1;
                       const fullWidth = isLast && oddCount;
-                      const flag = SECTION_FLAG[s.type];
-                      const seeAllUrl = flag
-                        ? `/books?category=${encodeURIComponent(l1.slug)}&${flag}=1`
+                      const sectionValue = SECTION_SEE_ALL[s.type];
+                      const seeAllUrl = sectionValue
+                        ? `/books?category=${encodeURIComponent(l1.slug)}&section=${sectionValue}`
                         : `/books?category=${encodeURIComponent(l1.slug)}`;
                       return (
                         <div key={s.type} className={fullWidth ? 'lg:col-span-2' : ''}>

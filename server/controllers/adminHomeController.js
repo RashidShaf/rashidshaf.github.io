@@ -99,7 +99,7 @@ exports.getConfig = async (req, res, next) => {
           take: 50,
         });
         flagged.forEach((b) => {
-          bucket[sectionType].push({ ...b, _fromFlag: true });
+          bucket[sectionType].push(b);
         });
       }
     }));
@@ -164,67 +164,122 @@ exports.saveConfig = async (req, res, next) => {
       })
       .filter(Boolean);
 
-    const ops = [];
-    ops.push(prisma.setting.upsert({
-      where: { key: 'homeLayout' },
-      update: { value: JSON.stringify(cleanSections) },
-      create: { key: 'homeLayout', value: JSON.stringify(cleanSections) },
-    }));
-
-    if (cornerPicks) {
-      for (const [cornerId, sectionsOrArray] of Object.entries(cornerPicks)) {
-        // Wipe this corner's picks entirely, then recreate from the submitted shape.
-        ops.push(prisma.homeSectionProduct.deleteMany({ where: { cornerId } }));
-
-        let perSection;
-        if (Array.isArray(sectionsOrArray)) {
-          // Legacy shape: a flat array — treat as featured picks only
-          perSection = { featured: sectionsOrArray };
-        } else if (sectionsOrArray && typeof sectionsOrArray === 'object') {
-          perSection = sectionsOrArray;
-        } else {
-          continue;
-        }
-
-        const rows = [];
-        for (const [sectionType, bookIds] of Object.entries(perSection)) {
-          if (!ALLOWED_SECTION_TYPES.includes(sectionType)) continue;
-          if (!Array.isArray(bookIds)) continue;
-          bookIds
-            .filter((id) => typeof id === 'string' && id)
-            .forEach((bookId, i) => rows.push({ cornerId, sectionType, bookId, displayOrder: i }));
-        }
-        if (rows.length > 0) {
-          ops.push(prisma.homeSectionProduct.createMany({ data: rows, skipDuplicates: true }));
-        }
-      }
+    // Snapshot "before" picks for the corners being saved; used inside the transaction
+    // to detect which books gained/lost their pick and flip matching flags atomically.
+    const cornerIdsInPayload = Object.keys(cornerPicks || {});
+    let beforePicks = [];
+    if (cornerIdsInPayload.length > 0) {
+      beforePicks = await prisma.homeSectionProduct.findMany({
+        where: { cornerId: { in: cornerIdsInPayload } },
+        select: { cornerId: true, sectionType: true, bookId: true },
+      });
     }
 
-    if (cornerSectionConfig) {
-      const cleanConfig = {};
-      for (const [slug, arr] of Object.entries(cornerSectionConfig)) {
-        if (!Array.isArray(arr)) continue;
-        const seen = new Set();
-        const normalized = [];
-        arr.forEach((s) => {
-          if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
-            seen.add(s.type);
-            normalized.push({ type: s.type, enabled: s.enabled !== false });
+    await prisma.$transaction(async (tx) => {
+      // --- home layout setting ---
+      await tx.setting.upsert({
+        where: { key: 'homeLayout' },
+        update: { value: JSON.stringify(cleanSections) },
+        create: { key: 'homeLayout', value: JSON.stringify(cleanSections) },
+      });
+
+      // --- pick writes ---
+      if (cornerPicks) {
+        for (const [cornerId, sectionsOrArray] of Object.entries(cornerPicks)) {
+          await tx.homeSectionProduct.deleteMany({ where: { cornerId } });
+
+          let perSection;
+          if (Array.isArray(sectionsOrArray)) {
+            perSection = { featured: sectionsOrArray };
+          } else if (sectionsOrArray && typeof sectionsOrArray === 'object') {
+            perSection = sectionsOrArray;
+          } else {
+            continue;
           }
-        });
-        ALLOWED_SECTION_TYPES.forEach((t) => {
-          if (!seen.has(t)) normalized.push({ type: t, enabled: true });
-        });
-        cleanConfig[slug] = normalized;
-      }
-      ops.push(prisma.setting.upsert({
-        where: { key: 'cornerSectionConfig' },
-        update: { value: JSON.stringify(cleanConfig) },
-        create: { key: 'cornerSectionConfig', value: JSON.stringify(cleanConfig) },
-      }));
-    }
 
-    await prisma.$transaction(ops);
+          const rows = [];
+          for (const [sectionType, bookIds] of Object.entries(perSection)) {
+            if (!ALLOWED_SECTION_TYPES.includes(sectionType)) continue;
+            if (!Array.isArray(bookIds)) continue;
+            bookIds
+              .filter((id) => typeof id === 'string' && id)
+              .forEach((bookId, i) => rows.push({ cornerId, sectionType, bookId, displayOrder: i }));
+          }
+          if (rows.length > 0) {
+            await tx.homeSectionProduct.createMany({ data: rows, skipDuplicates: true });
+          }
+        }
+      }
+
+      // --- corner section config (order + visibility per corner) ---
+      if (cornerSectionConfig) {
+        const cleanConfig = {};
+        for (const [slug, arr] of Object.entries(cornerSectionConfig)) {
+          if (!Array.isArray(arr)) continue;
+          const seen = new Set();
+          const normalized = [];
+          arr.forEach((s) => {
+            if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
+              seen.add(s.type);
+              normalized.push({ type: s.type, enabled: s.enabled !== false });
+            }
+          });
+          ALLOWED_SECTION_TYPES.forEach((t) => {
+            if (!seen.has(t)) normalized.push({ type: t, enabled: true });
+          });
+          cleanConfig[slug] = normalized;
+        }
+        await tx.setting.upsert({
+          where: { key: 'cornerSectionConfig' },
+          update: { value: JSON.stringify(cleanConfig) },
+          create: { key: 'cornerSectionConfig', value: JSON.stringify(cleanConfig) },
+        });
+      }
+
+      // --- two-way flag sync, still inside the transaction for atomicity ---
+      if (cornerIdsInPayload.length > 0) {
+        const afterPicks = await tx.homeSectionProduct.findMany({
+          where: { cornerId: { in: cornerIdsInPayload } },
+          select: { sectionType: true, bookId: true },
+        });
+
+        for (const [sectionType, flag] of Object.entries(FLAG_MAP)) {
+          const beforeIds = new Set(
+            beforePicks.filter((p) => p.sectionType === sectionType).map((p) => p.bookId)
+          );
+          const afterIds = new Set(
+            afterPicks.filter((p) => p.sectionType === sectionType).map((p) => p.bookId)
+          );
+
+          const added = [...afterIds].filter((id) => !beforeIds.has(id));
+          if (added.length > 0) {
+            await tx.book.updateMany({
+              where: { id: { in: added }, [flag]: false },
+              data: { [flag]: true },
+            });
+          }
+
+          const removed = [...beforeIds].filter((id) => !afterIds.has(id));
+          if (removed.length > 0) {
+            // Still picked for this section type in some OTHER corner we didn't touch?
+            const stillPicked = await tx.homeSectionProduct.findMany({
+              where: { sectionType, bookId: { in: removed } },
+              select: { bookId: true },
+              distinct: ['bookId'],
+            });
+            const stillSet = new Set(stillPicked.map((r) => r.bookId));
+            const orphaned = removed.filter((id) => !stillSet.has(id));
+            if (orphaned.length > 0) {
+              await tx.book.updateMany({
+                where: { id: { in: orphaned }, [flag]: true },
+                data: { [flag]: false },
+              });
+            }
+          }
+        }
+      }
+    }, { timeout: 20000 });
+
     res.json({ ok: true });
   } catch (error) {
     next(error);
