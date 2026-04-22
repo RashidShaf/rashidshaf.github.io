@@ -541,6 +541,11 @@
     "saved": "Layout saved.",
     "saveFailed": "Failed to save layout.",
     "loadFailed": "Failed to load layout.",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "sectionOrder": "Section order on corner page",
+    "pickPerSection": "Pick products per section",
+    "noPicksInSection": "No products picked for this section yet. The storefront will fall back to flag-based books if this section is enabled.",
+    "hideSection": "Hide section",
+    "showSection": "Show section"
   }
 }

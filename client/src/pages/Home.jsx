@@ -204,7 +204,9 @@ const Home = () => {
           const l1 = section.corner;
           if (!l1) return null;
           const hasChildren = l1.children && l1.children.length > 0;
-          const cornerSections = (section.cornerSections || []).filter((s) => s.books && s.books.length > 0);
+          // Keep ALL cornerSections (including empty ones) so the 2-per-row grid respects
+          // the admin-configured order. Empty sections render a "No products yet" placeholder.
+          const cornerSections = section.cornerSections || [];
           const hasCornerSections = cornerSections.length > 0;
           if (!hasChildren && !hasCornerSections) return null;
           return (
