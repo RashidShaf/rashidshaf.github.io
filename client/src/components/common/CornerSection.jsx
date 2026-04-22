@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import BookCard from '../books/BookCard';
@@ -20,10 +20,8 @@ import useLanguageStore from '../../stores/useLanguageStore';
 // Arrows and See All use the same FiArrow icon style.
 const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = false }) => {
   const { language } = useLanguageStore();
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
   const paginationRef = useRef(null);
-  const [swiperReady, setSwiperReady] = useState(false);
+  const [swiperInst, setSwiperInst] = useState(null);
   const isRTL = language === 'ar';
   const PrevArrow = isRTL ? FiArrowRight : FiArrowLeft;
   const NextArrow = isRTL ? FiArrowLeft : FiArrowRight;
@@ -32,39 +30,46 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
   const slotsPerRow = wide ? 6 : 3;
   const useCarousel = safeBooks.length > slotsPerRow;
 
+  // slideNext / slidePrev respect slidesPerGroup, which we set to match slidesPerView
+  // (via slidesPerGroupAuto below). So narrow sections advance by 3, wide by 6.
+  const slidePrev = () => swiperInst?.slidePrev(400);
+  const slideNext = () => swiperInst?.slideNext(400);
+
   const Header = (
     <header className="flex items-center gap-2 sm:gap-3 mb-3 3xl:mb-4">
       <h3 className="text-base sm:text-lg 3xl:text-xl font-display font-bold text-foreground flex-shrink-0 min-w-0 truncate">
         {title}
       </h3>
-      {useCarousel && (
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <button
-            ref={prevRef}
-            type="button"
-            aria-label="Previous"
-            className="flex items-center justify-center text-accent hover:text-accent-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <PrevArrow size={16} />
-          </button>
-          <div
-            ref={paginationRef}
-            className="corner-section-pagination flex items-center gap-1"
-          />
-          <button
-            ref={nextRef}
-            type="button"
-            aria-label="Next"
-            className="flex items-center justify-center text-accent hover:text-accent-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <NextArrow size={16} />
-          </button>
-        </div>
-      )}
+      <div className="flex-1 flex items-center justify-center">
+        {useCarousel && (
+          <div className="hidden sm:flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              aria-label="Previous"
+              onClick={slidePrev}
+              className="flex items-center justify-center text-accent hover:text-accent-light transition-colors"
+            >
+              <PrevArrow size={16} />
+            </button>
+            <div
+              ref={paginationRef}
+              className="corner-section-pagination flex items-center gap-1"
+            />
+            <button
+              type="button"
+              aria-label="Next"
+              onClick={slideNext}
+              className="flex items-center justify-center text-accent hover:text-accent-light transition-colors"
+            >
+              <NextArrow size={16} />
+            </button>
+          </div>
+        )}
+      </div>
       {seeAllUrl && (
         <Link
           to={seeAllUrl}
-          className="ms-auto inline-flex items-center gap-1 text-xs sm:text-sm 3xl:text-base font-medium text-accent hover:text-accent-light transition-colors"
+          className="inline-flex items-center gap-1 text-xs sm:text-sm 3xl:text-base font-medium text-accent hover:text-accent-light transition-colors"
         >
           <span className="whitespace-nowrap">{language === 'ar' ? 'عرض الكل' : 'See All'}</span>
           {isRTL ? <FiArrowLeft size={14} /> : <FiArrowRight size={14} />}
@@ -76,7 +81,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
   // Empty state — keep the section visible (so admin-ordered grid layout stays correct)
   if (safeBooks.length === 0) {
     return (
-      <section className="bg-surface rounded-xl border border-muted/10 p-4 3xl:p-6 overflow-hidden">
+      <section className="overflow-hidden">
         {Header}
         <div className="h-32 sm:h-40 flex items-center justify-center text-sm text-foreground/50 italic">
           {language === 'ar' ? 'لا توجد منتجات بعد' : 'No products yet'}
@@ -88,7 +93,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
   // Fixed-grid branch — cards stay same size; empty slots are invisible placeholders.
   if (!useCarousel) {
     return (
-      <section className="bg-surface rounded-xl border border-muted/10 p-4 3xl:p-6 overflow-hidden">
+      <section className="overflow-hidden">
         {Header}
         <div className={`grid ${wide ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3'} gap-2 sm:gap-3 3xl:gap-4`}>
           {safeBooks.map((book) => (
@@ -103,38 +108,60 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
   }
 
   // Carousel branch — Swiper with auto-scroll + manual arrows + pagination dots.
+  // Explicit slidesPerGroup at every breakpoint so autoplay/arrows advance by the full
+  // visible group, and pagination bullet count == number of groups.
   const breakpoints = wide
-    ? { 640: { slidesPerView: 3 }, 1024: { slidesPerView: 4 }, 1280: { slidesPerView: 6 } }
-    : { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } };
+    ? {
+        640:  { slidesPerView: 3, slidesPerGroup: 3 },
+        1024: { slidesPerView: 4, slidesPerGroup: 4 },
+        1280: { slidesPerView: 6, slidesPerGroup: 6 },
+      }
+    : {
+        640:  { slidesPerView: 3, slidesPerGroup: 3 },
+        1024: { slidesPerView: 3, slidesPerGroup: 3 },
+      };
 
   return (
-    <section className="bg-surface rounded-xl border border-muted/10 p-4 3xl:p-6 overflow-hidden">
+    <section className="overflow-hidden">
       {Header}
-      <Swiper
-        key={`${isRTL ? 'rtl' : 'ltr'}-${wide ? 'w' : 'n'}-${safeBooks.length}`}
-        modules={[Autoplay, Navigation, Pagination]}
+      {/* Mobile (<640px): native horizontal scroll, no arrows, no dots */}
+      <div
         dir={isRTL ? 'rtl' : 'ltr'}
-        spaceBetween={12}
-        slidesPerView={wide ? 2 : 1.5}
-        loop={safeBooks.length >= slotsPerRow * 2}
-        autoplay={{ delay: 6000, pauseOnMouseEnter: true, disableOnInteraction: false }}
-        navigation={{ prevEl: prevRef.current, nextEl: nextRef.current }}
-        pagination={{ el: paginationRef.current, clickable: true, type: 'bullets' }}
-        breakpoints={breakpoints}
-        onBeforeInit={(swiper) => {
-          swiper.params.navigation.prevEl = prevRef.current;
-          swiper.params.navigation.nextEl = nextRef.current;
-          if (swiper.params.pagination) swiper.params.pagination.el = paginationRef.current;
-        }}
-        onInit={() => setSwiperReady(true)}
-        className="!overflow-visible"
+        className="sm:hidden flex gap-3 overflow-x-auto scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {safeBooks.map((book) => (
-          <SwiperSlide key={book.id}>
+          <div key={book.id} className="flex-shrink-0 w-[calc(50%-6px)]">
             <BookCard book={book} comingSoon={comingSoon} />
-          </SwiperSlide>
+          </div>
         ))}
-      </Swiper>
+      </div>
+      {/* Tablet+ (≥640px): Swiper with autoplay + arrows + dots */}
+      <div className="hidden sm:block">
+        <Swiper
+          key={`${isRTL ? 'rtl' : 'ltr'}-${wide ? 'w' : 'n'}-${safeBooks.length}`}
+          modules={[Autoplay, Pagination]}
+          dir={isRTL ? 'rtl' : 'ltr'}
+          spaceBetween={12}
+          slidesPerView={2}
+          slidesPerGroup={2}
+          loop={safeBooks.length >= slotsPerRow * 2}
+          loopAddBlankSlides={false}
+          autoplay={{ delay: 6000, pauseOnMouseEnter: true, disableOnInteraction: false }}
+          pagination={{ el: paginationRef.current, clickable: true, type: 'bullets' }}
+          breakpoints={breakpoints}
+          onBeforeInit={(swiper) => {
+            if (swiper.params.pagination) swiper.params.pagination.el = paginationRef.current;
+          }}
+          onSwiper={(s) => setSwiperInst(s)}
+        >
+          {safeBooks.map((book) => (
+            <SwiperSlide key={book.id}>
+              <BookCard book={book} comingSoon={comingSoon} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
     </section>
   );
 };

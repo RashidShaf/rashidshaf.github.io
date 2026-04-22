@@ -75,43 +75,44 @@ async function collectCornerCategoryIds(cornerId) {
 }
 
 async function cornerSectionBooks(cornerId, sectionType, cornerCategoryIds) {
-  // 1) admin picks first, in displayOrder — but out-of-stock items go to the bottom.
-  // Fetch a bit extra, then re-sort in JS so isOutOfStock sinks, preserving displayOrder within groups.
-  const picksRaw = await prisma.homeSectionProduct.findMany({
-    where: { cornerId, sectionType, book: { isActive: true } },
-    orderBy: { displayOrder: 'asc' },
-    include: { book: { include: BOOK_INCLUDE } },
-    take: 24,
-  });
-  if (picksRaw.length > 0) {
-    const sorted = picksRaw
-      .slice()
-      .sort((a, b) => {
-        const aOut = a.book.isOutOfStock ? 1 : 0;
-        const bOut = b.book.isOutOfStock ? 1 : 0;
-        if (aOut !== bOut) return aOut - bOut;
-        return a.displayOrder - b.displayOrder;
-      })
-      .slice(0, 12);
-    return sorted.map((p) => p.book);
-  }
-
-  // 2) fallback: flag-based inside this corner (already sorts out-of-stock to bottom)
   const flag = FLAG_MAP[sectionType];
   if (!flag) return [];
-  return prisma.book.findMany({
-    where: {
-      isActive: true,
-      [flag]: true,
-      OR: [
-        { categoryId: { in: cornerCategoryIds } },
-        { bookCategories: { some: { categoryId: { in: cornerCategoryIds } } } },
-      ],
-    },
-    orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }],
-    take: 12,
-    include: BOOK_INCLUDE,
-  });
+
+  // Show EVERY book the admin marked for this section, regardless of how they
+  // marked it: explicit pick in Home Layout, or flag checkbox from the product
+  // edit page / bulk tools. Picks go first (admin-controlled order), flagged
+  // books follow (newest first). Duplicates are removed. Out-of-stock drops
+  // to the bottom of the combined list.
+  const [picks, flagged] = await Promise.all([
+    prisma.homeSectionProduct.findMany({
+      where: { cornerId, sectionType, book: { isActive: true } },
+      orderBy: { displayOrder: 'asc' },
+      include: { book: { include: BOOK_INCLUDE } },
+    }),
+    prisma.book.findMany({
+      where: {
+        isActive: true,
+        [flag]: true,
+        OR: [
+          { categoryId: { in: cornerCategoryIds } },
+          { bookCategories: { some: { categoryId: { in: cornerCategoryIds } } } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: BOOK_INCLUDE,
+    }),
+  ]);
+
+  const pickedIds = new Set(picks.map((p) => p.bookId));
+  const merged = [
+    ...picks.map((p) => p.book),
+    ...flagged.filter((b) => !pickedIds.has(b.id)),
+  ];
+
+  // Stable sort: out-of-stock to the bottom, otherwise preserve merged order.
+  return merged
+    .sort((a, b) => (a.isOutOfStock ? 1 : 0) - (b.isOutOfStock ? 1 : 0))
+    .slice(0, 24);
 }
 
 // Build a corner block for the home layout: metadata + L2 children + the 5 per-section carousels.
@@ -138,7 +139,11 @@ async function corner(cornerId, cornerSectionConfig) {
   const cornerSections = await Promise.all(
     enabled.map(async (entry) => ({
       type: entry.type,
-      books: await cornerSectionBooks(cat.id, entry.type, categoryIds),
+      // One failed section should not 500 the whole home layout. Log and show empty.
+      books: await cornerSectionBooks(cat.id, entry.type, categoryIds).catch((err) => {
+        console.error(`cornerSectionBooks failed for corner=${cat.slug} type=${entry.type}:`, err);
+        return [];
+      }),
     }))
   );
 
@@ -210,7 +215,10 @@ exports.getCornerSections = async (req, res, next) => {
     const sections = await Promise.all(
       enabledEntries.map(async (entry) => ({
         type: entry.type,
-        books: await cornerSectionBooks(cornerCat.id, entry.type, categoryIds),
+        books: await cornerSectionBooks(cornerCat.id, entry.type, categoryIds).catch((err) => {
+          console.error(`cornerSectionBooks failed for corner=${slug} type=${entry.type}:`, err);
+          return [];
+        }),
       }))
     );
 

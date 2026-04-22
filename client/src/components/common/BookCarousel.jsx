@@ -1,12 +1,15 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import useLanguageStore from '../../stores/useLanguageStore';
 
 const BookCarousel = ({ children }) => {
+  const { language } = useLanguageStore();
+  const isRTL = language === 'ar';
   const scrollRef = useRef(null);
   const thumbRef = useRef(null);
   const trackRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [canScrollStart, setCanScrollStart] = useState(false);
+  const [canScrollEnd, setCanScrollEnd] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   const updateThumb = useCallback(() => {
@@ -15,7 +18,7 @@ const BookCarousel = ({ children }) => {
     if (!el || !thumb) return;
     const maxScroll = el.scrollWidth - el.clientWidth;
     if (maxScroll <= 0) return;
-    const progress = el.scrollLeft / maxScroll;
+    const progress = Math.abs(el.scrollLeft) / maxScroll;
     const thumbWidth = Math.max(20, (el.clientWidth / el.scrollWidth) * 100);
     thumb.style.width = `${thumbWidth}%`;
     thumb.style.marginLeft = `${progress * (100 - thumbWidth)}%`;
@@ -24,8 +27,11 @@ const BookCarousel = ({ children }) => {
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    // In RTL, scrollLeft can be negative (Chromium) — normalize to absolute progress.
+    const scrolled = Math.abs(el.scrollLeft);
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollStart(scrolled > 4);
+    setCanScrollEnd(scrolled < maxScroll - 4);
     updateThumb();
   }, [updateThumb]);
 
@@ -50,7 +56,9 @@ const BookCarousel = ({ children }) => {
     const cardWidth = el.querySelector(':scope > *')?.offsetWidth || 260;
     const gap = 12;
     const scrollAmount = (cardWidth + gap) * 3;
-    el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    // direction = 'start' means "scroll back to earlier cards"; in RTL that's positive scrollLeft.
+    const baseDelta = direction === 'start' ? -scrollAmount : scrollAmount;
+    el.scrollBy({ left: isRTL ? -baseDelta : baseDelta, behavior: 'smooth' });
   };
 
   const handleTrackClick = (e) => {
@@ -77,7 +85,8 @@ const BookCarousel = ({ children }) => {
     const onMove = (ev) => {
       const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
       const delta = clientX - startX;
-      el.scrollLeft = startScroll + (delta / trackWidth) * maxScroll;
+      const signed = isRTL ? -delta : delta;
+      el.scrollLeft = startScroll + (signed / trackWidth) * maxScroll;
     };
 
     const onUp = () => {
@@ -94,25 +103,29 @@ const BookCarousel = ({ children }) => {
     document.addEventListener('touchend', onUp);
   };
 
-  const hasOverflow = canScrollLeft || canScrollRight;
+  const hasOverflow = canScrollStart || canScrollEnd;
+  const StartIcon = isRTL ? FiChevronRight : FiChevronLeft;
+  const EndIcon = isRTL ? FiChevronLeft : FiChevronRight;
 
   return (
     <div className="relative group/carousel">
-      {canScrollLeft && (
+      {canScrollStart && (
         <button
-          onClick={() => scroll('left')}
-          className="absolute -left-5 rtl:-left-auto rtl:-right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
+          onClick={() => scroll('start')}
+          aria-label="Previous"
+          className="absolute start-[-1.25rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
         >
-          <FiChevronLeft size={20} />
+          <StartIcon size={20} />
         </button>
       )}
 
-      {canScrollRight && (
+      {canScrollEnd && (
         <button
-          onClick={() => scroll('right')}
-          className="absolute -right-5 rtl:-right-auto rtl:-left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
+          onClick={() => scroll('end')}
+          aria-label="Next"
+          className="absolute end-[-1.25rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 hidden lg:flex items-center justify-center rounded-full bg-background border border-muted/20 shadow-lg text-foreground hover:bg-accent hover:text-white hover:border-accent transition-all duration-200 opacity-0 group-hover/carousel:opacity-100"
         >
-          <FiChevronRight size={20} />
+          <EndIcon size={20} />
         </button>
       )}
 
