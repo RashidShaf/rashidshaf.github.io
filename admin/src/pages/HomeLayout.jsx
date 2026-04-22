@@ -334,11 +334,6 @@ export default function HomeLayout() {
                                       {book.isActive === false && (
                                         <span className="text-[10px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex-shrink-0">{t('homeLayout.inactive') || 'Inactive'}</span>
                                       )}
-                                      {book._fromFlag && (
-                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-admin-accent bg-admin-accent/10 px-1.5 py-0.5 rounded flex-shrink-0" title={t('homeLayout.fromFlagTooltip') || 'Added from the product page flag'}>
-                                          {t('homeLayout.fromFlag') || 'Flag'}
-                                        </span>
-                                      )}
                                     </div>
                                     <p className="text-[11px] text-admin-muted mt-0.5 truncate">{book.sku || '—'}</p>
                                   </div>
