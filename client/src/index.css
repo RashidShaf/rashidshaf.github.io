@@ -97,6 +97,24 @@
   }
 }
 
+/* Per-corner section pagination dots (rendered between arrows in header) */
+.corner-section-pagination .swiper-pagination-bullet {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  opacity: 0.35;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin: 0 2px;
+}
+.corner-section-pagination .swiper-pagination-bullet-active {
+  opacity: 1;
+  width: 14px;
+  border-radius: 4px;
+}
+
 /* Banner Swiper pagination */
 .arkaan-banner-swiper .swiper-pagination-bullet {
   background: rgba(255, 255, 255, 0.5);

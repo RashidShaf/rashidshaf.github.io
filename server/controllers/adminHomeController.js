@@ -4,6 +4,28 @@ const ALLOWED_GLOBAL_TYPES = ['featured', 'newArrivals', 'bestsellers', 'trendin
 const ALLOWED_SECTION_TYPES = ['featured', 'bestsellers', 'newArrivals', 'trending', 'comingSoon'];
 const DEFAULT_CORNER_SECTION_CONFIG = ALLOWED_SECTION_TYPES.map((type) => ({ type, enabled: true }));
 
+// Maps a section-type key to the Book flag that represents it on the storefront.
+const FLAG_MAP = {
+  featured: 'isFeatured',
+  bestsellers: 'isBestseller',
+  newArrivals: 'isNewArrival',
+  trending: 'isTrending',
+  comingSoon: 'isComingSoon',
+};
+
+// Walk a corner's category subtree to collect every descendant category ID.
+async function collectCornerCategoryIds(cornerId) {
+  const walk = async (parentIds) => {
+    if (parentIds.length === 0) return [];
+    const children = await prisma.category.findMany({ where: { parentId: { in: parentIds } }, select: { id: true } });
+    if (children.length === 0) return [];
+    const ids = children.map((c) => c.id);
+    const deeper = await walk(ids);
+    return [...ids, ...deeper];
+  };
+  return [cornerId, ...(await walk([cornerId]))];
+}
+
 // GET /api/admin/home/config
 // Returns the saved section order + picks per corner per section type + the per-corner section config
 // (visibility + order of the 5 per-corner sections that render on `/?corner=<slug>`).
@@ -32,7 +54,7 @@ exports.getConfig = async (req, res, next) => {
       if (!knownGlobalTypes.has(t)) sections.push({ type: t, enabled: true });
     });
 
-    // --- picks grouped by (corner, sectionType) ---
+    // --- picks grouped by (corner, sectionType), with flag-based books merged in ---
     const cornerIds = corners.map((c) => c.id);
     const picks = await prisma.homeSectionProduct.findMany({
       where: { cornerId: { in: cornerIds } },
@@ -50,6 +72,37 @@ exports.getConfig = async (req, res, next) => {
       if (!cornerBucket[type]) cornerBucket[type] = [];
       cornerBucket[type].push(p.book);
     });
+
+    // Merge flag-based books into each corner+section. Books flagged (isFeatured, isBestseller,
+    // etc.) through the product page appear at the end of the relevant section's list, marked
+    // as auto-included so the admin knows they come from a flag.
+    const BOOK_SELECT = { id: true, title: true, titleAr: true, coverImage: true, sku: true, price: true, isActive: true };
+    await Promise.all(corners.map(async (c) => {
+      const categoryIds = await collectCornerCategoryIds(c.id);
+      const bucket = cornerPicks[c.id] || (cornerPicks[c.id] = {});
+      for (const sectionType of ALLOWED_SECTION_TYPES) {
+        if (!bucket[sectionType]) bucket[sectionType] = [];
+        const flag = FLAG_MAP[sectionType];
+        if (!flag) continue;
+        const pickedIds = bucket[sectionType].map((b) => b.id);
+        const flagged = await prisma.book.findMany({
+          where: {
+            isActive: true,
+            [flag]: true,
+            id: { notIn: pickedIds },
+            OR: [
+              { categoryId: { in: categoryIds } },
+              { bookCategories: { some: { categoryId: { in: categoryIds } } } },
+            ],
+          },
+          select: BOOK_SELECT,
+          take: 50,
+        });
+        flagged.forEach((b) => {
+          bucket[sectionType].push({ ...b, _fromFlag: true });
+        });
+      }
+    }));
 
     // --- per-corner section config (visibility + order) ---
     const configSetting = await prisma.setting.findUnique({ where: { key: 'cornerSectionConfig' } });

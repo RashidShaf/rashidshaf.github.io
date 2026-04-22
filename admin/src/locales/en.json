@@ -546,6 +546,9 @@
     "pickPerSection": "Pick products per section",
     "noPicksInSection": "No products picked for this section yet. The storefront will fall back to flag-based books if this section is enabled.",
     "hideSection": "Hide section",
-    "showSection": "Show section"
+    "showSection": "Show section",
+    "fromFlag": "Flag",
+    "fromFlagTooltip": "Added from the product page flag. Save to convert to an explicit pick.",
+    "flagMergeHint": "Books flagged via the product page (Featured / Bestseller / etc.) appear here automatically under the matching tab. Rearrange or remove as needed — your save becomes the explicit pick order."
   }
 }

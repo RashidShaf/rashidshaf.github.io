@@ -261,7 +261,11 @@ export default function HomeLayout() {
                           </div>
                           <button
                             onClick={() => toggleCornerSectionEnabled(corner.slug, entry.type)}
-                            className={`p-1.5 rounded-md transition-colors ${entry.enabled ? 'text-admin-accent bg-admin-accent/10 hover:bg-admin-accent/20' : 'text-admin-muted bg-admin-bg hover:bg-admin-bg/60'}`}
+                            className={`p-1.5 rounded-md border transition-all duration-150 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-admin-accent/40 ${
+                              entry.enabled
+                                ? 'text-admin-accent bg-admin-accent/10 border-admin-accent/20 hover:bg-admin-accent/20 hover:border-admin-accent/40'
+                                : 'text-admin-muted bg-admin-bg border-admin-border hover:bg-admin-accent/10 hover:text-admin-accent hover:border-admin-accent/30'
+                            }`}
                             title={entry.enabled ? (t('homeLayout.hideSection') || 'Hide section') : (t('homeLayout.showSection') || 'Show section')}
                           >
                             {entry.enabled ? <FiEye size={14} /> : <FiEyeOff size={14} />}
@@ -278,6 +282,9 @@ export default function HomeLayout() {
                     <h4 className="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">
                       {t('homeLayout.pickPerSection') || 'Pick products per section'}
                     </h4>
+                    <p className="text-[11px] text-admin-muted mb-2 leading-snug">
+                      {t('homeLayout.flagMergeHint') || 'Books flagged via the product page (Featured / Bestseller / etc.) appear here automatically under the matching tab. Rearrange or remove as needed — your save becomes the explicit pick order.'}
+                    </p>
                     <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
                       {SECTION_TYPES.map((type) => {
                         const count = cornerBuckets[type]?.length || 0;
@@ -322,10 +329,15 @@ export default function HomeLayout() {
                                     <div className="w-8 h-10 bg-admin-accent/10 rounded flex-shrink-0" />
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                       <p className="text-sm font-medium text-admin-text truncate">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</p>
                                       {book.isActive === false && (
                                         <span className="text-[10px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex-shrink-0">{t('homeLayout.inactive') || 'Inactive'}</span>
+                                      )}
+                                      {book._fromFlag && (
+                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-admin-accent bg-admin-accent/10 px-1.5 py-0.5 rounded flex-shrink-0" title={t('homeLayout.fromFlagTooltip') || 'Added from the product page flag'}>
+                                          {t('homeLayout.fromFlag') || 'Flag'}
+                                        </span>
                                       )}
                                     </div>
                                     <p className="text-[11px] text-admin-muted mt-0.5 truncate">{book.sku || '—'}</p>

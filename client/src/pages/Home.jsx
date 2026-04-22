@@ -270,6 +270,7 @@ const Home = () => {
                             books={s.books || []}
                             seeAllUrl={seeAllUrl}
                             comingSoon={s.type === 'comingSoon'}
+                            wide={fullWidth}
                           />
                         </div>
                       );
