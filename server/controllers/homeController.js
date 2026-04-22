@@ -75,16 +75,28 @@ async function collectCornerCategoryIds(cornerId) {
 }
 
 async function cornerSectionBooks(cornerId, sectionType, cornerCategoryIds) {
-  // 1) admin picks first, in displayOrder
-  const picks = await prisma.homeSectionProduct.findMany({
+  // 1) admin picks first, in displayOrder — but out-of-stock items go to the bottom.
+  // Fetch a bit extra, then re-sort in JS so isOutOfStock sinks, preserving displayOrder within groups.
+  const picksRaw = await prisma.homeSectionProduct.findMany({
     where: { cornerId, sectionType, book: { isActive: true } },
     orderBy: { displayOrder: 'asc' },
     include: { book: { include: BOOK_INCLUDE } },
-    take: 12,
+    take: 24,
   });
-  if (picks.length > 0) return picks.map((p) => p.book);
+  if (picksRaw.length > 0) {
+    const sorted = picksRaw
+      .slice()
+      .sort((a, b) => {
+        const aOut = a.book.isOutOfStock ? 1 : 0;
+        const bOut = b.book.isOutOfStock ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+        return a.displayOrder - b.displayOrder;
+      })
+      .slice(0, 12);
+    return sorted.map((p) => p.book);
+  }
 
-  // 2) fallback: flag-based inside this corner
+  // 2) fallback: flag-based inside this corner (already sorts out-of-stock to bottom)
   const flag = FLAG_MAP[sectionType];
   if (!flag) return [];
   return prisma.book.findMany({

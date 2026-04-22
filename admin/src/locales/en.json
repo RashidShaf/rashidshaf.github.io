@@ -549,6 +549,6 @@
     "showSection": "Show section",
     "fromFlag": "Flag",
     "fromFlagTooltip": "Added from the product page flag. Save to convert to an explicit pick.",
-    "flagMergeHint": "Books flagged via the product page (Featured / Bestseller / etc.) appear here automatically under the matching tab. Rearrange or remove as needed — your save becomes the explicit pick order."
+    "flagMergeHint": "Books you marked as Featured / Bestseller / New Arrival etc. on the product page show up here automatically under the matching tab. If you leave them alone, they stay linked to the flag — unchecking the flag on the product page later removes them. If you move or reorder a book here, it becomes a pinned pick that stays regardless of the flag."
   }
 }
