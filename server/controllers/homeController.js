@@ -139,6 +139,9 @@ async function corner(cornerId, cornerSectionConfig) {
   const cornerSections = await Promise.all(
     enabled.map(async (entry) => ({
       type: entry.type,
+      // Custom per-corner titles — client falls back to default translation when empty.
+      titleEn: typeof entry.titleEn === 'string' ? entry.titleEn : null,
+      titleAr: typeof entry.titleAr === 'string' ? entry.titleAr : null,
       // One failed section should not 500 the whole home layout. Log and show empty.
       books: await cornerSectionBooks(cat.id, entry.type, categoryIds).catch((err) => {
         console.error(`cornerSectionBooks failed for corner=${cat.slug} type=${entry.type}:`, err);
@@ -191,6 +194,37 @@ exports.getLayout = async (req, res, next) => {
   }
 };
 
+// Public: GET /api/home/corner-titles
+// Lightweight — returns just the per-corner section title overrides so the catalog
+// page (Books.jsx) can relabel its section filter dropdown when a corner is selected.
+// Shape: { [cornerSlug]: { [sectionType]: { titleEn, titleAr } } }
+exports.getCornerTitles = async (req, res, next) => {
+  try {
+    const row = await prisma.setting.findUnique({ where: { key: 'cornerSectionConfig' } });
+    if (!row?.value) return res.json({});
+    let parsed;
+    try { parsed = JSON.parse(row.value); } catch { return res.json({}); }
+    if (!parsed || typeof parsed !== 'object') return res.json({});
+    const out = {};
+    for (const [slug, arr] of Object.entries(parsed)) {
+      if (!Array.isArray(arr)) continue;
+      const titles = {};
+      arr.forEach((s) => {
+        if (s && typeof s.type === 'string' && ALLOWED_SECTION_TYPES.includes(s.type)) {
+          titles[s.type] = {
+            titleEn: typeof s.titleEn === 'string' && s.titleEn.trim() ? s.titleEn.trim() : null,
+            titleAr: typeof s.titleAr === 'string' && s.titleAr.trim() ? s.titleAr.trim() : null,
+          };
+        }
+      });
+      out[slug] = titles;
+    }
+    res.json(out);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Public: GET /api/home/corner-sections/:slug
 // Kept for deep-linking / standalone corner views.
 exports.getCornerSections = async (req, res, next) => {
@@ -215,6 +249,8 @@ exports.getCornerSections = async (req, res, next) => {
     const sections = await Promise.all(
       enabledEntries.map(async (entry) => ({
         type: entry.type,
+        titleEn: typeof entry.titleEn === 'string' ? entry.titleEn : null,
+        titleAr: typeof entry.titleAr === 'string' ? entry.titleAr : null,
         books: await cornerSectionBooks(cornerCat.id, entry.type, categoryIds).catch((err) => {
           console.error(`cornerSectionBooks failed for corner=${slug} type=${entry.type}:`, err);
           return [];

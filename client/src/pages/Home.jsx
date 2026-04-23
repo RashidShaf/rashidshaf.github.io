@@ -210,7 +210,10 @@ const Home = () => {
           // Keep ALL cornerSections (including empty ones) so the 2-per-row grid respects
           // the admin-configured order. Empty sections render a "No products yet" placeholder.
           const cornerSections = section.cornerSections || [];
-          const hasCornerSections = cornerSections.length > 0;
+          // Only render sub-sections that actually have books. Empty ones
+          // (e.g. Books → Coming Soon with zero picks/flags) are hidden for this corner.
+          const populatedSections = cornerSections.filter((s) => Array.isArray(s.books) && s.books.length > 0);
+          const hasCornerSections = populatedSections.length > 0;
           if (!hasChildren && !hasCornerSections) return null;
           return (
             <section key={`corner-${l1.id}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
@@ -258,18 +261,23 @@ const Home = () => {
               {hasCornerSections && (
                 <div className={hasChildren ? 'mt-6 3xl:mt-10' : ''}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 3xl:gap-8">
-                    {cornerSections.map((s, idx) => {
-                      const isLast = idx === cornerSections.length - 1;
-                      const oddCount = cornerSections.length % 2 === 1;
+                    {populatedSections.map((s, idx) => {
+                      const isLast = idx === populatedSections.length - 1;
+                      const oddCount = populatedSections.length % 2 === 1;
                       const fullWidth = isLast && oddCount;
                       const sectionValue = SECTION_SEE_ALL[s.type];
                       const seeAllUrl = sectionValue
                         ? `/books?category=${encodeURIComponent(l1.slug)}&section=${sectionValue}`
                         : `/books?category=${encodeURIComponent(l1.slug)}`;
+                      // Custom per-corner title overrides the default translation when set.
+                      const customTitle = language === 'ar'
+                        ? (s.titleAr && s.titleAr.trim())
+                        : (s.titleEn && s.titleEn.trim());
+                      const title = customTitle || SECTION_TITLES[s.type] || s.type;
                       return (
                         <div key={s.type} className={fullWidth ? 'lg:col-span-2' : ''}>
                           <CornerSection
-                            title={SECTION_TITLES[s.type] || s.type}
+                            title={title}
                             books={s.books || []}
                             seeAllUrl={seeAllUrl}
                             comingSoon={s.type === 'comingSoon'}
@@ -284,28 +292,10 @@ const Home = () => {
             </section>
           );
         }
-        // Global section (featured/newArrivals/bestsellers/trending/comingSoon)
-        if (!section.books || section.books.length === 0) return null;
-        const title = GLOBAL_TITLES[section.type];
-        const seeAllSection = GLOBAL_SEEALL_SECTION[section.type];
-        const hasSeeAll = !!seeAllSection && section.type !== 'comingSoon' && section.type !== 'trending';
-        return (
-          <section key={`g-${section.type}-${sIdx}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">{title}</h2>
-              {hasSeeAll && (
-                <Link to={`/books?section=${seeAllSection}`} className="flex items-center gap-1 text-sm 3xl:text-lg font-medium text-accent hover:text-accent-light transition-colors">
-                  {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
-                </Link>
-              )}
-            </div>
-            <BookCarousel>
-              {section.books.map((book) => (
-                <BookCard key={book.id} book={book} comingSoon={section.type === 'comingSoon'} />
-              ))}
-            </BookCarousel>
-          </section>
-        );
+        // Root-level global sections (Featured / Bestsellers / etc.) are intentionally
+        // not rendered — each corner already shows its own, so showing them again at
+        // the root would duplicate. Server still returns them for API compatibility.
+        return null;
       })}
 
     </>

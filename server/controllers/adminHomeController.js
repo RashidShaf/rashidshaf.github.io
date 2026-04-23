@@ -119,13 +119,17 @@ exports.getConfig = async (req, res, next) => {
       if (!Array.isArray(existing) || existing.length === 0) {
         cornerSectionConfig[c.slug] = DEFAULT_CORNER_SECTION_CONFIG.map((s) => ({ ...s }));
       } else {
-        // Normalize: ensure all 5 types present, preserve user-specified order + enabled state.
+        // Normalize: ensure all 5 types present, preserve user-specified order + enabled state
+        // + optional per-corner custom titles (titleEn, titleAr).
         const seen = new Set();
         const normalized = [];
         existing.forEach((s) => {
           if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
             seen.add(s.type);
-            normalized.push({ type: s.type, enabled: s.enabled !== false });
+            const entry = { type: s.type, enabled: s.enabled !== false };
+            if (typeof s.titleEn === 'string' && s.titleEn.trim()) entry.titleEn = s.titleEn.trim().slice(0, 80);
+            if (typeof s.titleAr === 'string' && s.titleAr.trim()) entry.titleAr = s.titleAr.trim().slice(0, 80);
+            normalized.push(entry);
           }
         });
         ALLOWED_SECTION_TYPES.forEach((t) => {
@@ -211,7 +215,7 @@ exports.saveConfig = async (req, res, next) => {
         }
       }
 
-      // --- corner section config (order + visibility per corner) ---
+      // --- corner section config (order + visibility + custom titles per corner) ---
       if (cornerSectionConfig) {
         const cleanConfig = {};
         for (const [slug, arr] of Object.entries(cornerSectionConfig)) {
@@ -221,7 +225,10 @@ exports.saveConfig = async (req, res, next) => {
           arr.forEach((s) => {
             if (s && ALLOWED_SECTION_TYPES.includes(s.type) && !seen.has(s.type)) {
               seen.add(s.type);
-              normalized.push({ type: s.type, enabled: s.enabled !== false });
+              const entry = { type: s.type, enabled: s.enabled !== false };
+              if (typeof s.titleEn === 'string' && s.titleEn.trim()) entry.titleEn = s.titleEn.trim().slice(0, 80);
+              if (typeof s.titleAr === 'string' && s.titleAr.trim()) entry.titleAr = s.titleAr.trim().slice(0, 80);
+              normalized.push(entry);
             }
           });
           ALLOWED_SECTION_TYPES.forEach((t) => {

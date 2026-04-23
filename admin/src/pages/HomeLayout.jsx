@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiChevronUp, FiChevronDown, FiX, FiPlus, FiSearch, FiGrid, FiLayers, FiStar, FiTrendingUp, FiClock, FiAward, FiGlobe, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiX, FiPlus, FiSearch, FiGrid, FiLayers, FiStar, FiTrendingUp, FiClock, FiAward, FiGlobe, FiEye, FiEyeOff, FiEdit2, FiCheck } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -28,6 +28,7 @@ export default function HomeLayout() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(null); // cornerId
   const [activeTab, setActiveTab] = useState({}); // { [cornerId]: sectionType }
+  const [editingTitle, setEditingTitle] = useState(null); // { slug, type } | null — only one row editing at a time
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -137,6 +138,17 @@ export default function HomeLayout() {
     });
   };
 
+  const updateCornerSectionTitle = (slug, sectionType, lang, value) => {
+    setCornerSectionConfig((prev) => {
+      const current = Array.isArray(prev[slug]) ? prev[slug] : DEFAULT_CORNER_CONFIG.map((s) => ({ ...s }));
+      const field = lang === 'ar' ? 'titleAr' : 'titleEn';
+      return {
+        ...prev,
+        [slug]: current.map((s) => s.type === sectionType ? { ...s, [field]: value } : s),
+      };
+    });
+  };
+
   // Debounced book search
   useEffect(() => {
     if (!expanded) { setSearchResults([]); return; }
@@ -207,6 +219,9 @@ export default function HomeLayout() {
 
       <div className="space-y-2">
         {sections.map((s, idx) => {
+          // Global sections (Featured / Bestsellers / etc.) were removed from the
+          // storefront home page — hide them from admin too so the UI is honest.
+          if (s.type !== 'corner') return null;
           const isCorner = s.type === 'corner';
           const meta = !isCorner ? GLOBAL_SECTION_META[s.type] : null;
           const Icon = isCorner ? FiLayers : (meta?.icon || FiGrid);
@@ -256,7 +271,10 @@ export default function HomeLayout() {
                       {t('homeLayout.sectionOrder') || 'Section order on corner page'}
                     </h4>
                     <div className="space-y-1.5">
-                      {cornerConfigArr.map((entry, eIdx) => (
+                      {cornerConfigArr.map((entry, eIdx) => {
+                        const isEditingThis = editingTitle?.slug === corner.slug && editingTitle?.type === entry.type;
+                        const hasCustomTitle = (entry.titleEn && entry.titleEn.trim()) || (entry.titleAr && entry.titleAr.trim());
+                        return (
                         <div key={entry.type} className={`flex items-center gap-3 px-3 py-2 border border-admin-border rounded-lg ${entry.enabled ? 'bg-admin-bg' : 'bg-admin-bg/40 opacity-60'}`}>
                           <span className="text-[11px] font-semibold text-admin-muted w-5 text-center select-none">{eIdx + 1}</span>
                           <div className="flex flex-col gap-0.5">
@@ -274,10 +292,68 @@ export default function HomeLayout() {
                           >
                             {entry.enabled ? <FiEye size={14} /> : <FiEyeOff size={14} />}
                           </button>
-                          <p className="flex-1 text-sm font-medium text-admin-text">{sectionLabel(entry.type)}</p>
-                          <p className="text-[11px] text-admin-muted flex-shrink-0">{cornerBuckets[entry.type]?.length || 0} {t('homeLayout.picks') || 'picks'}</p>
+
+                          {isEditingThis ? (
+                            <>
+                              <div className="flex-1 min-w-0">
+                                <label className="block text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-0.5">
+                                  {t('homeLayout.labelEnglish') || 'English title'}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={entry.titleEn || ''}
+                                  onChange={(e) => updateCornerSectionTitle(corner.slug, entry.type, 'en', e.target.value)}
+                                  maxLength={80}
+                                  placeholder={sectionLabel(entry.type)}
+                                  autoFocus
+                                  className="w-full px-2 py-1 text-sm bg-white border border-admin-border rounded-md focus:outline-none focus:border-admin-accent"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <label className="block text-[10px] font-semibold text-admin-muted uppercase tracking-wider mb-0.5">
+                                  {t('homeLayout.labelArabic') || 'Arabic title'}
+                                </label>
+                                <input
+                                  type="text"
+                                  dir="rtl"
+                                  value={entry.titleAr || ''}
+                                  onChange={(e) => updateCornerSectionTitle(corner.slug, entry.type, 'ar', e.target.value)}
+                                  maxLength={80}
+                                  placeholder={sectionLabel(entry.type)}
+                                  className="w-full px-2 py-1 text-sm bg-white border border-admin-border rounded-md focus:outline-none focus:border-admin-accent"
+                                />
+                              </div>
+                              <button
+                                onClick={() => setEditingTitle(null)}
+                                className="self-end p-1.5 rounded-md text-admin-accent bg-admin-accent/10 border border-admin-accent/20 hover:bg-admin-accent/20 hover:border-admin-accent/40 transition-colors"
+                                title={t('common.done') || 'Done'}
+                              >
+                                <FiCheck size={14} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-admin-text truncate">{sectionLabel(entry.type)}</p>
+                                {hasCustomTitle && (
+                                  <p className="text-[11px] text-admin-muted truncate mt-0.5">
+                                    {[entry.titleEn?.trim(), entry.titleAr?.trim()].filter(Boolean).join(' · ')}
+                                  </p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => setEditingTitle({ slug: corner.slug, type: entry.type })}
+                                className="p-1.5 rounded-md text-admin-muted bg-admin-bg border border-admin-border hover:text-admin-accent hover:bg-admin-accent/10 hover:border-admin-accent/30 transition-colors"
+                                title={t('homeLayout.renameSection') || 'Rename section'}
+                              >
+                                <FiEdit2 size={14} />
+                              </button>
+                              <p className="text-[11px] text-admin-muted flex-shrink-0 whitespace-nowrap">{cornerBuckets[entry.type]?.length || 0} {t('homeLayout.picks') || 'picks'}</p>
+                            </>
+                          )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 

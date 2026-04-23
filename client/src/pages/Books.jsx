@@ -19,11 +19,11 @@ const sortOptions = [
 
 const sectionOptions = [
   { value: '', labelKey: 'common.viewAll' },
-  { value: 'featured', labelKey: 'home.featured' },
-  { value: 'bestseller', labelKey: 'home.bestsellers' },
-  { value: 'new', labelKey: 'home.newArrivals' },
-  { value: 'trending', labelKey: 'home.trending' },
-  { value: 'comingSoon', labelKey: 'home.comingSoon' },
+  { value: 'featured',   labelKey: 'home.featured',    cornerType: 'featured' },
+  { value: 'bestseller', labelKey: 'home.bestsellers', cornerType: 'bestsellers' },
+  { value: 'new',        labelKey: 'home.newArrivals', cornerType: 'newArrivals' },
+  { value: 'trending',   labelKey: 'home.trending',    cornerType: 'trending' },
+  { value: 'comingSoon', labelKey: 'home.comingSoon',  cornerType: 'comingSoon' },
 ];
 
 const Books = () => {
@@ -49,6 +49,9 @@ const Books = () => {
   const [categoryBanners, setCategoryBanners] = useState([]);
   const [filterConfig, setFilterConfig] = useState(null);
   const [availableCustomFields, setAvailableCustomFields] = useState({});
+  // Per-corner section-title overrides, keyed by corner slug
+  // Shape: { [slug]: { [sectionType]: { titleEn, titleAr } } }
+  const [cornerTitles, setCornerTitles] = useState({});
   const sortRef = useRef(null);
   const sectionRef = useRef(null);
   const filterDropdownRef = useRef(null);
@@ -67,11 +70,26 @@ const Books = () => {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  // Fetch per-corner custom section titles once. Used to relabel the section
+  // dropdown when a corner is selected in the category filter.
+  useEffect(() => {
+    api.get('/home/corner-titles').then((res) => setCornerTitles(res.data || {})).catch(() => {});
+  }, []);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
   const selectedCategories = category ? category.split(',').filter(Boolean) : [];
+  // Active corner slug — first comma-separated category that matches a known corner.
+  // When set, the section dropdown labels use the admin-customized titles for that corner.
+  const activeCornerSlug = selectedCategories.find((s) => cornerTitles[s]) || null;
+  const sectionLabel = (opt) => {
+    if (!activeCornerSlug || !opt.cornerType) return t(opt.labelKey);
+    const titles = cornerTitles[activeCornerSlug]?.[opt.cornerType];
+    const custom = language === 'ar' ? titles?.titleAr : titles?.titleEn;
+    return (custom && custom.trim()) || t(opt.labelKey);
+  };
   const sort = searchParams.get('sort') || 'newest';
   const bookLang = searchParams.get('language') || '';
   const section = searchParams.get('section') || '';
@@ -802,7 +820,10 @@ const Books = () => {
                   onClick={() => { setSectionOpen(!sectionOpen); setSortOpen(false); setOpenFilter(null); }}
                   className="flex items-center gap-2 bg-surface border border-muted/40 rounded-lg px-3 py-1.5 pe-8 text-sm text-foreground focus:outline-none focus:border-accent cursor-pointer whitespace-nowrap"
                 >
-                  {t(sectionOptions.find((o) => o.value === section)?.labelKey || 'books.section')}
+                  {(() => {
+                    const current = sectionOptions.find((o) => o.value === section);
+                    return current ? sectionLabel(current) : t('books.section');
+                  })()}
                   <FiChevronDown className={`absolute end-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/60 transition-transform ${sectionOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {sectionOpen && (
@@ -815,7 +836,7 @@ const Books = () => {
                           section === opt.value ? 'bg-accent text-white font-semibold' : 'text-foreground hover:bg-accent/10 hover:text-accent'
                         }`}
                       >
-                        {t(opt.labelKey)}
+                        {sectionLabel(opt)}
                       </button>
                     ))}
                   </div>
