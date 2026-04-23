@@ -95,7 +95,20 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
     return (
       <section className="overflow-hidden">
         {Header}
-        <div className={`grid ${wide ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3'} gap-2 sm:gap-3 3xl:gap-4`}>
+        {/* Mobile (<640px): horizontal scroll matches the carousel branch so mobile is consistent */}
+        <div
+          dir={isRTL ? 'rtl' : 'ltr'}
+          className="sm:hidden flex gap-3 overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {safeBooks.map((book) => (
+            <div key={book.id} className="flex-shrink-0 w-[calc(50%-6px)]">
+              <BookCard book={book} comingSoon={comingSoon} />
+            </div>
+          ))}
+        </div>
+        {/* Tablet+ (≥640): fixed grid with invisible slot placeholders */}
+        <div className={`hidden sm:grid ${wide ? 'sm:grid-cols-4 lg:grid-cols-6' : 'sm:grid-cols-3'} gap-2 sm:gap-3 3xl:gap-4`}>
           {safeBooks.map((book) => (
             <BookCard key={book.id} book={book} comingSoon={comingSoon} />
           ))}
