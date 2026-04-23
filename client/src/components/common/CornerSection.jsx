@@ -28,12 +28,24 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
 
   const safeBooks = Array.isArray(books) ? books : [];
   const slotsPerRow = wide ? 6 : 3;
-  const useCarousel = safeBooks.length > slotsPerRow;
+  // Wide sections always use the Swiper carousel so tablet (640-1023) gets arrows/dots,
+  // never the native horizontal scroll that looked out of place next to narrow sections.
+  // Narrow sections keep grid when they fit in one row.
+  const useCarousel = wide || safeBooks.length > slotsPerRow;
 
   // slideNext / slidePrev respect slidesPerGroup, which we set to match slidesPerView
   // (via slidesPerGroupAuto below). So narrow sections advance by 3, wide by 6.
   const slidePrev = () => swiperInst?.slidePrev(400);
   const slideNext = () => swiperInst?.slideNext(400);
+
+  // Hide arrows/dots at breakpoints where every book already fits in view.
+  // sm+ shows 3 per view (narrow + wide), lg+ shows 6 for wide. Mobile is `hidden` anyway.
+  const n = safeBooks.length;
+  const arrowsVisibility = n <= 3
+    ? 'hidden'
+    : (wide && n <= 6
+        ? 'hidden sm:flex lg:hidden'
+        : 'hidden sm:flex');
 
   const Header = (
     <header className="flex items-center gap-2 sm:gap-3 mb-3 3xl:mb-4">
@@ -42,7 +54,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
       </h3>
       <div className="flex-1 flex items-center justify-center">
         {useCarousel && (
-          <div className="hidden sm:flex items-center gap-1.5 sm:gap-2">
+          <div className={`${arrowsVisibility} items-center gap-1.5 sm:gap-2`}>
             <button
               type="button"
               aria-label="Previous"
@@ -92,23 +104,25 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
 
   // Fixed-grid branch — cards stay same size; empty slots are invisible placeholders.
   if (!useCarousel) {
+    // Wide sections render as horizontal scroll up to lg (cards wouldn't fit cleanly in
+    // a single grid row at sm). Narrow sections render as scroll only on mobile.
+    const scrollHiddenAt = wide ? 'lg:hidden' : 'sm:hidden';
+    const gridShownAt = wide ? 'hidden lg:grid lg:grid-cols-6' : 'hidden sm:grid sm:grid-cols-3';
     return (
       <section className="overflow-hidden">
         {Header}
-        {/* Mobile (<640px): horizontal scroll matches the carousel branch so mobile is consistent */}
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="sm:hidden flex gap-3 overflow-x-auto scrollbar-hide"
+          className={`${scrollHiddenAt} flex gap-3 overflow-x-auto scrollbar-hide`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {safeBooks.map((book) => (
-            <div key={book.id} className="flex-shrink-0 w-[calc(50%-6px)]">
+            <div key={book.id} className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)]">
               <BookCard book={book} comingSoon={comingSoon} />
             </div>
           ))}
         </div>
-        {/* Tablet+ (≥640): fixed grid with invisible slot placeholders */}
-        <div className={`hidden sm:grid ${wide ? 'sm:grid-cols-4 lg:grid-cols-6' : 'sm:grid-cols-3'} gap-2 sm:gap-3 3xl:gap-4`}>
+        <div className={`${gridShownAt} gap-2 sm:gap-3 3xl:gap-4`}>
           {safeBooks.map((book) => (
             <BookCard key={book.id} book={book} comingSoon={comingSoon} />
           ))}
@@ -126,8 +140,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
   const breakpoints = wide
     ? {
         640:  { slidesPerView: 3, slidesPerGroup: 3 },
-        1024: { slidesPerView: 4, slidesPerGroup: 4 },
-        1280: { slidesPerView: 6, slidesPerGroup: 6 },
+        1024: { slidesPerView: 6, slidesPerGroup: 6 },
       }
     : {
         640:  { slidesPerView: 3, slidesPerGroup: 3 },

@@ -235,7 +235,7 @@ const Home = () => {
                         to={`/books?category=${cat.slug}`}
                         className="group bg-surface rounded-lg overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
                       >
-                        <div className="relative aspect-[5/6] bg-surface-alt overflow-hidden rounded-lg">
+                        <div className="relative aspect-[2/3] sm:aspect-[5/6] bg-surface-alt overflow-hidden rounded-lg">
                           {coverPath ? (
                             <Image src={coverPath} alt={getName(cat)} width={500} height={600} sizes="(max-width: 640px) 45vw, 240px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
