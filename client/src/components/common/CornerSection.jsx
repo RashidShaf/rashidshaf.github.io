@@ -19,7 +19,7 @@ import useLanguageStore from '../../stores/useLanguageStore';
 //   [Title]       [← dots →]       [See All →]
 // Arrows and See All use the same FiArrow icon style.
 const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = false }) => {
-  const { language } = useLanguageStore();
+  const { language, t } = useLanguageStore();
   const paginationRef = useRef(null);
   const [swiperInst, setSwiperInst] = useState(null);
   const isRTL = language === 'ar';
@@ -57,7 +57,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
           <div className={`${arrowsVisibility} items-center gap-1.5 sm:gap-2`}>
             <button
               type="button"
-              aria-label="Previous"
+              aria-label={t('common.previous')}
               onClick={slidePrev}
               className="flex items-center justify-center text-accent hover:text-accent-light transition-colors"
             >
@@ -69,7 +69,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
             />
             <button
               type="button"
-              aria-label="Next"
+              aria-label={t('common.next')}
               onClick={slideNext}
               className="flex items-center justify-center text-accent hover:text-accent-light transition-colors"
             >
@@ -83,7 +83,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
           to={seeAllUrl}
           className="inline-flex items-center gap-1 text-xs sm:text-sm 3xl:text-base font-medium text-accent hover:text-accent-light transition-colors"
         >
-          <span className="whitespace-nowrap">{language === 'ar' ? 'عرض الكل' : 'See All'}</span>
+          <span className="whitespace-nowrap">{t('common.seeAll')}</span>
           {isRTL ? <FiArrowLeft size={14} /> : <FiArrowRight size={14} />}
         </Link>
       )}
@@ -96,7 +96,7 @@ const CornerSection = ({ title, books, seeAllUrl, comingSoon = false, wide = fal
       <section className="overflow-hidden">
         {Header}
         <div className="h-32 sm:h-40 flex items-center justify-center text-sm text-foreground/50 italic">
-          {language === 'ar' ? 'لا توجد منتجات بعد' : 'No products yet'}
+          {t('home.noProductsYet')}
         </div>
       </section>
     );

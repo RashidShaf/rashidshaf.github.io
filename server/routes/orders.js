@@ -15,6 +15,7 @@ const createOrderSchema = Joi.object({
   paymentMethod: Joi.string().valid('COD', 'ONLINE').default('COD'),
   cartItems: Joi.array().items(Joi.object({
     bookId: Joi.string().required(),
+    variantId: Joi.string().allow('', null),
     quantity: Joi.number().integer().min(1).required(),
   })).min(1).required(),
 });

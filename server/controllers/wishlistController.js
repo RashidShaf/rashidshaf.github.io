@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const { variantListSelect, decorateBook } = require('../utils/bookDecorator');
 
 exports.list = async (req, res, next) => {
   try {
@@ -11,12 +12,15 @@ exports.list = async (req, res, next) => {
             id: true, title: true, titleAr: true, slug: true, author: true, authorAr: true,
             price: true, compareAtPrice: true, coverImage: true, averageRating: true,
             reviewCount: true, stock: true, isActive: true,
+            isOutOfStock: true, hasVariants: true,
             category: { select: { id: true, name: true, nameAr: true, slug: true } },
+            variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
           },
         },
       },
     });
-    res.json(items);
+    const decorated = items.map((it) => ({ ...it, book: decorateBook(it.book) }));
+    res.json(decorated);
   } catch (error) {
     next(error);
   }

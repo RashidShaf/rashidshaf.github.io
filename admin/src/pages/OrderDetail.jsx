@@ -184,17 +184,21 @@ export default function OrderDetail() {
                 <tbody>
                   {(order.items || []).length === 0 ? (
                     <tr><td colSpan={4} className="px-4 py-8 text-center text-admin-muted">{t('common.noItems')}</td></tr>
-                  ) : (order.items || []).map((item, idx) => (
-                    <tr key={idx} className="border-b border-admin-border last:border-0">
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4">
-                        <p className="font-medium text-admin-text">{language === 'ar' && item.book?.titleAr ? item.book.titleAr : (item.book?.title || item.title || 'Unknown')}</p>
-                        {item.book?.author && <p className="text-xs text-admin-muted">{item.book.author}</p>}
-                      </td>
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">QAR {parseFloat(item.price || 0).toFixed(2)}</td>
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{item.quantity}</td>
-                      <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
-                    </tr>
-                  ))}
+                  ) : (order.items || []).map((item, idx) => {
+                    const variantLine = [item.variantLabel, item.variantColor, item.variantSku].filter(Boolean).join(' · ');
+                    return (
+                      <tr key={idx} className="border-b border-admin-border last:border-0">
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4">
+                          <p className="font-medium text-admin-text">{language === 'ar' && item.book?.titleAr ? item.book.titleAr : (item.book?.title || item.title || 'Unknown')}</p>
+                          {variantLine && <p className="text-[11px] text-admin-accent font-medium mt-0.5">{variantLine}</p>}
+                          {item.book?.author && <p className="text-xs text-admin-muted">{item.book.author}</p>}
+                        </td>
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">QAR {parseFloat(item.price || 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">{item.quantity}</td>
+                        <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">QAR {(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -5,7 +5,18 @@ import { FiArrowLeft, FiUpload, FiX, FiChevronDown, FiSearch } from 'react-icons
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import AutocompleteInput from '../components/AutocompleteInput';
+import VariantsPanel from '../components/VariantsPanel';
 import api from '../utils/api';
+
+// Convert a YYYY-MM-DD form-input value to noon-UTC ISO so the calendar date
+// the admin selects round-trips correctly across timezones (avoids the day
+// rolling back/forward when interpreted in non-UTC display zones).
+const toISODateNoonUTC = (raw) => {
+  if (!raw) return null;
+  const ymd = String(raw).slice(0, 10);
+  const d = new Date(ymd + 'T12:00:00Z');
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
 
 export default function BookCreate() {
   const { t, language, isRTL } = useLanguageStore();
@@ -31,7 +42,9 @@ export default function BookCreate() {
     publishedDate: '', weight: '',
     brand: '', brandAr: '', material: '', materialAr: '', color: '', colorAr: '', dimensions: '', ageRange: '',
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false,
+    hasVariants: false,
   });
+  const [variants, setVariants] = useState([]);
 
   const [suggestedAuthors, setSuggestedAuthors] = useState([]);
   const [suggestedAuthorsAr, setSuggestedAuthorsAr] = useState([]);
@@ -132,11 +145,17 @@ export default function BookCreate() {
   }, [selectedParent]);
   const show = (key) => !visibleFields || visibleFields.includes(key);
 
-  // Custom fields from selected corner category
+  // Custom fields from selected corner category. Filtered by detailFields so
+  // unchecking a CF in Edit Corner hides it from this form (and from the
+  // variant form, since this prop is passed down). When detailFields isn't
+  // configured we show all CFs (existing convention).
   const categoryCustomFields = useMemo(() => {
     if (!selectedParent?.customFields) return [];
-    try { return JSON.parse(selectedParent.customFields); } catch { return []; }
-  }, [selectedParent]);
+    let allDefs = [];
+    try { allDefs = JSON.parse(selectedParent.customFields); } catch { return []; }
+    if (!Array.isArray(visibleFields)) return allDefs;
+    return allDefs.filter((cf) => visibleFields.includes(`cf_${cf.key}`));
+  }, [selectedParent, visibleFields]);
   const [customFieldValues, setCustomFieldValues] = useState({});
 
   const handleChange = (e) => {
@@ -189,9 +208,41 @@ export default function BookCreate() {
     setCoverPreview(URL.createObjectURL(file));
   };
 
+  // Surface duplicate barcodes inline before hitting the server.
+  const duplicateSkuIndices = useMemo(() => {
+    const seen = new Map();
+    const dups = new Set();
+    variants.forEach((v, i) => {
+      const sku = (v.sku || '').trim().toLowerCase();
+      if (!sku) return;
+      if (seen.has(sku)) {
+        dups.add(seen.get(sku));
+        dups.add(i);
+      } else {
+        seen.set(sku, i);
+      }
+    });
+    return dups;
+  }, [variants]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) { toast.error(t('books.titleRequired')); return; }
+    if (form.hasVariants) {
+      if (variants.length === 0) {
+        toast.error(t('books.atLeastOneVariant'));
+        return;
+      }
+      if (duplicateSkuIndices.size > 0) {
+        toast.error(t('books.duplicateBarcode'));
+        return;
+      }
+      const invalid = variants.find((v) => !v.label || v.label.trim() === '' || v.price === '' || parseFloat(v.price) < 0);
+      if (invalid) {
+        toast.error(t('books.variantInvalid'));
+        return;
+      }
+    }
     setSaving(true);
     try {
       const payload = { ...form };
@@ -217,7 +268,7 @@ export default function BookCreate() {
         if (!payload[f]) delete payload[f];
       });
       if (payload.publishedDate) {
-        payload.publishedDate = new Date(payload.publishedDate).toISOString();
+        payload.publishedDate = toISODateNoonUTC(payload.publishedDate);
       } else {
         delete payload.publishedDate;
       }
@@ -227,8 +278,65 @@ export default function BookCreate() {
         payload.customFields = JSON.stringify(customFieldValues);
       }
 
+      // Variants — strip image files (uploaded separately) before sending JSON
+      if (form.hasVariants) {
+        const numOrNull = (x) => (x === '' || x == null ? null : x);
+        // Persist ONLY entries that differ from the base. Lets the variant
+        // explicitly blank a CF (variant '' overrides base "Hardcover"), and
+        // means truly inherited keys aren't snapshotted on the variant row —
+        // so editing the base later still flows through to the variant.
+        const serializeCFs = (variantCfs, baseCfs) => {
+          if (!variantCfs || typeof variantCfs !== 'object') return null;
+          const overrides = {};
+          Object.entries(variantCfs).forEach(([k, v]) => {
+            const variantValue = (v?.value || '');
+            const variantValueAr = (v?.valueAr || '');
+            const baseEntry = baseCfs?.[k];
+            const baseValue = (baseEntry?.value || '');
+            const baseValueAr = (baseEntry?.valueAr || '');
+            if (variantValue !== baseValue || variantValueAr !== baseValueAr) {
+              overrides[k] = { value: variantValue, valueAr: variantValueAr };
+            }
+          });
+          return Object.keys(overrides).length > 0 ? JSON.stringify(overrides) : null;
+        };
+        payload.variants = variants.map((v, i) => ({
+          label: (v.label || '').trim(),
+          labelAr: v.labelAr || null,
+          sku: v.sku ? v.sku.trim() : null,
+          price: parseFloat(v.price) || 0,
+          purchasePrice: numOrNull(v.purchasePrice),
+          compareAtPrice: numOrNull(v.compareAtPrice),
+          stock: parseInt(v.stock, 10) || 0,
+          color: v.color || null,
+          colorAr: v.colorAr || null,
+          dimensions: v.dimensions || null,
+          weight: numOrNull(v.weight),
+          brand: v.brand || null,
+          brandAr: v.brandAr || null,
+          material: v.material || null,
+          materialAr: v.materialAr || null,
+          ageRange: v.ageRange || null,
+          author: v.author || null,
+          authorAr: v.authorAr || null,
+          publisher: v.publisher || null,
+          publisherAr: v.publisherAr || null,
+          isbn: v.isbn || null,
+          pages: v.pages === '' || v.pages == null ? null : parseInt(v.pages, 10),
+          language: v.language || null,
+          publishedDate: toISODateNoonUTC(v.publishedDate),
+          customFields: serializeCFs(v.customFieldValues, customFieldValues),
+          sortOrder: i,
+          isOutOfStock: !!v.isOutOfStock,
+          isActive: v.isActive === false ? false : true,
+        }));
+      } else {
+        payload.variants = [];
+      }
+
       const res = await api.post('/admin/books', payload);
       const bookId = res.data.id;
+      const createdVariants = res.data.variants || [];
 
       if (coverFile && bookId) {
         const fd = new FormData();
@@ -246,7 +354,37 @@ export default function BookCreate() {
         });
       }
 
-      toast.success(t('books.productCreated'));
+      // Upload variant images. Server returns variants in input (sortOrder) order
+      // so we can pair them 1:1 with the local variants array. We track which
+      // uploads failed and surface a partial-success toast so the admin knows
+      // to retry — silent failures previously left variants without images.
+      let failedVariantImageCount = 0;
+      if (form.hasVariants && createdVariants.length === variants.length) {
+        await Promise.all(
+          variants.map(async (v, i) => {
+            const created = createdVariants[i];
+            if (v.imageFile && created?.id) {
+              const fd = new FormData();
+              fd.append('image', v.imageFile);
+              try {
+                await api.post(`/admin/books/${bookId}/variants/${created.id}/image`, fd, {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                });
+              } catch {
+                failedVariantImageCount += 1;
+              }
+            }
+          }),
+        );
+      }
+
+      if (failedVariantImageCount > 0) {
+        toast.warning(
+          t('books.variantImagesPartialFail').replace('{{n}}', failedVariantImageCount),
+        );
+      } else {
+        toast.success(t('books.productCreated'));
+      }
       const tab = form.parentCategoryId || '';
       navigate(`/books${tab ? `?tab=${tab}` : ''}`);
     } catch (err) {
@@ -532,6 +670,12 @@ export default function BookCreate() {
                       <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder={t('books.dimPlaceholder')} className={inputClass} />
                     </div>
                   )}
+                  {show('weight') && (
+                    <div>
+                      <label className={labelClass}>{t('books.weight')}</label>
+                      <input name="weight" type="number" step="0.01" min="0" value={form.weight} onChange={handleChange} placeholder="0.00" className={inputClass} />
+                    </div>
+                  )}
                   {show('ageRange') && (
                     <div>
                       <label className={labelClass}>{t('books.ageRange')}</label>
@@ -570,14 +714,15 @@ export default function BookCreate() {
               </div>
             )}
 
-            {/* Pricing & Inventory */}
+            {/* Pricing & Inventory — root fields stay editable even when variants are on */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
               <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.pricingInventory')}</h3>
               {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">{t('books.comingSoonNote')}</p>}
+
               <div className="grid sm:grid-cols-3 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>{t('books.priceQAR')}</label>
-                  <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required className={inputClass} />
+                  <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required={!form.hasVariants} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>{t('books.purchasePrice')}</label>
@@ -592,6 +737,55 @@ export default function BookCreate() {
                   <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} className={inputClass} />
                 </div>
               </div>
+
+              {form.hasVariants && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  {t('books.variantBaseHint')}
+                </p>
+              )}
+            </div>
+
+            {/* Variants — own card, after Pricing & Inventory */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.variants')}</h3>
+              <label className="flex items-start gap-3 p-3 bg-gray-50 border border-admin-border rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.hasVariants}
+                  onChange={(e) => setForm((p) => ({ ...p, hasVariants: e.target.checked }))}
+                  className="mt-0.5 w-4 h-4 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-admin-text">{t('books.hasVariants')}</p>
+                  <p className="text-[11px] text-admin-muted mt-0.5">{t('books.hasVariantsHint')}</p>
+                </div>
+              </label>
+
+              {form.hasVariants && (
+                <VariantsPanel
+                  t={t}
+                  language={language}
+                  variants={variants}
+                  setVariants={setVariants}
+                  suggestedColors={suggestedColors}
+                  suggestedColorsAr={suggestedColorsAr}
+                  suggestedBrands={suggestedBrands}
+                  suggestedBrandsAr={suggestedBrandsAr}
+                  suggestedMaterials={suggestedMaterials}
+                  suggestedMaterialsAr={suggestedMaterialsAr}
+                  suggestedAuthors={suggestedAuthors}
+                  suggestedAuthorsAr={suggestedAuthorsAr}
+                  suggestedPublishers={suggestedPublishers}
+                  suggestedPublishersAr={suggestedPublishersAr}
+                  apiBase={import.meta.env.VITE_API_URL?.replace('/api', '')}
+                  duplicateSkuIndices={duplicateSkuIndices}
+                  category={selectedParent}
+                  basePrefill={form}
+                  categoryCustomFields={categoryCustomFields}
+                  baseCustomFieldValues={customFieldValues}
+                  suggestedCustomFields={suggestedCustomFields}
+                />
+              )}
             </div>
 
             {/* Actions */}

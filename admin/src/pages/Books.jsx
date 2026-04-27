@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, FiBook, FiStar, FiAlertTriangle, FiRefreshCw, FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -18,6 +18,41 @@ export default function Books() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: null, active: null, lowStock: null });
   const [deleteId, setDeleteId] = useState(null);
+  // Set of book ids whose variant sub-rows are expanded in the table.
+  const [expandedRows, setExpandedRows] = useState(() => new Set());
+  const toggleExpanded = (bookId) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(bookId)) next.delete(bookId); else next.add(bookId);
+      return next;
+    });
+  };
+
+  // Inline variant flag toggle — optimistic UI + revert on error.
+  const patchVariantFlag = async (bookId, variantId, patch) => {
+    // Optimistic update
+    setBooks((prev) => prev.map((b) =>
+      b.id !== bookId ? b : {
+        ...b,
+        variants: (b.variants || []).map((v) => v.id === variantId ? { ...v, ...patch } : v),
+      }
+    ));
+    try {
+      await api.patch(`/admin/books/${bookId}/variants/${variantId}`, patch);
+    } catch (err) {
+      // Revert
+      setBooks((prev) => prev.map((b) =>
+        b.id !== bookId ? b : {
+          ...b,
+          variants: (b.variants || []).map((v) => v.id === variantId ? {
+            ...v,
+            ...Object.keys(patch).reduce((acc, k) => ({ ...acc, [k]: !patch[k] }), {}),
+          } : v),
+        }
+      ));
+      toast.error(err.response?.data?.message || 'Failed to update');
+    }
+  };
   const [allCategories, setAllCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedTab, setSelectedTab] = useState(searchParams.get('tab') || '');
@@ -1043,8 +1078,14 @@ export default function Books() {
               ) : books.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-12 text-center text-admin-muted">{t('common.noResults')}</td></tr>
               ) : (
-                books.map((book, index) => (
-                  <tr key={book.id} className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(book.id) ? 'bg-blue-50' : ''}`}>
+                books.map((book, index) => {
+                  const variantCount = book._count?.variants ?? 0;
+                  const showChevron = book.hasVariants && variantCount > 0;
+                  const isExpanded = expandedRows.has(book.id);
+                  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '');
+                  return (
+                <React.Fragment key={book.id}>
+                  <tr className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(book.id) ? 'bg-blue-50' : ''}`}>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <input type="checkbox" checked={selectedIds.includes(book.id)} onChange={() => toggleSelect(book.id)} className="w-4 h-4 3xl:w-5 3xl:h-5 rounded border-gray-300 text-admin-accent focus:ring-admin-accent" />
                     </td>
@@ -1052,7 +1093,7 @@ export default function Books() {
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <div className="flex items-center gap-3 3xl:gap-4">
                         <div className="w-8 h-10 3xl:w-10 3xl:h-12 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                          {book.coverImage ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] 3xl:text-xs font-bold text-admin-muted">{(language === 'ar' && book.titleAr ? book.titleAr : book.title).charAt(0)}</div>}
+                          {book.coverImage ? <img src={`${apiBase}/${book.coverImage}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] 3xl:text-xs font-bold text-admin-muted">{(language === 'ar' && book.titleAr ? book.titleAr : book.title).charAt(0)}</div>}
                         </div>
                         <span className="font-medium text-admin-text truncate max-w-[200px] 3xl:max-w-[300px]">{language === 'ar' && book.titleAr ? book.titleAr : book.title}</span>
                       </div>
@@ -1074,8 +1115,23 @@ export default function Books() {
                       </div>
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
-                      <div>QAR {parseFloat(book.price).toFixed(2)}</div>
-                      {book.purchasePrice != null && book.purchasePrice !== '' && (
+                      {book.hasVariants && book.priceFrom != null && parseFloat(book.priceFrom) !== parseFloat(book.priceTo) ? (
+                        <div>
+                          <span className="text-[10px] text-admin-muted font-normal me-0.5">{t('books.from') || 'From'}</span>
+                          QAR {parseFloat(book.priceFrom).toFixed(2)}
+                        </div>
+                      ) : (
+                        <div>QAR {parseFloat(book.hasVariants && book.priceFrom != null ? book.priceFrom : book.price).toFixed(2)}</div>
+                      )}
+                      {book.hasVariants && (() => {
+                        const variantCount = book._count?.variants ?? 0;
+                        return (
+                          <div className="text-[10px] text-admin-accent font-semibold mt-0.5">
+                            {variantCount} {variantCount === 1 ? t('books.variants_one') : t('books.variants_other')}
+                          </div>
+                        );
+                      })()}
+                      {!book.hasVariants && book.purchasePrice != null && book.purchasePrice !== '' && (
                         <div className="text-[11px] text-admin-muted font-normal mt-0.5">
                           {t('books.purchasePriceShort') || 'Cost'}: QAR {parseFloat(book.purchasePrice).toFixed(2)}
                         </div>
@@ -1083,6 +1139,11 @@ export default function Books() {
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <span className={`font-medium ${book.stock <= 5 ? 'text-red-500' : 'text-admin-text'}`}>{book.stock}</span>
+                      {book.hasVariants && (
+                        <div className="text-[10px] text-admin-muted font-normal mt-0.5">
+                          {t('books.variantPerOption')}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4">
                       <button
@@ -1096,6 +1157,17 @@ export default function Books() {
                     </td>
                     <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end">
                       <div className="flex items-center justify-end gap-1.5">
+                        {showChevron && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(book.id)}
+                            className={`p-1.5 3xl:p-2 text-admin-muted hover:text-admin-accent transition-all ${isExpanded ? 'rotate-180' : ''}`}
+                            aria-label={t('books.toggleVariants')}
+                            title={isExpanded ? t('books.hideOptions') : t('books.showOptions')}
+                          >
+                            <FiChevronDown size={15} className="3xl:w-[18px] 3xl:h-[18px]" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleToggleOutOfStock(book)}
                           className={`px-2 py-0.5 3xl:px-2.5 3xl:py-1 text-[10px] 3xl:text-xs font-semibold rounded-full cursor-pointer transition-colors ${
@@ -1109,7 +1181,66 @@ export default function Books() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  {/* Variant sub-rows — read-only label/sku/price/color, clickable stock + active badges */}
+                  {isExpanded && (book.variants || []).map((v) => {
+                    const vLabel = language === 'ar' && v.labelAr ? v.labelAr : v.label;
+                    return (
+                      <tr key={`${book.id}__${v.id}`} className="border-b border-admin-border bg-gray-50/50 text-xs">
+                        <td className="px-4 py-2"></td>
+                        <td className="px-4 py-2"></td>
+                        <td className="px-4 py-2 ps-12">
+                          <div className="flex items-center gap-2 text-admin-muted">
+                            <span className="text-admin-muted/60">↳</span>
+                            <div className="w-6 h-8 rounded bg-gray-100 overflow-hidden flex-shrink-0">
+                              {v.image ? (
+                                <img src={`${apiBase}/${v.image}`} className="w-full h-full object-cover" alt="" />
+                              ) : book.coverImage ? (
+                                <img src={`${apiBase}/${book.coverImage}`} className="w-full h-full object-cover opacity-50" alt="" />
+                              ) : null}
+                            </div>
+                            <span className="font-medium text-admin-text truncate max-w-[160px]">{vLabel}</span>
+                            {v.color && (
+                              <span
+                                className="inline-block w-3 h-3 rounded-full border border-admin-border flex-shrink-0"
+                                style={{ backgroundColor: v.color }}
+                                title={v.color}
+                              />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-admin-muted">{v.sku || '—'}</td>
+                        <td className="px-4 py-2 font-medium text-admin-text">QAR {parseFloat(v.price).toFixed(2)}</td>
+                        <td className="px-4 py-2">
+                          <span className={`font-medium ${v.stock <= 5 ? 'text-red-500' : 'text-admin-text'}`}>{v.stock}</span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <button
+                            type="button"
+                            onClick={() => patchVariantFlag(book.id, v.id, { isActive: !v.isActive })}
+                            className={`px-2 py-0.5 text-[11px] font-medium rounded-full cursor-pointer transition-colors ${
+                              v.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }`}
+                          >
+                            {v.isActive ? t('common.active') : t('common.inactive')}
+                          </button>
+                        </td>
+                        <td className="px-4 py-2 text-end">
+                          <button
+                            type="button"
+                            onClick={() => patchVariantFlag(book.id, v.id, { isOutOfStock: !v.isOutOfStock })}
+                            className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-pointer transition-colors ${
+                              v.isOutOfStock ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                          >
+                            {v.isOutOfStock ? t('books.outOfStock') : t('common.inStock')}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

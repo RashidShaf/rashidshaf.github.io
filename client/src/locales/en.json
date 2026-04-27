@@ -18,7 +18,9 @@
     "confirm": "Are you sure?",
     "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
     "more": "More",
-    "results": "Results"
+    "results": "Results",
+    "previous": "Previous",
+    "next": "Next"
   },
   "nav": {
     "home": "Home",
@@ -53,7 +55,8 @@
     "testimonials": "What Our Readers Say",
     "newsletter": "Stay Updated",
     "newsletterPlaceholder": "Enter your email address",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "noProductsYet": "No products yet"
   },
   "books": {
     "title": "Browse Products",
@@ -88,7 +91,12 @@
     "material": "Material",
     "dimensions": "Dimensions",
     "ageRange": "Age Range",
-    "barcode": "Barcode"
+    "barcode": "Barcode",
+    "from": "From",
+    "chooseOption": "Choose option",
+    "chooseOptionToBuy": "Pick an option above to buy",
+    "default": "Default",
+    "noLongerAvailable": "No longer available"
   },
   "book": {
     "description": "Description",
@@ -133,7 +141,8 @@
     "phoneRequired": "Phone number required to complete purchase",
     "onlinePayment": "Online Payment",
     "onlinePaymentDesc": "Pay now with card",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "removeUnavailableFirst": "Please remove out-of-stock items before checkout"
   },
   "checkout": {
     "title": "Checkout",
@@ -190,7 +199,11 @@
     "contactInfo": "Contact Information",
     "address": "Address",
     "updateSuccess": "Profile updated",
-    "updateFailed": "Failed to update"
+    "updateFailed": "Failed to update",
+    "wishlistEmpty": "Your wishlist is empty",
+    "wishlistRemoved": "Removed from wishlist",
+    "wishlistCount_one": "product",
+    "wishlistCount_other": "products"
   },
   "orders": {
     "title": "My Orders",

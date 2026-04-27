@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import BookCard from '../components/books/BookCard';
@@ -15,6 +15,7 @@ import api from '../utils/api';
 
 const BookDetail = () => {
   const { slug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, language } = useLanguageStore();
   const addItem = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
@@ -26,6 +27,7 @@ const BookDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
 
   useEffect(() => {
     if (reviewModalOpen) {
@@ -69,6 +71,47 @@ const BookDetail = () => {
     window.scrollTo(0, 0);
   }, [slug]);
 
+  // Initialize selectedVariantId once the book loads.
+  //   - If a `?v=` URL param points to an existing variant, restore that.
+  //   - Otherwise, leave it null so the page shows the BASE product first.
+  // Customers must explicitly pick an option to see/add a variant.
+  useEffect(() => {
+    if (!book || !book.hasVariants) {
+      setSelectedVariantId(null);
+      return;
+    }
+    const active = (book.variants || []).filter((v) => v.isActive !== false);
+    const fromUrl = searchParams.get('v');
+    const urlMatch = fromUrl ? active.find((v) => v.id === fromUrl) : null;
+    if (urlMatch) {
+      setSelectedVariantId(urlMatch.id);
+      return;
+    }
+    setSelectedVariantId(null);
+    // Clear an invalid ?v= so the URL stays clean
+    if (fromUrl && !urlMatch) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('v');
+      setSearchParams(next, { replace: true });
+    }
+  }, [book?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // After refreshBook() (e.g. on review submit) the previously selected
+  // variant might have been deactivated by an admin in another tab. Drop the
+  // stale selection and clean the URL so the page doesn't keep showing
+  // base price/sku while ?v=<dead-id> lingers.
+  useEffect(() => {
+    if (!book || !selectedVariantId) return;
+    const active = (book.variants || []).filter((v) => v.isActive !== false);
+    if (active.find((v) => v.id === selectedVariantId)) return;
+    setSelectedVariantId(null);
+    if (searchParams.get('v')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('v');
+      setSearchParams(next, { replace: true });
+    }
+  }, [book?.variants]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -109,6 +152,98 @@ const BookDetail = () => {
   const parentCatName = parentCat ? (language === 'ar' && parentCat.nameAr ? parentCat.nameAr : parentCat.name) : null;
   const inWishlist = wishlistItems.includes(book.id);
 
+  // Variants — when present, drive price/sku/color/image/stock instead of root book
+  const hasVariants = !!book.hasVariants && Array.isArray(book.variants) && book.variants.length > 0;
+  const activeVariants = hasVariants ? book.variants.filter((v) => v.isActive !== false) : [];
+  const selectedVariant = hasVariants
+    ? activeVariants.find((v) => v.id === selectedVariantId) || null
+    : null;
+  const effectivePrice = selectedVariant ? selectedVariant.price : book.price;
+  const effectiveCompareAt = selectedVariant ? selectedVariant.compareAtPrice : book.compareAtPrice;
+  const effectiveSku = selectedVariant ? selectedVariant.sku : book.sku;
+  const effectiveColor = selectedVariant
+    ? (language === 'ar' && selectedVariant.colorAr ? selectedVariant.colorAr : (selectedVariant.color || (language === 'ar' && book.colorAr ? book.colorAr : book.color)))
+    : (language === 'ar' && book.colorAr ? book.colorAr : book.color);
+  const effectiveVariantImage = selectedVariant?.image || null;
+  // Per-field effective values — prefer variant override, fall back to base.
+  //
+  // CONTRACT: a variant column with NULL means "inherit from base". The admin
+  // form's sanitizer converts empty strings ('') to null on save, so DB-stored
+  // values are either non-empty or null. Therefore:
+  //   • String fields use `||` — treat '' (defensive, from raw DB writes) as
+  //     missing and fall back to base. Admin form never produces '' on save.
+  //   • Numeric fields use `??` — preserve `0` as a real value and only fall
+  //     back when the variant value is null/undefined.
+  //   • Date fields use `||` — same as strings; '' from raw DB writes inherits.
+  const effectiveDimensions = (selectedVariant?.dimensions) || book.dimensions;
+  const effectiveWeight     = selectedVariant?.weight ?? book.weight;
+  const effectiveBrand = (() => {
+    const ar = selectedVariant?.brandAr || book.brandAr;
+    const en = selectedVariant?.brand || book.brand;
+    return language === 'ar' && ar ? ar : en;
+  })();
+  const effectiveMaterial = (() => {
+    const ar = selectedVariant?.materialAr || book.materialAr;
+    const en = selectedVariant?.material || book.material;
+    return language === 'ar' && ar ? ar : en;
+  })();
+  const effectiveAgeRange = (selectedVariant?.ageRange) || book.ageRange;
+  // Book-specific
+  const effectiveAuthor = (() => {
+    const ar = selectedVariant?.authorAr || book.authorAr;
+    const en = selectedVariant?.author || book.author;
+    return language === 'ar' && ar ? ar : en;
+  })();
+  const effectivePublisher = (() => {
+    const ar = selectedVariant?.publisherAr || book.publisherAr;
+    const en = selectedVariant?.publisher || book.publisher;
+    return language === 'ar' && ar ? ar : en;
+  })();
+  const effectiveIsbn = selectedVariant?.isbn || book.isbn;
+  const effectivePages = selectedVariant?.pages ?? book.pages;
+  const effectiveLanguage = selectedVariant?.language || book.language;
+  const effectivePublishedDate = selectedVariant?.publishedDate || book.publishedDate;
+  // Merge customFields per key — variant override wins per key, even when
+  // empty (so admin can explicitly blank a CF on a variant). The render-side
+  // filter (`if (val.value || val.valueAr)`) drops empty values from display
+  // so the row simply doesn't appear for a deliberately-blanked override.
+  // Keys absent from variant.customFields fall through to base.
+  const effectiveCustomFieldValues = (() => {
+    const parse = (raw) => {
+      if (!raw) return {};
+      if (typeof raw === 'object') return raw;
+      try { return JSON.parse(raw) || {}; } catch { return {}; }
+    };
+    const baseCfs = parse(book.customFields);
+    const varCfs = parse(selectedVariant?.customFields);
+    const merged = { ...baseCfs };
+    Object.entries(varCfs).forEach(([key, val]) => {
+      if (val) merged[key] = val; // override wins even if value is empty
+    });
+    return merged;
+  })();
+  // Base is always purchasable when book.isOutOfStock=false. Variant is
+  // purchasable only when active and not out of stock. Unavailable means
+  // whichever target the customer has currently selected is out.
+  const isUnavailable = selectedVariant
+    ? (selectedVariant.isOutOfStock || !selectedVariant.isActive)
+    : book.isOutOfStock;
+
+  const handlePickVariant = (variantId) => {
+    setSelectedVariantId(variantId);
+    setSelectedImage(null); // let the gallery default re-evaluate
+    const next = new URLSearchParams(searchParams);
+    if (variantId) next.set('v', variantId); else next.delete('v');
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleAddToCart = () => {
+    // No variant selected ⇒ buy the base product. The server now accepts
+    // variantId=null on hasVariants products as a valid base purchase.
+    addItem(book, quantity, selectedVariant ? selectedVariant.id : null);
+    toast.success(t('books.addedToCart'));
+  };
+
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
   const coverPath = book.coverImage || null;
   const placeholderPath = (() => {
@@ -119,9 +254,9 @@ const BookDetail = () => {
   const coverUrl = coverPath ? `${API_BASE}/${coverPath}` : null;
   const placeholderUrl = placeholderPath ? `${API_BASE}/${placeholderPath}` : null;
 
-  const hasDiscount = book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price);
+  const hasDiscount = effectiveCompareAt && parseFloat(effectiveCompareAt) > parseFloat(effectivePrice);
   const discountPercent = hasDiscount
-    ? Math.round((1 - parseFloat(book.price) / parseFloat(book.compareAtPrice)) * 100)
+    ? Math.round((1 - parseFloat(effectivePrice) / parseFloat(effectiveCompareAt)) * 100)
     : 0;
 
   const bookUrl = `https://arkaan.qa/books/${book.slug}`;
@@ -135,7 +270,7 @@ const BookDetail = () => {
     name: title,
     description: description || undefined,
     image: seoImage,
-    sku: book.sku || book.id,
+    sku: effectiveSku || book.id,
     ...(book.isbn && {
       gtin13: book.isbn.replace(/[^0-9]/g, '').length === 13 ? book.isbn.replace(/[^0-9]/g, '') : undefined,
     }),
@@ -151,17 +286,31 @@ const BookDetail = () => {
       ratingValue: parseFloat(book.averageRating).toFixed(1),
       reviewCount: book.reviewCount,
     } : undefined,
-    offers: {
-      '@type': 'Offer',
-      url: bookUrl,
-      priceCurrency: 'QAR',
-      price: parseFloat(book.price).toFixed(2),
-      availability: book.isOutOfStock || book.stock <= 0
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      seller: { '@type': 'Organization', name: 'Arkaan Bookstore' },
-    },
+    offers: hasVariants && book.priceFrom
+      ? {
+          '@type': 'AggregateOffer',
+          url: bookUrl,
+          priceCurrency: 'QAR',
+          lowPrice: parseFloat(book.priceFrom).toFixed(2),
+          highPrice: parseFloat(book.priceTo).toFixed(2),
+          offerCount: activeVariants.length,
+          availability: isUnavailable
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: { '@type': 'Organization', name: 'Arkaan Bookstore' },
+        }
+      : {
+          '@type': 'Offer',
+          url: bookUrl,
+          priceCurrency: 'QAR',
+          price: parseFloat(effectivePrice).toFixed(2),
+          availability: isUnavailable
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: { '@type': 'Organization', name: 'Arkaan Bookstore' },
+        },
   };
 
   const breadcrumbJsonLd = {
@@ -214,14 +363,14 @@ const BookDetail = () => {
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Image Gallery */}
-          <div className="flex-shrink-0 lg:mx-0">
-            <div className="flex flex-col gap-3 sm:gap-4 items-center sm:items-start">
+          {/* Image Gallery — centered on mobile + tablet (640–1023), left-aligned on desktop */}
+          <div className="flex-shrink-0 mx-auto lg:mx-0">
+            <div className="flex flex-col gap-3 sm:gap-4 items-center lg:items-start">
               {/* Main cover */}
               <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
-                {(selectedImage || coverPath || placeholderPath) ? (
+                {(selectedImage || effectiveVariantImage || coverPath || placeholderPath) ? (
                   <Image
-                    src={selectedImage || coverPath || placeholderPath}
+                    src={selectedImage || effectiveVariantImage || coverPath || placeholderPath}
                     alt={title}
                     width={405}
                     height={600}
@@ -241,20 +390,42 @@ const BookDetail = () => {
                 )}
               </div>
 
-              {/* Thumbnail strip — below main image */}
-              {book.images && book.images.length > 0 && (
-                <div className="flex flex-row gap-2 sm:gap-2.5 flex-wrap">
-                  {[coverPath, ...book.images].filter(Boolean).slice(0, 4).map((imgPath, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setSelectedImage(imgPath)}
-                      className={`w-14 h-16 sm:w-16 sm:h-20 3xl:w-20 3xl:h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${(selectedImage || coverPath) === imgPath ? 'border-accent' : 'border-muted/15 hover:border-accent/50'}`}
-                    >
-                      <Image src={imgPath} alt="" width={80} height={96} sizes="80px" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Thumbnail strip — scope depends on what's selected:
+                   • A variant is selected → show ONLY the variant's image
+                     (the base product's additional photos belong to the base,
+                     not to this variant — showing them would be misleading).
+                   • Base is selected (or no variants) → show base cover plus
+                     the book's additional images. */}
+              {(() => {
+                let thumbs;
+                if (selectedVariant && effectiveVariantImage) {
+                  thumbs = [effectiveVariantImage];
+                } else {
+                  thumbs = [coverPath, ...(book.images || [])].filter(Boolean);
+                }
+                // De-duplicate while preserving order
+                const seen = new Set();
+                const unique = thumbs.filter((p) => {
+                  if (seen.has(p)) return false;
+                  seen.add(p);
+                  return true;
+                }).slice(0, 5);
+                if (unique.length <= 1) return null;
+                const activeThumb = selectedImage || effectiveVariantImage || coverPath;
+                return (
+                  <div className="flex flex-row gap-2 sm:gap-2.5 flex-wrap">
+                    {unique.map((imgPath, i) => (
+                      <div
+                        key={`${imgPath}-${i}`}
+                        onClick={() => setSelectedImage(imgPath)}
+                        className={`w-14 h-16 sm:w-16 sm:h-20 3xl:w-20 3xl:h-24 rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${activeThumb === imgPath ? 'border-primary' : 'border-muted/15 hover:border-primary/50'}`}
+                      >
+                        <Image src={imgPath} alt="" width={80} height={96} sizes="80px" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
           </div>
@@ -308,13 +479,148 @@ const BookDetail = () => {
               <span className="text-sm text-foreground/50 underline underline-offset-2">({book.reviewCount} {t('book.reviews')})</span>
             </button>
 
-            {/* Price + Quantity + Buttons — pushed to bottom on desktop */}
+            {/* Variant picker — sits HIGH in the layout (right after the
+                rating). First tile is the BASE product (always purchasable).
+                Image first, color swatch fallback, grey letter as last resort.
+                Price shows only in the main price element below, reflecting
+                the selected target. */}
+            {hasVariants && activeVariants.length > 0 && (
+              <div className="mt-6 lg:mt-24 3xl:mt-36">
+                <p className="text-[11px] sm:text-xs 3xl:text-sm font-semibold text-foreground/70 uppercase tracking-wider mb-2 3xl:mb-3">
+                  {t('books.chooseOption')}
+                </p>
+                <div className="flex flex-wrap gap-2 sm:gap-3 3xl:gap-4">
+                  {/* Base tile */}
+                  {(() => {
+                    const isSelected = !selectedVariantId;
+                    const isOut = book.isOutOfStock;
+                    const baseLabel = t('books.default');
+                    return (
+                      <button
+                        key="__base"
+                        type="button"
+                        onClick={() => handlePickVariant(null)}
+                        title={baseLabel}
+                        className="flex flex-col items-center gap-1 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#560736] focus-visible:ring-offset-2 cursor-pointer"
+                      >
+                        <div
+                          className={`relative w-12 h-12 sm:w-14 sm:h-14 3xl:w-[72px] 3xl:h-[72px] rounded-full overflow-hidden border-2 transition-all ${
+                            isSelected
+                              ? 'border-primary ring-2 ring-[#560736]/40 scale-105'
+                              : isOut
+                                ? 'border-muted/15 opacity-50'
+                                : 'border-muted/20 group-hover:border-primary/50'
+                          }`}
+                        >
+                          {coverPath ? (
+                            <Image
+                              src={coverPath}
+                              alt={baseLabel}
+                              width={120}
+                              height={120}
+                              sizes="56px"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-surface-alt text-foreground/40 text-lg font-bold">
+                              {(book.title || '?').trim().charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          {isOut && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                              <span className="text-[8px] font-bold text-white uppercase tracking-wider rotate-[-15deg]">
+                                {t('books.outOfStock')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] sm:text-[11px] 3xl:text-xs font-medium line-clamp-1 max-w-[56px] sm:max-w-[64px] 3xl:max-w-[72px] ${
+                          isSelected ? 'text-primary' : 'text-foreground/70'
+                        }`}>
+                          {baseLabel}
+                        </span>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Variant tiles */}
+                  {activeVariants.map((v) => {
+                    const isSelected = selectedVariantId === v.id;
+                    const isOut = v.isOutOfStock;
+                    const vLabel = language === 'ar' && v.labelAr ? v.labelAr : v.label;
+                    const initial = (vLabel || '?').trim().charAt(0).toUpperCase();
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => handlePickVariant(v.id)}
+                        title={vLabel}
+                        className="flex flex-col items-center gap-1 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#560736] focus-visible:ring-offset-2 cursor-pointer"
+                      >
+                        <div
+                          className={`relative w-12 h-12 sm:w-14 sm:h-14 3xl:w-[72px] 3xl:h-[72px] rounded-full overflow-hidden border-2 transition-all ${
+                            isSelected
+                              ? 'border-primary ring-2 ring-[#560736]/40 scale-105'
+                              : isOut
+                                ? 'border-muted/15 opacity-50'
+                                : 'border-muted/20 group-hover:border-primary/50'
+                          }`}
+                          style={!v.image && !coverPath && v.color ? { backgroundColor: v.color } : undefined}
+                        >
+                          {v.image ? (
+                            <Image
+                              src={v.image}
+                              alt={vLabel}
+                              width={120}
+                              height={120}
+                              sizes="56px"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : coverPath ? (
+                            // Fallback: use the base product cover when no variant image
+                            <Image
+                              src={coverPath}
+                              alt={vLabel}
+                              width={120}
+                              height={120}
+                              sizes="56px"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : !v.color ? (
+                            <div className="w-full h-full flex items-center justify-center bg-surface-alt text-foreground/40 text-lg font-bold">
+                              {initial}
+                            </div>
+                          ) : null}
+                          {isOut && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                              <span className="text-[8px] font-bold text-white uppercase tracking-wider rotate-[-15deg]">
+                                {t('books.outOfStock')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] sm:text-[11px] 3xl:text-xs font-medium line-clamp-1 max-w-[56px] sm:max-w-[64px] 3xl:max-w-[72px] ${
+                          isSelected ? 'text-primary' : 'text-foreground/70'
+                        }`}>
+                          {vLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Price + Quantity + Buttons — pushed to the bottom on desktop
+                so the variant picker stays high and a natural gap opens up
+                between the picker and the price. */}
             <div className="lg:mt-auto">
+
             {/* Price */}
             <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-7 lg:mt-0">
-              <span className="text-2xl sm:text-3xl 3xl:text-5xl font-bold text-foreground">{formatPrice(book.price)}</span>
+              <span className="text-2xl sm:text-3xl 3xl:text-5xl font-bold text-foreground">{formatPrice(effectivePrice)}</span>
               {hasDiscount && (
-                <span className="text-sm sm:text-lg text-foreground/40 line-through">{formatPrice(book.compareAtPrice)}</span>
+                <span className="text-sm sm:text-lg text-foreground/40 line-through">{formatPrice(effectiveCompareAt)}</span>
               )}
             </div>
 
@@ -345,18 +651,18 @@ const BookDetail = () => {
             {/* Add to Cart + Buy Now */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
-                disabled={book.isOutOfStock}
+                onClick={handleAddToCart}
+                disabled={isUnavailable}
                 className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 3xl:px-8 py-2 sm:py-2.5 3xl:py-3 bg-[#A39666] text-white text-xs sm:text-sm 3xl:text-base font-medium rounded-lg hover:bg-[#B8AB7E] active:scale-[0.97] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart size={14} />
                 {t('common.addToCart')}
               </button>
 
-              {!book.isOutOfStock ? (
+              {!isUnavailable ? (
                 <Link
                   to="/cart"
-                  onClick={() => { addItem(book, quantity); toast.success(t('books.addedToCart')); }}
+                  onClick={handleAddToCart}
                   className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 3xl:px-8 py-2 sm:py-2.5 3xl:py-3 text-xs sm:text-sm 3xl:text-base font-medium rounded-lg transition-colors"
                   style={{ backgroundColor: '#7A1B4E', color: 'white' }}
                 >
@@ -373,8 +679,8 @@ const BookDetail = () => {
               )}
             </div>
 
-            {/* Stock info */}
-            {book.isOutOfStock && (
+            {/* Stock info — only when the currently-selected target is out */}
+            {isUnavailable && (
               <p className="text-xs sm:text-sm mt-2 sm:mt-3 font-medium text-red-500">
                 {t('books.outOfStock')}
               </p>
@@ -390,34 +696,35 @@ const BookDetail = () => {
               const show = (key) => !allowed || allowed.includes(key);
 
               const items = [
-                show('author') && author && author !== 'Unknown' && author.trim() !== '' && { label: t('books.author'), value: author },
-                show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
-                show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
-                show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
-                show('barcode') && book.sku && { label: t('books.barcode'), value: book.sku },
-                show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
-                show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
-                show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
-                show('color') && book.color && { label: t('books.color'), value: language === 'ar' && book.colorAr ? book.colorAr : book.color },
-                show('material') && book.material && { label: t('books.material'), value: language === 'ar' && book.materialAr ? book.materialAr : book.material },
-                show('dimensions') && book.dimensions && { label: t('books.dimensions'), value: book.dimensions },
-                show('ageRange') && book.ageRange && { label: t('books.ageRange'), value: book.ageRange },
+                show('author') && effectiveAuthor && effectiveAuthor !== 'Unknown' && effectiveAuthor.trim() !== '' && { label: t('books.author'), value: effectiveAuthor },
+                show('publisher') && effectivePublisher && { label: t('book.publisher'), value: effectivePublisher },
+                show('pages') && effectivePages && { label: t('book.pages'), value: effectivePages },
+                show('isbn') && effectiveIsbn && { label: t('book.isbn'), value: effectiveIsbn },
+                show('barcode') && effectiveSku && { label: t('books.barcode'), value: effectiveSku },
+                show('language') && effectiveLanguage && { label: t('books.language'), value: effectiveLanguage === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
+                show('publishedDate') && effectivePublishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(effectivePublishedDate) : formatDate(effectivePublishedDate) },
+                show('brand') && effectiveBrand && { label: t('books.brand'), value: effectiveBrand },
+                show('color') && effectiveColor && { label: t('books.color'), value: effectiveColor },
+                show('material') && effectiveMaterial && { label: t('books.material'), value: effectiveMaterial },
+                show('dimensions') && effectiveDimensions && { label: t('books.dimensions'), value: effectiveDimensions },
+                show('ageRange') && effectiveAgeRange && { label: t('books.ageRange'), value: effectiveAgeRange },
               ].filter(Boolean);
 
-              // Add custom field values
-              if (book.customFields) {
-                try {
-                  const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
-                  const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
-                  let cfDefs = [];
-                  if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
-                  cfDefs.forEach((def) => {
-                    const val = cfValues[def.key];
-                    if (val && (val.value || val.valueAr)) {
-                      items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
-                    }
-                  });
-                } catch {}
+              // Add custom field values — variant override merged with base.
+              {
+                const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+                let cfDefs = [];
+                if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
+                cfDefs.forEach((def) => {
+                  // Custom fields are gated by the corner's detailFields config
+                  // (`cf_<key>`). When admin unchecks a CF in Edit Corner →
+                  // hide it on the storefront, even if a value is stored.
+                  if (!show(`cf_${def.key}`)) return;
+                  const val = effectiveCustomFieldValues[def.key];
+                  if (val && (val.value || val.valueAr)) {
+                    items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
+                  }
+                });
               }
 
               if (items.length === 0) return null;
@@ -455,34 +762,35 @@ const BookDetail = () => {
             const show = (key) => !allowed || allowed.includes(key);
 
             const items = [
-              show('author') && author && author !== 'Unknown' && author.trim() !== '' && { label: t('books.author'), value: author },
-              show('publisher') && publisher && { label: t('book.publisher'), value: publisher },
-              show('pages') && book.pages && { label: t('book.pages'), value: book.pages },
-              show('isbn') && book.isbn && { label: t('book.isbn'), value: book.isbn },
-              show('barcode') && book.sku && { label: t('books.barcode'), value: book.sku },
-              show('language') && book.language && { label: t('books.language'), value: book.language === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
-              show('publishedDate') && book.publishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(book.publishedDate) : formatDate(book.publishedDate) },
-              show('brand') && book.brand && { label: t('books.brand'), value: language === 'ar' && book.brandAr ? book.brandAr : book.brand },
-              show('color') && book.color && { label: t('books.color'), value: language === 'ar' && book.colorAr ? book.colorAr : book.color },
-              show('material') && book.material && { label: t('books.material'), value: language === 'ar' && book.materialAr ? book.materialAr : book.material },
-              show('dimensions') && book.dimensions && { label: t('books.dimensions'), value: book.dimensions },
-              show('ageRange') && book.ageRange && { label: t('books.ageRange'), value: book.ageRange },
+              show('author') && effectiveAuthor && effectiveAuthor !== 'Unknown' && effectiveAuthor.trim() !== '' && { label: t('books.author'), value: effectiveAuthor },
+              show('publisher') && effectivePublisher && { label: t('book.publisher'), value: effectivePublisher },
+              show('pages') && effectivePages && { label: t('book.pages'), value: effectivePages },
+              show('isbn') && effectiveIsbn && { label: t('book.isbn'), value: effectiveIsbn },
+              show('barcode') && effectiveSku && { label: t('books.barcode'), value: effectiveSku },
+              show('language') && effectiveLanguage && { label: t('books.language'), value: effectiveLanguage === 'ar' ? t('books.langArabic') : t('books.langEnglish') },
+              show('publishedDate') && effectivePublishedDate && { label: t('book.published'), value: language === 'ar' ? formatDateAr(effectivePublishedDate) : formatDate(effectivePublishedDate) },
+              show('brand') && effectiveBrand && { label: t('books.brand'), value: effectiveBrand },
+              show('color') && effectiveColor && { label: t('books.color'), value: effectiveColor },
+              show('material') && effectiveMaterial && { label: t('books.material'), value: effectiveMaterial },
+              show('dimensions') && effectiveDimensions && { label: t('books.dimensions'), value: effectiveDimensions },
+              show('ageRange') && effectiveAgeRange && { label: t('books.ageRange'), value: effectiveAgeRange },
             ].filter(Boolean);
 
-            // Add custom field values
-            if (book.customFields) {
-              try {
-                const cfValues = typeof book.customFields === 'string' ? JSON.parse(book.customFields) : book.customFields;
-                const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
-                let cfDefs = [];
-                if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
-                cfDefs.forEach((def) => {
-                  const val = cfValues[def.key];
-                  if (val && (val.value || val.valueAr)) {
-                    items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
-                  }
-                });
-              } catch {}
+            // Add custom field values — variant override merged with base.
+            {
+              const rawCF = book.category?.parent?.parent?.parent?.customFields || book.category?.parent?.parent?.customFields || book.category?.parent?.customFields || book.category?.customFields;
+              let cfDefs = [];
+              if (rawCF) { try { cfDefs = JSON.parse(rawCF); } catch {} }
+              cfDefs.forEach((def) => {
+                // Custom fields are gated by the corner's detailFields config
+                // (`cf_<key>`). When admin unchecks a CF in Edit Corner →
+                // hide it on the storefront, even if a value is stored.
+                if (!show(`cf_${def.key}`)) return;
+                const val = effectiveCustomFieldValues[def.key];
+                if (val && (val.value || val.valueAr)) {
+                  items.push({ label: language === 'ar' && def.nameAr ? def.nameAr : def.name, value: language === 'ar' && val.valueAr ? val.valueAr : val.value });
+                }
+              });
             }
 
             if (items.length === 0) return null;

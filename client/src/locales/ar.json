@@ -18,7 +18,9 @@
     "confirm": "هل أنت متأكد؟",
     "confirmDelete": "هل أنت متأكد من الحذف؟ لا يمكن التراجع عن هذا الإجراء.",
     "more": "المزيد",
-    "results": "نتائج"
+    "results": "نتائج",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "nav": {
     "home": "الرئيسية",
@@ -53,7 +55,8 @@
     "testimonials": "ماذا يقول قراؤنا",
     "newsletter": "ابقَ على اطلاع",
     "newsletterPlaceholder": "أدخل بريدك الإلكتروني",
-    "subscribe": "اشترك"
+    "subscribe": "اشترك",
+    "noProductsYet": "لا توجد منتجات بعد"
   },
   "books": {
     "title": "تصفح المنتجات",
@@ -88,7 +91,12 @@
     "material": "المادة",
     "dimensions": "الأبعاد",
     "ageRange": "الفئة العمرية",
-    "barcode": "الباركود"
+    "barcode": "الباركود",
+    "from": "ابتداءً من",
+    "chooseOption": "اختر خياراً",
+    "chooseOptionToBuy": "اختر خياراً أعلاه للشراء",
+    "default": "الأساسي",
+    "noLongerAvailable": "لم يعد متوفراً"
   },
   "book": {
     "description": "الوصف",
@@ -133,7 +141,8 @@
     "phoneRequired": "رقم الهاتف مطلوب لإتمام الشراء",
     "onlinePayment": "الدفع الإلكتروني",
     "onlinePaymentDesc": "ادفع الآن بالبطاقة",
-    "comingSoon": "قريباً"
+    "comingSoon": "قريباً",
+    "removeUnavailableFirst": "يرجى إزالة المنتجات غير المتوفرة قبل إتمام الشراء"
   },
   "checkout": {
     "title": "إتمام الطلب",
@@ -190,7 +199,11 @@
     "contactInfo": "معلومات الاتصال",
     "address": "العنوان",
     "updateSuccess": "تم تحديث الملف الشخصي",
-    "updateFailed": "فشل في التحديث"
+    "updateFailed": "فشل في التحديث",
+    "wishlistEmpty": "قائمة المفضلة فارغة",
+    "wishlistRemoved": "تمت الإزالة من المفضلة",
+    "wishlistCount_one": "منتج",
+    "wishlistCount_other": "منتجات"
   },
   "orders": {
     "title": "طلباتي",

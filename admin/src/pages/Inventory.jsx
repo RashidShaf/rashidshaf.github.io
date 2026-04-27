@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { FiAlertTriangle, FiPackage, FiChevronLeft, FiChevronRight, FiChevronUp, FiPlus, FiX, FiBook, FiDollarSign, FiLayers, FiSearch, FiRefreshCw } from 'react-icons/fi';
@@ -108,7 +108,7 @@ export default function Inventory() {
     return () => clearTimeout(timer);
   }, [invSearch]);
 
-  const handleRestock = async (bookId) => {
+  const handleRestock = async (bookId, variantId = null) => {
     const qty = parseInt(restockQty);
     if (!qty || qty <= 0) {
       toast.error(t('inventory.enterValidQty'));
@@ -118,6 +118,7 @@ export default function Inventory() {
     try {
       await api.post(`/admin/inventory/${bookId}/restock`, {
         quantity: qty,
+        variantId: variantId || undefined,
       });
       toast.success(t('inventory.restocked'));
       setRestockId(null);
@@ -366,10 +367,14 @@ export default function Inventory() {
                   const bookId = item.id || item.bookId;
                   const stock = item.stock ?? item.currentStock ?? 0;
                   const isLow = stock <= 5;
+                  const isVariantParent = !!item.hasVariants && Array.isArray(item.variants) && item.variants.length > 0;
+                  const variantStockTotal = isVariantParent
+                    ? item.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+                    : stock;
 
                   return (
+                    <React.Fragment key={bookId}>
                     <tr
-                      key={bookId}
                       className={`border-b border-admin-border hover:bg-gray-50 transition-colors ${selectedIds.includes(bookId) ? 'bg-blue-50' : ''}`}
                     >
                       <td className="px-4 py-3">
@@ -381,19 +386,26 @@ export default function Inventory() {
                         </p>
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4">
-                        <span
-                          className={`font-semibold ${
-                            isLow ? 'text-red-500' : 'text-admin-text'
-                          }`}
-                        >
-                          {stock}
-                        </span>
-                        {isLow && (
-                          <span className="ml-2 text-xs text-red-400">{t('common.low')}</span>
+                        {isVariantParent ? (
+                          <div>
+                            <span className="font-semibold text-admin-text">{variantStockTotal}</span>
+                            <span className="ml-2 text-[11px] text-admin-muted">
+                              {t('books.acrossNVariants').replace('{{n}}', item.variants.length)}
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`font-semibold ${isLow ? 'text-red-500' : 'text-admin-text'}`}>
+                              {stock}
+                            </span>
+                            {isLow && (
+                              <span className="ml-2 text-xs text-red-400">{t('common.low')}</span>
+                            )}
+                          </>
                         )}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 font-medium text-admin-text">
-                        QAR {(stock * parseFloat(item.price || 0)).toFixed(2)}
+                        QAR {(variantStockTotal * parseFloat(item.price || 0)).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-admin-muted">
                         {item.salesCount ?? item.totalSold ?? '-'}
@@ -409,7 +421,9 @@ export default function Inventory() {
                         </button>
                       </td>
                       <td className="px-4 py-3 3xl:px-5 3xl:py-4 text-end">
-                        {restockId === bookId ? (
+                        {isVariantParent ? (
+                          <span className="text-[11px] text-admin-muted">{t('books.restockPerOption')}</span>
+                        ) : restockId === bookId ? (
                           <div className="flex items-center gap-3 justify-end">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs text-admin-muted">{t('common.qty')}:</span>
@@ -448,6 +462,63 @@ export default function Inventory() {
                         )}
                       </td>
                     </tr>
+                    {isVariantParent && item.variants.map((v) => {
+                      const vRestockKey = `${bookId}__${v.id}`;
+                      const vIsLow = v.stock <= (v.lowStockThreshold || 5);
+                      return (
+                        <tr key={vRestockKey} className="border-b border-admin-border bg-gray-50/40">
+                          <td className="px-4 py-2"></td>
+                          <td className="px-4 py-2 ps-12 text-xs text-admin-muted">
+                            ↳ {language === 'ar' && v.labelAr ? v.labelAr : v.label}
+                            {v.sku && <span className="ms-2 text-[10px] text-admin-muted">[{v.sku}]</span>}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`text-sm font-semibold ${vIsLow ? 'text-red-500' : 'text-admin-text'}`}>
+                              {v.stock}
+                            </span>
+                            {vIsLow && <span className="ml-2 text-[10px] text-red-400">{t('common.low')}</span>}
+                          </td>
+                          <td className="px-4 py-2 text-xs text-admin-muted" colSpan={3}></td>
+                          <td className="px-4 py-2 text-end">
+                            {restockId === vRestockKey ? (
+                              <div className="flex items-center gap-2 justify-end">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={restockQty}
+                                  onChange={(e) => setRestockQty(e.target.value)}
+                                  placeholder="0"
+                                  className="w-16 px-2 py-1 bg-white border border-admin-input-border rounded text-xs text-admin-text focus:outline-none focus:border-admin-accent text-center"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleRestock(bookId, v.id)}
+                                  disabled={restocking || !restockQty}
+                                  className="px-3 py-1 bg-admin-success text-white rounded text-[11px] font-semibold disabled:opacity-40"
+                                >
+                                  {restocking ? '...' : t('inventory.restock')}
+                                </button>
+                                <button
+                                  onClick={() => { setRestockId(null); setRestockQty(''); }}
+                                  className="p-1 text-admin-muted hover:text-red-500"
+                                >
+                                  <FiX size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setRestockId(vRestockKey)}
+                                className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-[11px] font-semibold hover:bg-green-100"
+                              >
+                                <FiPackage size={11} />
+                                {t('inventory.restock')}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    </React.Fragment>
                   );
                 })
               )}

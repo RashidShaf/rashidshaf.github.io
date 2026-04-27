@@ -1,10 +1,185 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateSlug } = require('../utils/helpers');
-const { generateVariantsSafe } = require('../utils/images');
+const { generateVariantsSafe, variantPath, DEFAULT_WIDTHS } = require('../utils/images');
 const { normalize, buildSearchIndex } = require('../utils/arabicNormalize');
 const fs = require('fs');
 const path = require('path');
+
+// Anchor a YYYY-MM-DD string at noon UTC so the calendar date stays the same
+// when displayed in any timezone from UTC-11 through UTC+11. `new Date(ymd)`
+// alone resolves to UTC midnight, which slips back to the previous day in
+// Qatar (UTC+3). Mirrors `toISODateNoonUTC` in the admin form. Pass-through
+// for empty / null / Date inputs.
+const parseDateNoonUTC = (v) => {
+  if (v == null || v === '') return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  const s = String(v).trim();
+  if (!s) return null;
+  // Already an ISO string with a time component — trust it.
+  if (/T\d{2}:\d{2}/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // Bare YYYY-MM-DD — anchor at noon UTC.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const d = new Date(`${s}T12:00:00.000Z`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // Fallback: let Date parse whatever it can.
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+// Strip empties / coerce a single variant's input into a clean Prisma payload.
+const sanitizeVariantInput = (raw) => {
+  const numOrNull = (v) => {
+    if (v === '' || v == null) return null;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const strOrNull = (v) => (v == null || v === '' ? null : String(v).trim());
+
+  const out = {
+    label: String(raw.label || '').trim(),
+    labelAr: strOrNull(raw.labelAr),
+    sku: strOrNull(raw.sku),
+    price: parseFloat(raw.price) || 0,
+    purchasePrice: numOrNull(raw.purchasePrice),
+    compareAtPrice: numOrNull(raw.compareAtPrice),
+    stock: parseInt(raw.stock, 10) || 0,
+    lowStockThreshold: raw.lowStockThreshold != null ? parseInt(raw.lowStockThreshold, 10) || 5 : 5,
+    color: strOrNull(raw.color),
+    colorAr: strOrNull(raw.colorAr),
+    // New per-variant overrides — null means "inherit from base book".
+    dimensions: strOrNull(raw.dimensions),
+    weight: numOrNull(raw.weight),
+    brand: strOrNull(raw.brand),
+    brandAr: strOrNull(raw.brandAr),
+    material: strOrNull(raw.material),
+    materialAr: strOrNull(raw.materialAr),
+    ageRange: strOrNull(raw.ageRange),
+    // Book-specific per-variant overrides
+    author: strOrNull(raw.author),
+    authorAr: strOrNull(raw.authorAr),
+    publisher: strOrNull(raw.publisher),
+    publisherAr: strOrNull(raw.publisherAr),
+    isbn: strOrNull(raw.isbn),
+    pages: (() => {
+      if (raw.pages === '' || raw.pages == null) return null;
+      const n = parseInt(raw.pages, 10);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    language: (raw.language === 'en' || raw.language === 'ar') ? raw.language : null,
+    publishedDate: parseDateNoonUTC(raw.publishedDate),
+    // JSON string shape { [fieldKey]: { value, valueAr } } — pass through;
+    // empty/'{}' becomes null so storefront merge defaults to base.
+    customFields: (raw.customFields && raw.customFields !== '{}') ? raw.customFields : null,
+    image: raw.image || null,
+    sortOrder: parseInt(raw.sortOrder, 10) || 0,
+    isOutOfStock: raw.isOutOfStock === true || raw.isOutOfStock === 'true',
+    isActive: raw.isActive === undefined ? true : (raw.isActive === true || raw.isActive === 'true'),
+  };
+  return out;
+};
+
+// Fail fast on duplicate SKUs WITHIN the submitted form, so the admin sees a
+// clean inline error instead of a Postgres unique-violation.
+const checkDuplicateSkusInPayload = (variants) => {
+  const seen = new Set();
+  for (let i = 0; i < variants.length; i++) {
+    const sku = variants[i].sku;
+    if (!sku) continue;
+    const key = sku.toLowerCase();
+    if (seen.has(key)) {
+      const err = new Error(`Duplicate barcode "${sku}" in variants list.`);
+      err.status = 400;
+      err.variantIndex = i;
+      err.field = 'sku';
+      throw err;
+    }
+    seen.add(key);
+  }
+};
+
+// Reconcile a book's variants: create new (no id), update matched, delete missing.
+// Returns the list of image paths that belonged to deleted variants, so the
+// caller can unlink the underlying files outside the transaction.
+const reconcileVariants = async (tx, bookId, incoming) => {
+  const cleaned = incoming.map(sanitizeVariantInput);
+  checkDuplicateSkusInPayload(cleaned);
+
+  // E3 guard: a variant SKU must not collide with any Book.sku, otherwise
+  // barcode lookups become ambiguous. Variant<->Variant uniqueness is enforced
+  // by the @unique index on ProductVariant.sku and by checkDuplicateSkusInPayload.
+  const incomingSkus = cleaned.map((v) => v.sku).filter(Boolean);
+  if (incomingSkus.length > 0) {
+    const colliding = await tx.book.findFirst({
+      where: { sku: { in: incomingSkus, mode: 'insensitive' } },
+      select: { id: true, sku: true, title: true },
+    });
+    if (colliding) {
+      const idx = cleaned.findIndex((v) => v.sku && v.sku.toLowerCase() === colliding.sku.toLowerCase());
+      const err = new Error(`Barcode "${colliding.sku}" is already used by another product ("${colliding.title}").`);
+      err.status = 400;
+      err.variantIndex = idx;
+      err.field = 'sku';
+      throw err;
+    }
+  }
+
+  const existing = await tx.productVariant.findMany({
+    where: { bookId },
+    select: { id: true, image: true },
+  });
+  const existingIds = new Set(existing.map((v) => v.id));
+  const existingImageById = new Map(existing.map((v) => [v.id, v.image]));
+  const incomingIds = new Set(
+    incoming.filter((v) => v.id).map((v) => v.id)
+  );
+
+  const toDelete = existing.filter((v) => !incomingIds.has(v.id));
+  const orphanImages = toDelete.map((v) => v.image).filter(Boolean);
+
+  if (toDelete.length > 0) {
+    await tx.productVariant.deleteMany({
+      where: { id: { in: toDelete.map((v) => v.id) } },
+    });
+  }
+
+  for (let i = 0; i < incoming.length; i++) {
+    const data = cleaned[i];
+    const id = incoming[i].id;
+    if (id && existingIds.has(id)) {
+      // If the variant's image path changed, the previous file (and its
+      // sized WebP siblings) becomes an orphan — collect for cleanup.
+      const prevImage = existingImageById.get(id);
+      if (prevImage && prevImage !== data.image) {
+        orphanImages.push(prevImage);
+      }
+      await tx.productVariant.update({ where: { id }, data });
+    } else {
+      await tx.productVariant.create({ data: { ...data, bookId } });
+    }
+  }
+
+  return orphanImages;
+};
+
+// Best-effort cleanup of image files. For each path, also unlinks the
+// auto-generated WebP siblings (-400.webp, -800.webp, -1600.webp) created by
+// generateVariantsSafe — otherwise replacing or deleting an image leaks the
+// resized copies forever.
+const unlinkImageFiles = (relativePaths) => {
+  relativePaths.forEach((rel) => {
+    if (!rel) return;
+    const abs = path.join(__dirname, '..', rel);
+    fs.unlink(abs, () => {});
+    DEFAULT_WIDTHS.forEach((w) => {
+      fs.unlink(variantPath(abs, w), () => {});
+    });
+  });
+};
 
 const buildBooksWhere = async (query) => {
   const { search, category, hasImage, hasDesc, hasDescAr, duplicateBarcode, similarNames,
@@ -126,6 +301,21 @@ exports.list = async (req, res, next) => {
         include: {
           category: { select: { id: true, name: true, nameAr: true, parentId: true } },
           bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+          // Variant count drives the "N options" badge on the products table.
+          // Without this, the cell always showed 0.
+          _count: { select: { variants: true } },
+          // Variants array (slim) drives the expandable sub-rows in the admin
+          // Books table. Limited fields keep the payload bounded.
+          variants: {
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true, label: true, labelAr: true, sku: true,
+              price: true, stock: true, color: true, image: true,
+              isOutOfStock: true, isActive: true,
+            },
+          },
+          // (Note: full variant data — including customFields — is fetched via
+          // adminBookController.getById, which the BookEdit page uses.)
         },
       }),
       prisma.book.count({ where }),
@@ -185,6 +375,7 @@ exports.getById = async (req, res, next) => {
       include: {
         category: true,
         bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+        variants: { orderBy: { sortOrder: 'asc' } },
       },
     });
     if (!book) return res.status(404).json({ message: 'Book not found.' });
@@ -207,9 +398,10 @@ exports.create = async (req, res, next) => {
     data.stock = data.stock ? parseInt(data.stock) : 0;
     data.pages = data.pages ? parseInt(data.pages) : null;
     data.weight = data.weight ? parseFloat(data.weight) : null;
-    if (data.publishedDate && typeof data.publishedDate === 'string') {
-      data.publishedDate = new Date(data.publishedDate);
-    } else if (!data.publishedDate) {
+    const parsedDate = parseDateNoonUTC(data.publishedDate);
+    if (parsedDate) {
+      data.publishedDate = parsedDate;
+    } else {
       delete data.publishedDate;
     }
     if (!data.isbn || data.isbn === '') delete data.isbn;
@@ -223,33 +415,68 @@ exports.create = async (req, res, next) => {
     ['isFeatured', 'isBestseller', 'isNewArrival', 'isTrending', 'isComingSoon', 'isOutOfStock'].forEach((f) => {
       data[f] = data[f] === 'true' || data[f] === true;
     });
+    // Variant flag — coerce to boolean
+    data.hasVariants = data.hasVariants === true || data.hasVariants === 'true';
+
+    // E3: book SKU must not collide with any variant SKU
+    if (data.sku) {
+      const variantCollision = await prisma.productVariant.findFirst({
+        where: { sku: { equals: data.sku, mode: 'insensitive' } },
+        select: { sku: true },
+      });
+      if (variantCollision) {
+        return res.status(400).json({ message: `Barcode "${data.sku}" is already used by a product variant.` });
+      }
+    }
     // Handle customFields — keep as JSON string for TEXT column, null if empty
     if (!data.customFields || data.customFields === '{}') data.customFields = null;
 
-    // Extract additionalCategoryIds before creating (not a Book field)
+    // Extract before creating (not Book fields)
     const additionalCategoryIds = data.additionalCategoryIds;
+    const variants = Array.isArray(data.variants) ? data.variants : [];
     delete data.additionalCategoryIds;
+    delete data.variants;
+
+    // Defensive: if hasVariants is on but no variants supplied, downgrade to
+    // a normal product so the storefront doesn't render a broken empty picker.
+    if (data.hasVariants && variants.length === 0) {
+      data.hasVariants = false;
+    }
 
     // Compute normalized search index so Arabic/English variants match during search
-    data.searchIndex = buildSearchIndex(data);
+    data.searchIndex = buildSearchIndex({ ...data, variants });
 
-    const book = await prisma.book.create({ data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } } });
+    const book = await prisma.$transaction(async (tx) => {
+      const created = await tx.book.create({ data });
 
-    // Create BookCategory records for additional categories
-    if (additionalCategoryIds && Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
-      await prisma.bookCategory.createMany({
-        data: additionalCategoryIds.map((catId) => ({ bookId: book.id, categoryId: catId })),
+      if (additionalCategoryIds && Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
+        await tx.bookCategory.createMany({
+          data: additionalCategoryIds.map((catId) => ({ bookId: created.id, categoryId: catId })),
+        });
+      }
+
+      if (data.hasVariants && variants.length > 0) {
+        await reconcileVariants(tx, created.id, variants);
+      }
+
+      return tx.book.findUnique({
+        where: { id: created.id },
+        include: {
+          category: true,
+          bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+          variants: { orderBy: { sortOrder: 'asc' } },
+        },
       });
-      // Re-fetch to include the new bookCategories
-      const updated = await prisma.book.findUnique({
-        where: { id: book.id },
-        include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
-      });
-      return res.status(201).json(updated);
-    }
+    });
 
     res.status(201).json(book);
   } catch (error) {
+    if (error.status === 400 && error.field === 'sku') {
+      return res.status(400).json({
+        message: error.message,
+        variantErrors: [{ index: error.variantIndex, field: 'sku', message: error.message }],
+      });
+    }
     next(error);
   }
 };
@@ -269,7 +496,7 @@ exports.update = async (req, res, next) => {
     data.pages = data.pages && data.pages !== '' ? parseInt(data.pages) : null;
     if (data.weight !== undefined) data.weight = data.weight ? parseFloat(data.weight) : null;
     if (data.publishedDate !== undefined) {
-      data.publishedDate = data.publishedDate ? new Date(data.publishedDate) : null;
+      data.publishedDate = parseDateNoonUTC(data.publishedDate);
     }
     if (data.isbn === '') delete data.isbn;
     if (data.categoryId === '') delete data.categoryId;
@@ -281,32 +508,63 @@ exports.update = async (req, res, next) => {
       if (data[f] !== undefined) data[f] = data[f] === 'true' || data[f] === true;
     });
     if (data.isActive !== undefined) data.isActive = data.isActive === 'true' || data.isActive === true;
+    if (data.hasVariants !== undefined) data.hasVariants = data.hasVariants === true || data.hasVariants === 'true';
+
+    // E3: book SKU must not collide with any variant SKU (own variants excluded
+    // from the lookup since they'll be reconciled in this same request)
+    if (data.sku) {
+      const variantCollision = await prisma.productVariant.findFirst({
+        where: {
+          sku: { equals: data.sku, mode: 'insensitive' },
+          bookId: { not: req.params.id },
+        },
+        select: { sku: true },
+      });
+      if (variantCollision) {
+        return res.status(400).json({ message: `Barcode "${data.sku}" is already used by a product variant.` });
+      }
+    }
     if (data.customFields && typeof data.customFields === 'string') {
       // Keep as string for TEXT column
     } else if (data.customFields === '' || data.customFields === undefined) {
       delete data.customFields;
     }
 
-    // Extract additionalCategoryIds before updating (not a Book field)
+    // Extract before updating (not Book fields)
     const additionalCategoryIds = data.additionalCategoryIds;
+    const variantsPayload = data.variants;
     delete data.additionalCategoryIds;
+    delete data.variants;
+
+    // Defensive: if the payload says hasVariants=true with an empty variants
+    // array, downgrade to a normal product. Same guard as the create path.
+    if (data.hasVariants === true && Array.isArray(variantsPayload) && variantsPayload.length === 0) {
+      data.hasVariants = false;
+    }
 
     // Fetch current state so we can
-    //   (a) rebuild searchIndex from merged old + new field values
+    //   (a) rebuild searchIndex from merged old + new field values + variants
     //   (b) only delete Home Layout picks when a section flag TRANSITIONED true → false
-    //       (not on every save that happens to carry `flag: false` in the payload)
+    // Include the existing variants so a non-variant field update (e.g. title)
+    // doesn't silently drop variant SKUs/labels from the search index.
     const existing = await prisma.book.findUnique({
       where: { id: req.params.id },
       select: {
         title: true, titleAr: true, author: true, authorAr: true, publisher: true, publisherAr: true, isbn: true, sku: true,
         isFeatured: true, isBestseller: true, isNewArrival: true, isTrending: true, isComingSoon: true,
+        hasVariants: true,
+        variants: { select: { sku: true, label: true, labelAr: true, color: true, colorAr: true } },
       },
     });
 
-    // Rebuild searchIndex if any searchable field is being updated
+    // Rebuild searchIndex when any searchable field OR variants change.
+    // When the payload doesn't include a variants array, fall back to the
+    // existing variants so we don't strip them from the index.
     const searchFields = ['title', 'titleAr', 'author', 'authorAr', 'publisher', 'publisherAr', 'isbn', 'sku'];
-    if (searchFields.some((f) => f in data)) {
-      data.searchIndex = buildSearchIndex({ ...existing, ...data });
+    const variantsArray = Array.isArray(variantsPayload) ? variantsPayload : null;
+    if (searchFields.some((f) => f in data) || variantsArray) {
+      const variantsForIndex = variantsArray !== null ? variantsArray : (existing?.variants || []);
+      data.searchIndex = buildSearchIndex({ ...existing, ...data, variants: variantsForIndex });
     }
 
     // Determine which section picks to delete based on flag TRANSITIONS (true → false).
@@ -324,54 +582,72 @@ exports.update = async (req, res, next) => {
       }
     }
 
-    // Atomic: book update + dependent pick deletes run in the same transaction.
-    const book = await prisma.$transaction(async (tx) => {
-      const updated = await tx.book.update({
-        where: { id: req.params.id }, data, include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
-      });
+    // Atomic: book update + variant reconciliation + section pick cleanup.
+    const orphanImages = await prisma.$transaction(async (tx) => {
+      await tx.book.update({ where: { id: req.params.id }, data });
+
+      let orphans = [];
+      if (variantsArray !== null) {
+        orphans = await reconcileVariants(tx, req.params.id, variantsArray);
+      }
+
       for (const sectionType of picksToDelete) {
         await tx.homeSectionProduct.deleteMany({
           where: { bookId: req.params.id, sectionType },
         });
       }
-      return updated;
+
+      if (additionalCategoryIds !== undefined) {
+        await tx.bookCategory.deleteMany({ where: { bookId: req.params.id } });
+        if (Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
+          await tx.bookCategory.createMany({
+            data: additionalCategoryIds.map((catId) => ({ bookId: req.params.id, categoryId: catId })),
+          });
+        }
+      }
+
+      return orphans;
     });
 
-    // Update BookCategory records if additionalCategoryIds provided
-    if (additionalCategoryIds !== undefined) {
-      await prisma.bookCategory.deleteMany({ where: { bookId: req.params.id } });
-      if (Array.isArray(additionalCategoryIds) && additionalCategoryIds.length > 0) {
-        await prisma.bookCategory.createMany({
-          data: additionalCategoryIds.map((catId) => ({ bookId: req.params.id, categoryId: catId })),
-        });
-      }
-      // Re-fetch to include updated bookCategories
-      const updated = await prisma.book.findUnique({
-        where: { id: req.params.id },
-        include: { category: true, bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } } },
-      });
-      return res.json(updated);
-    }
+    // Best-effort cleanup of variant image files outside the transaction
+    unlinkImageFiles(orphanImages);
+
+    const book = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      include: {
+        category: true,
+        bookCategories: { include: { category: { select: { id: true, name: true, nameAr: true } } } },
+        variants: { orderBy: { sortOrder: 'asc' } },
+      },
+    });
 
     res.json(book);
   } catch (error) {
+    if (error.status === 400 && error.field === 'sku') {
+      return res.status(400).json({
+        message: error.message,
+        variantErrors: [{ index: error.variantIndex, field: 'sku', message: error.message }],
+      });
+    }
     next(error);
   }
 };
 
 exports.remove = async (req, res, next) => {
   try {
-    const book = await prisma.book.findUnique({ where: { id: req.params.id } });
+    const book = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      include: { variants: { select: { image: true } } },
+    });
     if (!book) return res.status(404).json({ message: 'Book not found.' });
     await prisma.book.delete({ where: { id: req.params.id } });
-    // Clean up image files
-    const filesToDelete = [book.coverImage, ...(book.images || [])];
-    filesToDelete.forEach((img) => {
-      if (img) {
-        const filePath = path.join(__dirname, '..', img);
-        fs.unlink(filePath, () => {});
-      }
-    });
+    // Clean up image files (book + variant images)
+    const filesToDelete = [
+      book.coverImage,
+      ...(book.images || []),
+      ...book.variants.map((v) => v.image),
+    ];
+    unlinkImageFiles(filesToDelete);
     res.json({ message: 'Book deleted.' });
   } catch (error) {
     next(error);
@@ -393,16 +669,40 @@ exports.uploadCover = async (req, res, next) => {
       where: { id: req.params.id }, data: { coverImage },
     });
 
-    // Delete old cover file if it exists
-    if (existingBook?.coverImage) {
-      const oldPath = path.join(__dirname, '..', existingBook.coverImage);
-      fs.unlink(oldPath, () => {});
+    // Delete old cover file (and its sized WebP siblings) if it exists
+    if (existingBook?.coverImage && existingBook.coverImage !== coverImage) {
+      unlinkImageFiles([existingBook.coverImage]);
     }
 
     // Generate responsive WebP variants (best-effort, non-blocking for response)
     await generateVariantsSafe(req.file.path);
 
     res.json({ coverImage: book.coverImage });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /admin/books/:id/cover — removes cover from DB and disk (incl. sized
+// WebP siblings). Used by the admin Edit form's "X" button on the cover preview
+// when the admin wants to clear the cover without replacing it.
+exports.removeCover = async (req, res, next) => {
+  try {
+    const existing = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      select: { coverImage: true },
+    });
+    if (!existing) return res.status(404).json({ message: 'Book not found.' });
+
+    if (existing.coverImage) {
+      await prisma.book.update({
+        where: { id: req.params.id },
+        data: { coverImage: null },
+      });
+      unlinkImageFiles([existing.coverImage]);
+    }
+
+    res.json({ coverImage: null });
   } catch (error) {
     next(error);
   }
@@ -431,9 +731,106 @@ exports.deleteImage = async (req, res, next) => {
   try {
     const { imageUrl } = req.body;
     const book = await prisma.book.findUnique({ where: { id: req.params.id }, select: { images: true } });
-    const images = (book?.images || []).filter((img) => img !== imageUrl);
+    const before = book?.images || [];
+    const images = before.filter((img) => img !== imageUrl);
     await prisma.book.update({ where: { id: req.params.id }, data: { images } });
+    // Only unlink if the image was actually in the set (defensive against bad input)
+    if (imageUrl && before.includes(imageUrl)) {
+      unlinkImageFiles([imageUrl]);
+    }
     res.json({ images });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.uploadVariantImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+    const { id: bookId, variantId } = req.params;
+
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+      select: { id: true, bookId: true, image: true },
+    });
+    if (!variant || variant.bookId !== bookId) {
+      // Don't leak the orphan upload — clean up immediately
+      fs.unlink(req.file.path, () => {});
+      return res.status(404).json({ message: 'Variant not found for this book.' });
+    }
+
+    const image = `uploads/covers/${req.file.filename}`;
+    let updated;
+    try {
+      updated = await prisma.productVariant.update({
+        where: { id: variantId },
+        data: { image },
+      });
+    } catch (err) {
+      // Race condition: another request deleted the variant between findUnique
+      // and update. Translate Prisma's RecordNotFound (P2025) to a clean 404
+      // instead of leaking a 500. Also clean up the orphaned upload.
+      if (err && err.code === 'P2025') {
+        fs.unlink(req.file.path, () => {});
+        return res.status(404).json({ message: 'Variant no longer exists.' });
+      }
+      throw err;
+    }
+
+    // Delete the previous variant image file
+    if (variant.image) {
+      unlinkImageFiles([variant.image]);
+    }
+
+    await generateVariantsSafe(req.file.path);
+    res.json({ image: updated.image, variantId });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PATCH /admin/books/:bookId/variants/:variantId
+// Whitelisted body: { isOutOfStock?, isActive? }. Used by inline toggles in
+// the admin Books table. Verifies the variant belongs to the URL book id —
+// closes the cross-book IDOR window where an admin URL-tampers another book's
+// variant id.
+exports.patchVariant = async (req, res, next) => {
+  try {
+    const { id: bookId, variantId } = req.params;
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+      select: { id: true, bookId: true },
+    });
+    if (!variant || variant.bookId !== bookId) {
+      return res.status(404).json({ message: 'Variant not found for this book.' });
+    }
+
+    const data = {};
+    if (typeof req.body.isOutOfStock === 'boolean') data.isOutOfStock = req.body.isOutOfStock;
+    if (typeof req.body.isActive === 'boolean') data.isActive = req.body.isActive;
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ message: 'No valid fields to update.' });
+    }
+
+    let updated;
+    try {
+      updated = await prisma.productVariant.update({
+        where: { id: variantId },
+        data,
+        select: {
+          id: true, label: true, labelAr: true, sku: true,
+          price: true, stock: true, color: true, image: true,
+          isOutOfStock: true, isActive: true,
+        },
+      });
+    } catch (err) {
+      if (err && err.code === 'P2025') {
+        return res.status(404).json({ message: 'Variant no longer exists.' });
+      }
+      throw err;
+    }
+
+    res.json(updated);
   } catch (error) {
     next(error);
   }
@@ -474,9 +871,11 @@ exports.bulkAction = async (req, res, next) => {
       }
       case 'markInStock':
         await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isOutOfStock: false } });
+        await prisma.productVariant.updateMany({ where: { bookId: { in: ids } }, data: { isOutOfStock: false } });
         break;
       case 'markOutOfStock':
         await prisma.book.updateMany({ where: { id: { in: ids } }, data: { isOutOfStock: true } });
+        await prisma.productVariant.updateMany({ where: { bookId: { in: ids } }, data: { isOutOfStock: true } });
         break;
       case 'setSection': {
         const sectionData = {};

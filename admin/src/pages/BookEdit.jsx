@@ -5,7 +5,17 @@ import { FiArrowLeft, FiUpload, FiX, FiChevronDown, FiSearch } from 'react-icons
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
 import AutocompleteInput from '../components/AutocompleteInput';
+import VariantsPanel from '../components/VariantsPanel';
 import api from '../utils/api';
+
+// Convert a YYYY-MM-DD form-input value to noon-UTC ISO so the calendar date
+// the admin selects round-trips correctly across timezones.
+const toISODateNoonUTC = (raw) => {
+  if (!raw) return null;
+  const ymd = String(raw).slice(0, 10);
+  const d = new Date(ymd + 'T12:00:00Z');
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
 
@@ -19,6 +29,8 @@ export default function BookEdit() {
   const [allCategories, setAllCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [existingCover, setExistingCover] = useState(null);
+  const [coverMarkedForRemoval, setCoverMarkedForRemoval] = useState(false);
   const [existingImages, setExistingImages] = useState([]);
   const [newImageFiles, setNewImageFiles] = useState([]);
   const [newImagePreviews, setNewImagePreviews] = useState([]);
@@ -50,7 +62,9 @@ export default function BookEdit() {
     publishedDate: '', weight: '',
     brand: '', brandAr: '', material: '', materialAr: '', color: '', colorAr: '', dimensions: '', ageRange: '',
     isFeatured: false, isBestseller: false, isNewArrival: false, isTrending: false, isComingSoon: false, isOutOfStock: false, isActive: true,
+    hasVariants: false,
   });
+  const [variants, setVariants] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,6 +152,7 @@ export default function BookEdit() {
           isComingSoon: book.isComingSoon || false,
           isOutOfStock: book.isOutOfStock || false,
           isActive: book.isActive !== false,
+          hasVariants: !!book.hasVariants,
         };
 
         setForm(formData);
@@ -145,6 +160,60 @@ export default function BookEdit() {
           try { setCustomFieldValues(JSON.parse(book.customFields)); } catch {}
         }
         setSelectedCategoryIds(allSelectedIds);
+
+        // Hydrate variants from the loaded book
+        if (Array.isArray(book.variants)) {
+          // Parse the BASE customFields once — variants only persist overrides
+          // that DIFFER from base, so the panel needs base + overrides merged
+          // to render the inputs with sensible values.
+          let baseCfsParsed = {};
+          if (book.customFields) {
+            try { baseCfsParsed = JSON.parse(book.customFields) || {}; } catch {}
+          }
+          setVariants(book.variants.map((v, i) => {
+            let varOverrides = {};
+            if (v.customFields) {
+              try { varOverrides = JSON.parse(v.customFields) || {}; } catch {}
+            }
+            // Display values = base CF + variant overrides on top.
+            const cfv = { ...baseCfsParsed, ...varOverrides };
+            return ({
+              _key: v.id,
+              id: v.id,
+              label: v.label || '',
+              labelAr: v.labelAr || '',
+              sku: v.sku || '',
+              price: v.price != null ? parseFloat(v.price).toString() : '',
+              purchasePrice: v.purchasePrice != null ? parseFloat(v.purchasePrice).toString() : '',
+              compareAtPrice: v.compareAtPrice != null ? parseFloat(v.compareAtPrice).toString() : '',
+              stock: v.stock != null ? v.stock.toString() : '0',
+              color: v.color || '',
+              colorAr: v.colorAr || '',
+              dimensions: v.dimensions || '',
+              weight: v.weight != null ? parseFloat(v.weight).toString() : '',
+              brand: v.brand || '',
+              brandAr: v.brandAr || '',
+              material: v.material || '',
+              materialAr: v.materialAr || '',
+              ageRange: v.ageRange || '',
+              author: v.author || '',
+              authorAr: v.authorAr || '',
+              publisher: v.publisher || '',
+              publisherAr: v.publisherAr || '',
+              isbn: v.isbn || '',
+              pages: v.pages != null ? v.pages.toString() : '',
+              language: v.language || '',
+              publishedDate: v.publishedDate ? new Date(v.publishedDate).toISOString().split('T')[0] : '',
+              customFieldValues: cfv,
+              image: v.image || '',
+              imageFile: null,
+              imagePreview: null,
+              sortOrder: v.sortOrder ?? i,
+              isOutOfStock: !!v.isOutOfStock,
+              isActive: v.isActive !== false,
+            });
+          }));
+        }
 
         // Auto-expand Level 2 parents of selected Level 3 categories
         const toExpand = {};
@@ -159,7 +228,10 @@ export default function BookEdit() {
         });
         setExpandedSubs(toExpand);
 
-        if (book.coverImage) setCoverPreview(`${API_BASE}/${book.coverImage}`);
+        if (book.coverImage) {
+          setCoverPreview(`${API_BASE}/${book.coverImage}`);
+          setExistingCover(book.coverImage);
+        }
         if (book.images && book.images.length > 0) setExistingImages(book.images);
       } catch (err) {
         toast.error(t('books.failedLoadProduct'));
@@ -218,10 +290,16 @@ export default function BookEdit() {
   }, [selectedParent]);
   const show = (key) => !visibleFields || visibleFields.includes(key);
 
+  // Custom fields from selected corner. Filtered by detailFields so unchecking
+  // a CF in Edit Corner hides it from this form (and the variant form, since
+  // this is passed down). When detailFields isn't configured we show all.
   const categoryCustomFields = useMemo(() => {
     if (!selectedParent?.customFields) return [];
-    try { return JSON.parse(selectedParent.customFields); } catch { return []; }
-  }, [selectedParent]);
+    let allDefs = [];
+    try { allDefs = JSON.parse(selectedParent.customFields); } catch { return []; }
+    if (!Array.isArray(visibleFields)) return allDefs;
+    return allDefs.filter((cf) => visibleFields.includes(`cf_${cf.key}`));
+  }, [selectedParent, visibleFields]);
   const [customFieldValues, setCustomFieldValues] = useState({});
 
   const getName = (cat) => language === 'ar' && cat.nameAr ? cat.nameAr : cat.name;
@@ -249,6 +327,15 @@ export default function BookEdit() {
   const removeNewImage = (index) => {
     setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
     setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // X on the cover preview marks it for removal — no server call yet.
+  // The actual DELETE fires inside the form's submit handler, so the admin
+  // can change their mind (re-pick a file, or navigate away) before saving.
+  const handleRemoveCover = () => {
+    setCoverFile(null);
+    setCoverPreview(null);
+    if (existingCover) setCoverMarkedForRemoval(true);
   };
 
   const handleChange = (e) => {
@@ -283,11 +370,45 @@ export default function BookEdit() {
     if (!file) return;
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
+    // Picking a new file overrides any pending removal.
+    setCoverMarkedForRemoval(false);
   };
+
+  // Surface duplicate barcodes inline before hitting the server.
+  const duplicateSkuIndices = useMemo(() => {
+    const seen = new Map();
+    const dups = new Set();
+    variants.forEach((v, i) => {
+      const sku = (v.sku || '').trim().toLowerCase();
+      if (!sku) return;
+      if (seen.has(sku)) {
+        dups.add(seen.get(sku));
+        dups.add(i);
+      } else {
+        seen.set(sku, i);
+      }
+    });
+    return dups;
+  }, [variants]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) { toast.error(t('books.titleRequired')); return; }
+    if (form.hasVariants) {
+      if (variants.length === 0) {
+        toast.error(t('books.atLeastOneVariant'));
+        return;
+      }
+      if (duplicateSkuIndices.size > 0) {
+        toast.error(t('books.duplicateBarcode'));
+        return;
+      }
+      const invalid = variants.find((v) => !v.label || v.label.trim() === '' || v.price === '' || parseFloat(v.price) < 0);
+      if (invalid) {
+        toast.error(t('books.variantInvalid'));
+        return;
+      }
+    }
     setSaving(true);
     try {
       const payload = { ...form };
@@ -322,7 +443,7 @@ export default function BookEdit() {
         payload.weight = null;
       }
       if (payload.publishedDate) {
-        payload.publishedDate = new Date(payload.publishedDate).toISOString();
+        payload.publishedDate = toISODateNoonUTC(payload.publishedDate);
       } else {
         payload.publishedDate = null;
       }
@@ -331,7 +452,64 @@ export default function BookEdit() {
         payload.customFields = JSON.stringify(customFieldValues);
       }
 
-      await api.put(`/admin/books/${id}`, payload);
+      if (form.hasVariants) {
+        const numOrNull = (x) => (x === '' || x == null ? null : x);
+        // Persist ONLY entries that differ from the base. Lets the variant
+        // explicitly blank a CF, and means truly inherited keys aren't
+        // snapshotted on the variant — base edits flow through.
+        const serializeCFs = (variantCfs, baseCfs) => {
+          if (!variantCfs || typeof variantCfs !== 'object') return null;
+          const overrides = {};
+          Object.entries(variantCfs).forEach(([k, v]) => {
+            const variantValue = (v?.value || '');
+            const variantValueAr = (v?.valueAr || '');
+            const baseEntry = baseCfs?.[k];
+            const baseValue = (baseEntry?.value || '');
+            const baseValueAr = (baseEntry?.valueAr || '');
+            if (variantValue !== baseValue || variantValueAr !== baseValueAr) {
+              overrides[k] = { value: variantValue, valueAr: variantValueAr };
+            }
+          });
+          return Object.keys(overrides).length > 0 ? JSON.stringify(overrides) : null;
+        };
+        payload.variants = variants.map((v, i) => ({
+          id: v.id || undefined,
+          label: (v.label || '').trim(),
+          labelAr: v.labelAr || null,
+          sku: v.sku ? v.sku.trim() : null,
+          price: parseFloat(v.price) || 0,
+          purchasePrice: numOrNull(v.purchasePrice),
+          compareAtPrice: numOrNull(v.compareAtPrice),
+          stock: parseInt(v.stock, 10) || 0,
+          color: v.color || null,
+          colorAr: v.colorAr || null,
+          dimensions: v.dimensions || null,
+          weight: numOrNull(v.weight),
+          brand: v.brand || null,
+          brandAr: v.brandAr || null,
+          material: v.material || null,
+          materialAr: v.materialAr || null,
+          ageRange: v.ageRange || null,
+          author: v.author || null,
+          authorAr: v.authorAr || null,
+          publisher: v.publisher || null,
+          publisherAr: v.publisherAr || null,
+          isbn: v.isbn || null,
+          pages: v.pages === '' || v.pages == null ? null : parseInt(v.pages, 10),
+          language: v.language || null,
+          publishedDate: toISODateNoonUTC(v.publishedDate),
+          customFields: serializeCFs(v.customFieldValues, customFieldValues),
+          image: v.image || null,
+          sortOrder: i,
+          isOutOfStock: !!v.isOutOfStock,
+          isActive: v.isActive === false ? false : true,
+        }));
+      } else {
+        payload.variants = [];
+      }
+
+      const res = await api.put(`/admin/books/${id}`, payload);
+      const updatedVariants = res.data.variants || [];
 
       if (coverFile) {
         const fd = new FormData();
@@ -339,6 +517,17 @@ export default function BookEdit() {
         await api.post(`/admin/books/${id}/cover`, fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        setCoverMarkedForRemoval(false);
+      } else if (coverMarkedForRemoval && existingCover) {
+        // User clicked X on the cover and didn't pick a replacement — apply
+        // the deferred removal now.
+        try {
+          await api.delete(`/admin/books/${id}/cover`);
+          setExistingCover(null);
+          setCoverMarkedForRemoval(false);
+        } catch {
+          toast.error(t('books.failedRemoveImage'));
+        }
       }
 
       if (newImageFiles.length > 0) {
@@ -349,7 +538,36 @@ export default function BookEdit() {
         });
       }
 
-      toast.success(t('books.productUpdated'));
+      // Variant images — upload any newly attached files. The server returns
+      // variants in sortOrder, matching the order we sent them in. Failures are
+      // counted so the admin gets a partial-success toast instead of a silent loss.
+      let failedVariantImageCount = 0;
+      if (form.hasVariants) {
+        await Promise.all(
+          variants.map(async (v, i) => {
+            if (!v.imageFile) return;
+            const target = updatedVariants[i];
+            if (!target?.id) return;
+            const fd = new FormData();
+            fd.append('image', v.imageFile);
+            try {
+              await api.post(`/admin/books/${id}/variants/${target.id}/image`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
+            } catch {
+              failedVariantImageCount += 1;
+            }
+          }),
+        );
+      }
+
+      if (failedVariantImageCount > 0) {
+        toast.warning(
+          t('books.variantImagesPartialFail').replace('{{n}}', failedVariantImageCount),
+        );
+      } else {
+        toast.success(t('books.productUpdated'));
+      }
       navigate(-1);
     } catch (err) {
       toast.error(err.response?.data?.message || t('books.failedUpdate'));
@@ -642,6 +860,12 @@ export default function BookEdit() {
                       <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder={t('books.dimPlaceholder')} className={inputClass} />
                     </div>
                   )}
+                  {show('weight') && (
+                    <div>
+                      <label className={labelClass}>{t('books.weight')}</label>
+                      <input name="weight" type="number" step="0.01" min="0" value={form.weight} onChange={handleChange} placeholder="0.00" className={inputClass} />
+                    </div>
+                  )}
                   {show('ageRange') && (
                     <div>
                       <label className={labelClass}>{t('books.ageRange')}</label>
@@ -680,14 +904,15 @@ export default function BookEdit() {
               </div>
             )}
 
-            {/* Pricing & Inventory */}
+            {/* Pricing & Inventory — root fields stay editable even when variants are on */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
               <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.pricingInventory')}</h3>
               {form.isComingSoon && <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">{t('books.comingSoonNote')}</p>}
+
               <div className="grid sm:grid-cols-3 gap-4 3xl:gap-6">
                 <div>
                   <label className={labelClass}>{t('books.priceQAR')}</label>
-                  <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required className={inputClass} />
+                  <input name="price" type="number" step="0.01" min="0" value={form.price} onChange={handleChange} required={!form.hasVariants} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>{t('books.purchasePrice')}</label>
@@ -702,6 +927,55 @@ export default function BookEdit() {
                   <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} className={inputClass} />
                 </div>
               </div>
+
+              {form.hasVariants && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  {t('books.variantBaseHint')}
+                </p>
+              )}
+            </div>
+
+            {/* Variants — own card, after Pricing & Inventory */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm space-y-4">
+              <h3 className="text-sm 3xl:text-base font-bold text-admin-text uppercase tracking-wider">{t('books.variants')}</h3>
+              <label className="flex items-start gap-3 p-3 bg-gray-50 border border-admin-border rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.hasVariants}
+                  onChange={(e) => setForm((p) => ({ ...p, hasVariants: e.target.checked }))}
+                  className="mt-0.5 w-4 h-4 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-admin-text">{t('books.hasVariants')}</p>
+                  <p className="text-[11px] text-admin-muted mt-0.5">{t('books.hasVariantsHint')}</p>
+                </div>
+              </label>
+
+              {form.hasVariants && (
+                <VariantsPanel
+                  t={t}
+                  language={language}
+                  variants={variants}
+                  setVariants={setVariants}
+                  suggestedColors={suggestedColors}
+                  suggestedColorsAr={suggestedColorsAr}
+                  suggestedBrands={suggestedBrands}
+                  suggestedBrandsAr={suggestedBrandsAr}
+                  suggestedMaterials={suggestedMaterials}
+                  suggestedMaterialsAr={suggestedMaterialsAr}
+                  suggestedAuthors={suggestedAuthors}
+                  suggestedAuthorsAr={suggestedAuthorsAr}
+                  suggestedPublishers={suggestedPublishers}
+                  suggestedPublishersAr={suggestedPublishersAr}
+                  apiBase={API_BASE}
+                  duplicateSkuIndices={duplicateSkuIndices}
+                  category={selectedParent}
+                  basePrefill={form}
+                  categoryCustomFields={categoryCustomFields}
+                  baseCustomFieldValues={customFieldValues}
+                  suggestedCustomFields={suggestedCustomFields}
+                />
+              )}
             </div>
 
             {/* Actions */}
@@ -727,7 +1001,7 @@ export default function BookEdit() {
                 {coverPreview ? (
                   <>
                     <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setCoverFile(null); setCoverPreview(null); }} className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleRemoveCover(); }} className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
                       <FiX size={14} />
                     </button>
                   </>

@@ -174,8 +174,9 @@ const OrderDetail = () => {
               </div>
               <div className="divide-y divide-muted/10">
                 {order.items.map((item) => {
-                  const coverPath = item.book?.coverImage || null;
+                  const coverPath = item.variant?.image || item.book?.coverImage || null;
                   const title = isRTL && item.book?.titleAr ? item.book.titleAr : item.title;
+                  const variantLine = [item.variantLabel, item.variantColor].filter(Boolean).join(' · ');
                   return (
                     <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                       <div className="w-14 h-[72px] rounded-lg bg-surface-alt overflow-hidden flex-shrink-0">
@@ -187,6 +188,9 @@ const OrderDetail = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground line-clamp-1">{title}</p>
+                        {variantLine && (
+                          <p className="text-[11px] text-foreground/55 line-clamp-1 mt-0.5">{variantLine}</p>
+                        )}
                         <p className="text-xs text-foreground/50 mt-1">
                           {formatPrice(item.price)} x {item.quantity}
                         </p>

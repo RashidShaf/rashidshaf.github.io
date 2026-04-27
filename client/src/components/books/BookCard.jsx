@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiStar, FiClock } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../../stores/useLanguageStore';
@@ -9,9 +9,21 @@ import Image from '../common/Image';
 
 const BookCard = ({ book, comingSoon = false }) => {
   const { t, language } = useLanguageStore();
+  const navigate = useNavigate();
   const addItem = useCartStore((s) => s.addItem);
   const toggleItem = useWishlistStore((s) => s.toggleItem);
   const wishlistItems = useWishlistStore((s) => s.items);
+
+  const handleQuickAdd = (e) => {
+    e.preventDefault();
+    if (isOutOfStock) return;
+    if (book.hasVariants) {
+      navigate(`/books/${book.slug}`);
+      return;
+    }
+    addItem(book, 1);
+    toast.success(t('books.addedToCart'));
+  };
 
   const title = language === 'ar' && book.titleAr ? book.titleAr : book.title;
   const author = language === 'ar' && book.authorAr ? book.authorAr : book.author;
@@ -23,7 +35,23 @@ const BookCard = ({ book, comingSoon = false }) => {
     const cat = book.category;
     return cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage || null;
   })();
-  const isOutOfStock = !comingSoon && book.isOutOfStock;
+
+  // Variant-aware: if every variant is out of stock, the card behaves as out of stock.
+  // If any variant is in stock, mobile/hover Add-to-Cart redirects to the detail
+  // page so the customer can choose an option.
+  const hasVariants = !!book.hasVariants;
+  const variantInStock = hasVariants && (book.anyInStock !== undefined
+    ? book.anyInStock
+    : (Array.isArray(book.variants) && book.variants.some((v) => !v.isOutOfStock)));
+  const isOutOfStock = !comingSoon && (
+    hasVariants ? !variantInStock : book.isOutOfStock
+  );
+
+  const hasPriceRange = hasVariants && book.priceFrom != null && book.priceTo != null
+    && parseFloat(book.priceFrom) !== parseFloat(book.priceTo);
+  const displayPrice = hasVariants && book.priceFrom != null
+    ? book.priceFrom
+    : book.price;
 
   return (
     <div
@@ -62,12 +90,7 @@ const BookCard = ({ book, comingSoon = false }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
             <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (isOutOfStock) return;
-                  addItem(book, 1);
-                  toast.success(t('books.addedToCart'));
-                }}
+                onClick={handleQuickAdd}
                 disabled={isOutOfStock}
                 className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#A39666] text-white text-xs font-medium rounded-lg hover:bg-[#B8AB7E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -126,10 +149,15 @@ const BookCard = ({ book, comingSoon = false }) => {
           {!comingSoon && (
             <div className="mt-1.5 sm:mt-2 3xl:mt-3">
               <div className="flex items-center gap-1.5">
+                {hasPriceRange && (
+                  <span className="text-[10px] sm:text-[11px] 3xl:text-sm text-foreground/60 me-0.5">
+                    {t('books.from') || 'From'}
+                  </span>
+                )}
                 <span className="text-xs sm:text-sm 3xl:text-xl font-bold text-foreground">
-                  {formatPrice(book.price)}
+                  {formatPrice(displayPrice)}
                 </span>
-                {book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(book.price) && (
+                {book.compareAtPrice && parseFloat(book.compareAtPrice) > parseFloat(displayPrice) && (
                   <span className="text-[10px] sm:text-[11px] 3xl:text-sm text-foreground/60 line-through">
                     {formatPrice(book.compareAtPrice)}
                   </span>
@@ -144,10 +172,7 @@ const BookCard = ({ book, comingSoon = false }) => {
             {/* Mobile: Add to Cart + Wishlist buttons */}
             <div className="flex items-center gap-1.5 mt-2 sm:hidden">
               <button
-                onClick={() => {
-                  if (isOutOfStock) return;
-                  addItem(book, 1);
-                }}
+                onClick={handleQuickAdd}
                 disabled={isOutOfStock}
                 className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-[#A39666] text-white text-[11px] font-medium rounded-md disabled:opacity-40"
               >

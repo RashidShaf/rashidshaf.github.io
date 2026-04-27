@@ -114,7 +114,7 @@ const TrackOrder = () => {
                     {/* Thumbnails */}
                     <div className="hidden sm:flex -space-x-2 flex-shrink-0">
                       {(order.items || []).slice(0, 3).map((item, i) => {
-                        const coverPath = item.book?.coverImage || null;
+                        const coverPath = item.variant?.image || item.book?.coverImage || null;
                         return (
                           <div key={i} className="w-10 h-13 rounded-lg overflow-hidden border-2 border-background bg-surface-alt flex-shrink-0">
                             {coverPath ? <Image src={coverPath} alt="" width={40} height={52} sizes="40px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-accent/30 text-[10px] font-bold">{item.title?.[0]}</div>}
@@ -190,7 +190,7 @@ const TrackOrder = () => {
                         </h3>
                         <div className="space-y-2">
                           {order.items.map((item) => {
-                            const coverPath = item.book?.coverImage || null;
+                            const coverPath = item.variant?.image || item.book?.coverImage || null;
                             const title = isRTL && item.book?.titleAr ? item.book.titleAr : item.title;
                             return (
                               <div key={item.id} className="flex items-center gap-3 p-3 bg-surface-alt/30 rounded-xl">

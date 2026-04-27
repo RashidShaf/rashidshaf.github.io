@@ -35,7 +35,7 @@ exports.list = async (req, res, next) => {
         where, orderBy: { createdAt: 'desc' }, skip, take: limit,
         include: {
           user: { select: { firstName: true, lastName: true, email: true } },
-          items: { select: { title: true, quantity: true, price: true, book: { select: { title: true, titleAr: true, author: true, coverImage: true } } } },
+          items: { select: { title: true, quantity: true, price: true, variantLabel: true, variantSku: true, variantColor: true, book: { select: { title: true, titleAr: true, author: true, coverImage: true } } } },
         },
       }),
       prisma.order.count({ where }),
@@ -77,7 +77,7 @@ exports.getById = async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         user: { select: { firstName: true, lastName: true, email: true } },
-        items: { select: { title: true, quantity: true, price: true, book: { select: { title: true, titleAr: true, author: true, coverImage: true } } } },
+        items: { select: { title: true, quantity: true, price: true, variantLabel: true, variantSku: true, variantColor: true, book: { select: { title: true, titleAr: true, author: true, coverImage: true } } } },
       },
     });
     if (!order) return res.status(404).json({ message: 'Order not found.' });

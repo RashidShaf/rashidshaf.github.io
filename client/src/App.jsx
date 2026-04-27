@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import useLanguageStore from './stores/useLanguageStore';
 import useAuthStore from './stores/useAuthStore';
+import useCartStore from './stores/useCartStore';
 
 import MainLayout from './components/layout/MainLayout';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -96,14 +97,21 @@ const App = () => {
   const initLanguage = useLanguageStore((s) => s.initLanguage);
   const accessToken = useAuthStore((s) => s.accessToken);
   const fetchUser = useAuthStore((s) => s.fetchUser);
+  const fetchCart = useCartStore((s) => s.fetchCart);
 
   useEffect(() => {
     initLanguage();
   }, [initLanguage]);
 
   // Validate session on app load — catches blocked users
+  // Also refresh cart so stale variant snapshots in localStorage (price, label,
+  // image) are replaced with fresh server data — prevents the user seeing an
+  // old price in the cart that doesn't match what they pay at checkout.
   useEffect(() => {
-    if (accessToken) fetchUser();
+    if (accessToken) {
+      fetchUser();
+      fetchCart();
+    }
   }, []);
 
   return (

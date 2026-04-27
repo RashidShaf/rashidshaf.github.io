@@ -1,18 +1,27 @@
 const prisma = require('../config/database');
 
+const cartItemInclude = {
+  book: {
+    select: {
+      id: true, title: true, titleAr: true, slug: true, author: true,
+      authorAr: true, price: true, compareAtPrice: true, coverImage: true,
+      stock: true, isActive: true, isOutOfStock: true, hasVariants: true,
+    },
+  },
+  variant: {
+    select: {
+      id: true, label: true, labelAr: true, sku: true,
+      price: true, color: true, colorAr: true, image: true,
+      stock: true, isOutOfStock: true, isActive: true,
+    },
+  },
+};
+
 exports.get = async (req, res, next) => {
   try {
     const items = await prisma.cartItem.findMany({
       where: { userId: req.user.id },
-      include: {
-        book: {
-          select: {
-            id: true, title: true, titleAr: true, slug: true, author: true,
-            authorAr: true, price: true, compareAtPrice: true, coverImage: true,
-            stock: true, isActive: true, isOutOfStock: true,
-          },
-        },
-      },
+      include: cartItemInclude,
       orderBy: { createdAt: 'desc' },
     });
     res.json(items);
@@ -23,24 +32,55 @@ exports.get = async (req, res, next) => {
 
 exports.add = async (req, res, next) => {
   try {
-    const { bookId, quantity = 1 } = req.body;
+    const { bookId, variantId: rawVariantId, quantity = 1 } = req.body;
+    const qty = Math.min(Math.max(parseInt(quantity, 10) || 1, 1), 999);
 
-    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    const book = await prisma.book.findUnique({
+      where: { id: bookId },
+      include: { variants: true },
+    });
     if (!book || !book.isActive) {
       return res.status(404).json({ message: 'Book not found.' });
     }
 
-    if (book.isOutOfStock) {
-      return res.status(400).json({ message: `"${book.title}" is currently out of stock.` });
+    // The base product is always purchasable on its own. Variants are
+    // ALTERNATIVE options the customer may pick — picking none means buying
+    // the base. Server still validates whichever target the client chose.
+    let variantId = null;
+    if (book.hasVariants && rawVariantId) {
+      const variant = book.variants.find((v) => v.id === rawVariantId);
+      if (!variant) {
+        return res.status(400).json({ message: 'Selected option is not available.' });
+      }
+      if (!variant.isActive) {
+        return res.status(400).json({ message: 'Selected option is no longer available.' });
+      }
+      if (variant.isOutOfStock) {
+        return res.status(400).json({ message: 'Selected option is out of stock.' });
+      }
+      variantId = variant.id;
+    } else {
+      // Buying the base — either non-variant product, or hasVariants with no
+      // variant chosen. Block on the base's out-of-stock flag.
+      variantId = null;
+      if (book.isOutOfStock) {
+        return res.status(400).json({ message: `"${book.title}" is currently out of stock.` });
+      }
     }
+
+    const variantKey = variantId || '';
 
     const item = await prisma.cartItem.upsert({
       where: {
-        userId_bookId: { userId: req.user.id, bookId },
+        userId_bookId_variantKey: {
+          userId: req.user.id,
+          bookId,
+          variantKey,
+        },
       },
-      update: { quantity: { increment: quantity } },
-      create: { userId: req.user.id, bookId, quantity },
-      include: { book: true },
+      update: { quantity: { increment: qty } },
+      create: { userId: req.user.id, bookId, variantId, variantKey, quantity: qty },
+      include: cartItemInclude,
     });
 
     res.json(item);
@@ -52,23 +92,33 @@ exports.add = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { quantity } = req.body;
+    const qty = Math.min(Math.max(parseInt(quantity, 10) || 1, 1), 999);
+
     const item = await prisma.cartItem.findUnique({
       where: { id: req.params.itemId },
-      include: { book: true },
+      include: cartItemInclude,
     });
 
     if (!item || item.userId !== req.user.id) {
       return res.status(404).json({ message: 'Cart item not found.' });
     }
 
-    if (item.book.isOutOfStock) {
+    // Block stock blockers; per oversell policy, low stock alone does not block.
+    if (item.variant) {
+      if (!item.variant.isActive) {
+        return res.status(400).json({ message: 'This option is no longer available.' });
+      }
+      if (item.variant.isOutOfStock) {
+        return res.status(400).json({ message: 'This option is out of stock.' });
+      }
+    } else if (item.book.isOutOfStock) {
       return res.status(400).json({ message: `"${item.book.title}" is currently out of stock.` });
     }
 
     const updated = await prisma.cartItem.update({
       where: { id: req.params.itemId },
-      data: { quantity },
-      include: { book: true },
+      data: { quantity: qty },
+      include: cartItemInclude,
     });
 
     res.json(updated);

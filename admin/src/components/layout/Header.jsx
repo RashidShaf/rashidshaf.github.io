@@ -16,6 +16,7 @@ const pageTitles = {
   '/inventory': 'nav.inventory',
   '/reports': 'nav.reports',
   '/banners': 'nav.banners',
+  '/ad-grids': 'nav.adGrids',
   '/data': 'nav.data',
   '/settings': 'nav.settings',
 };

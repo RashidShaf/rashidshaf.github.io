@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { toast } from 'react-toastify';
 import api from '../utils/api';
 
 const isLoggedIn = () => {
@@ -10,6 +11,20 @@ const isLoggedIn = () => {
     return false;
   }
 };
+
+// Composite key for matching cart rows. variantKey === '' for non-variant items
+// mirrors the deterministic NOT NULL column the server uses for its unique index.
+const keyOf = (bookId, variantId) => `${bookId}__${variantId || ''}`;
+
+const shapeServerItem = (item) => ({
+  bookId: item.book.id,
+  variantId: item.variantId || null,
+  variantKey: keyOf(item.book.id, item.variantId),
+  book: item.book,
+  variant: item.variant || null,
+  quantity: item.quantity,
+  serverId: item.id,
+});
 
 const useCartStore = create(
   persist(
@@ -23,12 +38,23 @@ const useCartStore = create(
         if (!isLoggedIn()) return;
         try {
           const res = await api.get('/cart');
-          const serverItems = (res.data || []).map((item) => ({
-            bookId: item.book.id,
-            book: item.book,
-            quantity: item.quantity,
-            serverId: item.id,
-          }));
+          const serverItems = (res.data || []).map(shapeServerItem);
+          // E7: detect rows that the server dropped (variant cascade-deleted by
+          // admin) and surface a toast so the customer isn't surprised.
+          const before = get().items;
+          if (before.length > 0) {
+            const serverKeys = new Set(serverItems.map((i) => keyOf(i.bookId, i.variantId)));
+            const dropped = before.filter((i) => i.serverId && !serverKeys.has(keyOf(i.bookId, i.variantId)));
+            if (dropped.length > 0) {
+              try {
+                toast.info(
+                  dropped.length === 1
+                    ? 'An item in your cart is no longer available and has been removed.'
+                    : `${dropped.length} items in your cart are no longer available and have been removed.`,
+                );
+              } catch {}
+            }
+          }
           set({ items: serverItems });
         } catch {}
       },
@@ -37,49 +63,80 @@ const useCartStore = create(
         if (!isLoggedIn()) return;
         const { items } = get();
         if (items.length === 0) { await get().fetchCart(); return; }
-        // Fetch server cart first to avoid double-incrementing
         try {
           const serverRes = await api.get('/cart');
           const serverItems = serverRes.data || [];
           const serverMap = {};
-          serverItems.forEach((si) => { serverMap[si.book.id] = si; });
+          serverItems.forEach((si) => {
+            serverMap[keyOf(si.book.id, si.variantId)] = si;
+          });
 
           for (const item of items) {
             if (!item.bookId) continue;
-            const existing = serverMap[item.bookId];
+            const k = keyOf(item.bookId, item.variantId);
+            const existing = serverMap[k];
             if (existing) {
-              // Already on server — update to the max of local vs server quantity
               const targetQty = Math.max(item.quantity, existing.quantity);
               if (targetQty !== existing.quantity) {
                 await api.put(`/cart/${existing.id}`, { quantity: targetQty }).catch(() => {});
               }
             } else {
-              // Not on server — add it
-              await api.post('/cart', { bookId: item.bookId, quantity: item.quantity }).catch(() => {});
+              await api.post('/cart', {
+                bookId: item.bookId,
+                variantId: item.variantId || null,
+                quantity: item.quantity,
+              }).catch(() => {});
             }
           }
         } catch {}
-        // Fetch canonical state from server
         await get().fetchCart();
       },
 
-      addItem: (book, quantity = 1) => {
+      addItem: (book, quantity = 1, variantId = null) => {
         const { items } = get();
-        const existing = items.find((i) => i.bookId === book.id);
+        const variant = variantId && Array.isArray(book.variants)
+          ? book.variants.find((v) => v.id === variantId) || null
+          : null;
+        const existing = items.find((i) => i.bookId === book.id && (i.variantId || null) === (variantId || null));
         if (existing) {
-          set({ items: items.map((i) => i.bookId === book.id ? { ...i, quantity: i.quantity + quantity } : i) });
+          set({
+            items: items.map((i) =>
+              i.bookId === book.id && (i.variantId || null) === (variantId || null)
+                ? { ...i, quantity: i.quantity + quantity }
+                : i,
+            ),
+          });
         } else {
-          set({ items: [...items, { bookId: book.id, book, quantity }] });
+          set({
+            items: [...items, {
+              bookId: book.id,
+              variantId: variantId || null,
+              variantKey: keyOf(book.id, variantId),
+              book,
+              variant,
+              quantity,
+            }],
+          });
         }
 
-        // Sync to server in background
         if (isLoggedIn()) {
-          api.post('/cart', { bookId: book.id, quantity }).then((res) => {
-            // Update serverId from response
+          api.post('/cart', {
+            bookId: book.id,
+            variantId: variantId || null,
+            quantity,
+          }).then((res) => {
             const data = res.data;
             set({
               items: get().items.map((i) =>
-                i.bookId === book.id ? { ...i, serverId: data.id, quantity: data.quantity, book: data.book || i.book } : i
+                i.bookId === book.id && (i.variantId || null) === (variantId || null)
+                  ? {
+                      ...i,
+                      serverId: data.id,
+                      quantity: data.quantity,
+                      book: data.book || i.book,
+                      variant: data.variant || i.variant,
+                    }
+                  : i,
               ),
             });
           }).catch(() => {});
@@ -88,19 +145,33 @@ const useCartStore = create(
         return existing ? 'updated' : 'added';
       },
 
-      removeItem: (bookId) => {
-        const item = get().items.find((i) => i.bookId === bookId);
-        set({ items: get().items.filter((i) => i.bookId !== bookId) });
+      removeItem: (bookId, variantId = null) => {
+        const item = get().items.find(
+          (i) => i.bookId === bookId && (i.variantId || null) === (variantId || null),
+        );
+        set({
+          items: get().items.filter(
+            (i) => !(i.bookId === bookId && (i.variantId || null) === (variantId || null)),
+          ),
+        });
 
         if (isLoggedIn() && item?.serverId) {
           api.delete(`/cart/${item.serverId}`).catch(() => {});
         }
       },
 
-      updateQuantity: (bookId, quantity) => {
-        if (quantity <= 0) return get().removeItem(bookId);
-        const item = get().items.find((i) => i.bookId === bookId);
-        set({ items: get().items.map((i) => i.bookId === bookId ? { ...i, quantity } : i) });
+      updateQuantity: (bookId, variantId, quantity) => {
+        if (quantity <= 0) return get().removeItem(bookId, variantId);
+        const item = get().items.find(
+          (i) => i.bookId === bookId && (i.variantId || null) === (variantId || null),
+        );
+        set({
+          items: get().items.map((i) =>
+            i.bookId === bookId && (i.variantId || null) === (variantId || null)
+              ? { ...i, quantity }
+              : i,
+          ),
+        });
 
         if (isLoggedIn() && item?.serverId) {
           api.put(`/cart/${item.serverId}`, { quantity }).catch(() => {});
@@ -115,7 +186,10 @@ const useCartStore = create(
       },
 
       getTotal: () => {
-        return get().items.reduce((total, item) => total + (parseFloat(item.book.price) * item.quantity), 0);
+        return get().items.reduce((total, item) => {
+          const unit = parseFloat(item.variant?.price ?? item.book.price);
+          return total + unit * item.quantity;
+        }, 0);
       },
 
       getItemCount: () => {
@@ -124,8 +198,8 @@ const useCartStore = create(
     }),
     {
       name: 'cart-storage',
-    }
-  )
+    },
+  ),
 );
 
 export default useCartStore;

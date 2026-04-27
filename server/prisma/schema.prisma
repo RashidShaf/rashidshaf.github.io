@@ -99,6 +99,7 @@ model Category {
   banners        Banner[]
   filters        CategoryFilter[]
   homeSectionProducts HomeSectionProduct[]
+  adGridTiles    AdGridTile[]
 
   @@map("categories")
 }
@@ -143,6 +144,9 @@ model Book {
   lowStockThreshold Int    @default(5) @map("low_stock_threshold")
   sku               String? @unique
 
+  // Variants
+  hasVariants Boolean @default(false) @map("has_variants")
+
   // Metadata
   categoryId    String?    @map("category_id")
   tags          String[]   @default([])
@@ -170,6 +174,8 @@ model Book {
   readingListItems ReadingListItem[]
   inventoryLogs    InventoryLog[]
   homeSectionProducts HomeSectionProduct[]
+  variants        ProductVariant[]
+  adGridTiles     AdGridTile[]
 
   @@index([categoryId])
   @@index([author])
@@ -178,6 +184,58 @@ model Book {
   @@index([isActive])
   @@index([salesCount])
   @@map("books")
+}
+
+// ==================== PRODUCT VARIANTS ====================
+
+model ProductVariant {
+  id                String   @id @default(uuid())
+  bookId            String   @map("book_id")
+  label             String
+  labelAr           String?  @map("label_ar")
+  sku               String?  @unique
+  price             Decimal  @db.Decimal(10, 2)
+  purchasePrice     Decimal? @map("purchase_price")  @db.Decimal(10, 2)
+  compareAtPrice    Decimal? @map("compare_at_price") @db.Decimal(10, 2)
+  stock             Int      @default(0)
+  lowStockThreshold Int      @default(5) @map("low_stock_threshold")
+  color             String?
+  colorAr           String?  @map("color_ar")
+  // Per-variant overrides — null means "inherit from base book"
+  dimensions        String?
+  weight            Decimal? @db.Decimal(6, 2)
+  brand             String?
+  brandAr           String?  @map("brand_ar")
+  material          String?
+  materialAr        String?  @map("material_ar")
+  ageRange          String?  @map("age_range")
+  // Book-specific overrides (also useful for editions / printings).
+  author            String?
+  authorAr          String?  @map("author_ar")
+  publisher         String?
+  publisherAr       String?  @map("publisher_ar")
+  isbn              String?               // not @unique — allows variant to share base ISBN
+  pages             Int?
+  language          String?
+  publishedDate     DateTime? @map("published_date")
+  // JSON shape: { [fieldKey]: { value, valueAr } } — same as Book.customFields.
+  // Per-variant override; storefront merges with base values on a per-key basis.
+  customFields      String?  @map("custom_fields") @db.Text
+  image             String?
+  sortOrder         Int      @default(0) @map("sort_order")
+  isOutOfStock      Boolean  @default(false) @map("is_out_of_stock")
+  isActive          Boolean  @default(true)  @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  book          Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
+
+  @@index([bookId])
+  @@index([sku])
+  @@map("product_variants")
 }
 
 // ==================== BOOK CATEGORIES (Many-to-Many) ====================
@@ -222,17 +280,20 @@ model Review {
 // ==================== CART ====================
 
 model CartItem {
-  id        String     @id @default(uuid())
-  userId    String     @map("user_id")
-  bookId    String     @map("book_id")
-  quantity  Int        @default(1)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  id         String     @id @default(uuid())
+  userId     String     @map("user_id")
+  bookId     String     @map("book_id")
+  variantId  String?    @map("variant_id")
+  variantKey String     @default("") @map("variant_key")
+  quantity   Int        @default(1)
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book    Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, bookId])
+  @@unique([userId, bookId, variantKey])
   @@map("cart_items")
 }
 
@@ -273,16 +334,21 @@ model Order {
 }
 
 model OrderItem {
-  id        String     @id @default(uuid())
-  orderId   String     @map("order_id")
-  bookId    String?    @map("book_id")
-  quantity  Int
-  price     Decimal    @db.Decimal(10, 2)
-  title     String
-  createdAt DateTime   @default(now()) @map("created_at")
+  id           String     @id @default(uuid())
+  orderId      String     @map("order_id")
+  bookId       String?    @map("book_id")
+  variantId    String?    @map("variant_id")
+  quantity     Int
+  price        Decimal    @db.Decimal(10, 2)
+  title        String
+  variantLabel String?    @map("variant_label")
+  variantSku   String?    @map("variant_sku")
+  variantColor String?    @map("variant_color")
+  createdAt    DateTime   @default(now()) @map("created_at")
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  book  Book?  @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  book    Book?           @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
   @@map("order_items")
 }
@@ -341,6 +407,7 @@ model ReadingListItem {
 model InventoryLog {
   id            String          @id @default(uuid())
   bookId        String          @map("book_id")
+  variantId     String?         @map("variant_id")
   action        InventoryAction
   quantity      Int
   previousStock Int             @map("previous_stock")
@@ -349,9 +416,11 @@ model InventoryLog {
   performedBy   String?         @map("performed_by")
   createdAt     DateTime        @default(now()) @map("created_at")
 
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book    Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
   @@index([bookId])
+  @@index([variantId])
   @@index([action])
   @@map("inventory_logs")
 }
@@ -381,6 +450,30 @@ model HomeSectionProduct {
   @@unique([cornerId, sectionType, bookId])
   @@index([cornerId, sectionType])
   @@map("home_section_products")
+}
+
+// ==================== AD GRID TILES ====================
+
+model AdGridTile {
+  id           String   @id @default(uuid())
+  cornerId     String   @map("corner_id")
+  position     Int
+  image        String
+  bookId       String?  @map("book_id")
+  externalLink String?  @map("external_link")
+  title        String?
+  titleAr      String?  @map("title_ar")
+  isActive     Boolean  @default(true) @map("is_active")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  corner       Category @relation(fields: [cornerId], references: [id], onDelete: Cascade)
+  book         Book?    @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@unique([cornerId, position])
+  @@index([cornerId])
+  @@map("ad_grid_tiles")
 }
 
 // ==================== NOTIFICATIONS ====================

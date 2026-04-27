@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { BOOK_SORT_OPTIONS } = require('../config/constants');
 const { normalize } = require('../utils/arabicNormalize');
+const { variantListSelect, decorateBook, decorateBooks } = require('../utils/bookDecorator');
 
 exports.list = async (req, res, next) => {
   try {
@@ -104,14 +105,15 @@ exports.list = async (req, res, next) => {
       }
     }
 
-    // Color filter (comma-separated multi-select)
+    // Color filter (comma-separated multi-select) — also matches variant colors
     if (color) {
       const colors = color.split(',').map(c => c.trim()).filter(Boolean);
-      if (colors.length === 1) {
-        where.color = { equals: colors[0], mode: 'insensitive' };
-      } else {
-        where.AND.push({ OR: colors.map(c => ({ color: { equals: c, mode: 'insensitive' } })) });
-      }
+      where.AND.push({
+        OR: colors.flatMap((c) => [
+          { color: { equals: c, mode: 'insensitive' } },
+          { variants: { some: { isActive: true, color: { equals: c, mode: 'insensitive' } } } },
+        ]),
+      });
     }
 
     // Material filter (comma-separated multi-select)
@@ -126,10 +128,21 @@ exports.list = async (req, res, next) => {
 
     // Custom field filters (cf_fieldkey=value1,value2)
     // Match exact key+value pairs in JSON like: "fieldkey":{"value":"Red"}
+    //
+    // SECURITY: `cfKey` and `v` are interpolated into a `contains` LIKE
+    // pattern. Reject any input containing `%`, `\`, or `"` — these would
+    // either act as SQL wildcards or break out of the JSON-shape match.
+    // `_` (single-char wildcard) is allowed — it's bounded enough not to
+    // be a leak vector and underscore is legitimate in some product values.
+    // Length-bound both inputs.
+    const safeForLike = (s) => typeof s === 'string'
+      && s.length > 0 && s.length <= 200
+      && !/[%\\"]/.test(s);
     Object.keys(req.query).filter((k) => k.startsWith('cf_')).forEach((k) => {
-      const values = req.query[k].split(',').map((v) => v.trim()).filter(Boolean);
+      const cfKey = k.slice(3); // remove "cf_" prefix
+      if (!safeForLike(cfKey) || cfKey.length > 80) return;
+      const values = req.query[k].split(',').map((v) => v.trim()).filter(safeForLike);
       if (values.length > 0) {
-        const cfKey = k.slice(3); // remove "cf_" prefix
         where.AND.push({
           OR: values.map((v) => ({
             OR: [
@@ -160,8 +173,14 @@ exports.list = async (req, res, next) => {
       case 'title_asc': sortBy = { title: 'asc' }; break;
       case 'title_desc': sortBy = { title: 'desc' }; break;
     }
-    // Out-of-stock products always go to the bottom
-    const orderBy = [{ isOutOfStock: 'asc' }, sortBy];
+    // Out-of-stock products go to the bottom — UNLESS the customer typed a
+    // search term. With the search bar's small `?limit=6` cap, OOS-to-bottom
+    // would push an exact-name match off the page if any in-stock products
+    // also match. When searching, the customer asked for THAT product; rank
+    // it normally so they actually find it. Trim guards against `?search=   `
+    // (whitespace-only) which is truthy but produces no real match.
+    const trimmedSearch = typeof search === 'string' ? search.trim() : '';
+    const orderBy = trimmedSearch ? [sortBy] : [{ isOutOfStock: 'asc' }, sortBy];
 
     const [books, total] = await Promise.all([
       prisma.book.findMany({
@@ -173,12 +192,13 @@ exports.list = async (req, res, next) => {
           category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true,
             parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } },
           } },
+          variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
         },
       }),
       prisma.book.count({ where }),
     ]);
 
-    res.json(getPaginatedResponse(books, total, page, limit));
+    res.json(getPaginatedResponse(decorateBooks(books), total, page, limit));
   } catch (error) {
     next(error);
   }
@@ -208,6 +228,10 @@ exports.getBySlug = async (req, res, next) => {
             user: { select: { id: true, firstName: true, lastName: true } },
           },
         },
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     });
 
@@ -221,7 +245,7 @@ exports.getBySlug = async (req, res, next) => {
       data: { viewCount: { increment: 1 } },
     });
 
-    res.json(book);
+    res.json(decorateBook(book));
   } catch (error) {
     next(error);
   }
@@ -259,9 +283,12 @@ exports.featured = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
+      include: {
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
+      },
     });
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) { next(error); }
 };
 
@@ -276,9 +303,12 @@ exports.newArrivals = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
+      include: {
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
+      },
     });
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) { next(error); }
 };
 
@@ -293,9 +323,12 @@ exports.bestsellers = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
+      include: {
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
+      },
     });
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) {
     next(error);
   }
@@ -312,9 +345,12 @@ exports.trending = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
+      include: {
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
+      },
     });
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) { next(error); }
 };
 
@@ -329,9 +365,12 @@ exports.comingSoon = async (req, res, next) => {
     }
     const books = await prisma.book.findMany({
       where, orderBy: [{ isOutOfStock: 'asc' }, { createdAt: 'desc' }], take: 8,
-      include: { category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } } },
+      include: {
+        category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
+      },
     });
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) { next(error); }
 };
 
@@ -359,10 +398,11 @@ exports.recommendations = async (req, res, next) => {
       take: 6,
       include: {
         category: { select: { id: true, name: true, nameAr: true, slug: true, placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } } } },
+        variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
       },
     });
 
-    res.json(books);
+    res.json(decorateBooks(books));
   } catch (error) {
     next(error);
   }
@@ -388,13 +428,30 @@ exports.filters = async (req, res, next) => {
       ];
     }
 
-    const [authors, publishers, brands, colors, materials] = await Promise.all([
+    const [authors, publishers, brands, colors, materials, variantColors] = await Promise.all([
       prisma.book.findMany({ where, select: { author: true, authorAr: true }, distinct: ['author'], orderBy: { author: 'asc' } }),
       prisma.book.findMany({ where, select: { publisher: true, publisherAr: true }, distinct: ['publisher'], orderBy: { publisher: 'asc' } }),
       prisma.book.findMany({ where, select: { brand: true, brandAr: true }, distinct: ['brand'], orderBy: { brand: 'asc' } }),
       prisma.book.findMany({ where, select: { color: true, colorAr: true }, distinct: ['color'], orderBy: { color: 'asc' } }),
       prisma.book.findMany({ where, select: { material: true, materialAr: true }, distinct: ['material'], orderBy: { material: 'asc' } }),
+      prisma.productVariant.findMany({
+        where: { isActive: true, book: where },
+        select: { color: true, colorAr: true },
+        distinct: ['color'],
+      }).catch(() => []),
     ]);
+
+    // De-dupe helper that merges book-level and variant-level entries (case-insensitive on value)
+    const mergeUnique = (rows, valueKey, valueArKey) => {
+      const map = new Map();
+      rows.forEach((r) => {
+        const v = r[valueKey];
+        if (!v) return;
+        const k = v.toLowerCase();
+        if (!map.has(k)) map.set(k, { value: v, valueAr: r[valueArKey] || null });
+      });
+      return Array.from(map.values()).sort((a, b) => a.value.localeCompare(b.value));
+    };
 
     // Extract distinct custom field values
     const booksWithCF = await prisma.book.findMany({
@@ -423,7 +480,7 @@ exports.filters = async (req, res, next) => {
       authors: authors.filter(a => a.author).map(a => ({ value: a.author, valueAr: a.authorAr })),
       publishers: publishers.filter(p => p.publisher).map(p => ({ value: p.publisher, valueAr: p.publisherAr })),
       brands: brands.filter(b => b.brand).map(b => ({ value: b.brand, valueAr: b.brandAr })),
-      colors: colors.filter(c => c.color).map(c => ({ value: c.color, valueAr: c.colorAr })),
+      colors: mergeUnique([...colors, ...variantColors], 'color', 'colorAr'),
       materials: materials.filter(m => m.material).map(m => ({ value: m.material, valueAr: m.materialAr })),
       customFieldValues,
     });

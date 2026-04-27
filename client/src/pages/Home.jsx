@@ -10,6 +10,7 @@ import BookCarousel from '../components/common/BookCarousel';
 import LogoOverlay from '../components/common/LogoOverlay';
 import Image from '../components/common/Image';
 import CornerSection from '../components/common/CornerSection';
+import AdBannerGrid from '../components/home/AdBannerGrid';
 import SEO from '../components/SEO';
 import useLanguageStore from '../stores/useLanguageStore';
 import api from '../utils/api';
@@ -217,7 +218,7 @@ const Home = () => {
           if (!hasChildren && !hasCornerSections) return null;
           return (
             <section key={`corner-${l1.id}`} className="mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 py-6 sm:py-8 3xl:py-16">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl 3xl:text-4xl font-display font-bold text-foreground">
                   {getName(l1)}
                 </h2>
@@ -225,7 +226,11 @@ const Home = () => {
                   {t('common.seeAll')} {language === 'ar' ? <FiArrowLeft size={16} /> : <FiArrowRight size={16} />}
                 </Link>
               </div>
+              {section.adTiles && section.adTiles.length > 0 && (
+                <AdBannerGrid tiles={section.adTiles} />
+              )}
               {hasChildren && (
+                <div className={(section.adTiles && section.adTiles.length > 0) ? 'mt-6 3xl:mt-10' : ''}>
                 <BookCarousel>
                   {l1.children.map((cat) => {
                     const coverPath = cat.image || null;
@@ -244,11 +249,11 @@ const Home = () => {
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                          <div className="absolute bottom-3 left-3 right-3">
-                            <h3 className="text-[15px] font-bold text-white line-clamp-1 leading-tight">
+                          <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
+                            <h3 className="text-[12px] sm:text-[15px] font-bold text-white line-clamp-2 leading-tight break-words">
                               {getName(cat)}
                             </h3>
-                            <p className="text-[12px] text-white/70 mt-0.5">
+                            <p className="text-[10px] sm:text-[12px] text-white/70 mt-0.5">
                               {cat._count?.books || 0} {t('common.results').toLowerCase()}
                             </p>
                           </div>
@@ -257,9 +262,10 @@ const Home = () => {
                     );
                   })}
                 </BookCarousel>
+                </div>
               )}
               {hasCornerSections && (
-                <div className={hasChildren ? 'mt-6 3xl:mt-10' : ''}>
+                <div className={(hasChildren || (section.adTiles && section.adTiles.length > 0)) ? 'mt-6 3xl:mt-10' : ''}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 3xl:gap-8">
                     {populatedSections.map((s, idx) => {
                       const isLast = idx === populatedSections.length - 1;

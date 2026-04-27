@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import SEO from '../components/SEO';
@@ -13,6 +13,7 @@ import api from '../utils/api';
 
 const Wishlist = () => {
   const { t, language } = useLanguageStore();
+  const navigate = useNavigate();
   const addToCart = useCartStore((s) => s.addItem);
   const { items: wishlistIds, books, removeItem, fetchWishlist } = useWishlistStore();
   const [loading, setLoading] = useState(true);
@@ -40,10 +41,15 @@ const Wishlist = () => {
 
   const handleRemove = (bookId) => {
     removeItem(bookId);
-    toast.success(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist');
+    toast.success(t('profile.wishlistRemoved'));
   };
 
   const handleAddToCart = (book) => {
+    if (book.hasVariants) {
+      navigate(`/books/${book.slug}`);
+      toast.info(t('books.chooseOption') || 'Choose an option for this product');
+      return;
+    }
     addToCart(book, 1);
     toast.success(t('books.addedToCart'));
   };
@@ -55,7 +61,7 @@ const Wishlist = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">{t('profile.myWishlist')}</h1>
-            {books.length > 0 && <p className="text-sm text-foreground/50 mt-1">{books.length} {language === 'ar' ? 'كتب' : 'books'}</p>}
+            {books.length > 0 && <p className="text-sm text-foreground/50 mt-1">{books.length} {books.length === 1 ? t('profile.wishlistCount_one') : t('profile.wishlistCount_other')}</p>}
           </div>
         </div>
 
@@ -71,7 +77,7 @@ const Wishlist = () => {
         ) : books.length === 0 ? (
           <div className="text-center py-20">
             <FiHeart className="w-16 h-16 text-foreground/15 mx-auto mb-4" />
-            <p className="text-foreground/50 text-lg font-medium mb-2">{language === 'ar' ? 'قائمة المفضلة فارغة' : 'Your wishlist is empty'}</p>
+            <p className="text-foreground/50 text-lg font-medium mb-2">{t('profile.wishlistEmpty')}</p>
             <Link to="/books" className="inline-block mt-4 px-6 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent-light transition-colors">
               {t('cart.continueShopping')}
             </Link>
@@ -122,7 +128,11 @@ const Wishlist = () => {
                       <h3 className="text-[15px] font-bold text-foreground line-clamp-1 hover:text-accent transition-colors leading-tight">{title}</h3>
                     </Link>
                     <p className="text-[13px] text-foreground/50 mt-1 line-clamp-1">{author}</p>
-                    <p className="text-sm font-bold text-foreground mt-2">{formatPrice(book.price)}</p>
+                    <p className="text-sm font-bold text-foreground mt-2">
+                      {book.hasVariants && book.priceFrom != null && book.priceTo != null && parseFloat(book.priceFrom) !== parseFloat(book.priceTo)
+                        ? `${t('books.from') || 'From'} ${formatPrice(book.priceFrom)}`
+                        : formatPrice(book.hasVariants && book.priceFrom != null ? book.priceFrom : book.price)}
+                    </p>
                   </div>
                 </div>
               );

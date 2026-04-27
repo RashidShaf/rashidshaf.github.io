@@ -42,4 +42,10 @@ const uploadBanner = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-module.exports = { uploadCover, uploadCategoryImage, uploadBanner };
+const uploadAdGrid = multer({
+  storage: createStorage('ad-grids'),
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+module.exports = { uploadCover, uploadCategoryImage, uploadBanner, uploadAdGrid };

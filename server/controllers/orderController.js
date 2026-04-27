@@ -2,33 +2,76 @@ const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateOrderNumber } = require('../utils/helpers');
 
+const orderItemBookSelect = {
+  id: true, slug: true, coverImage: true, titleAr: true, authorAr: true, hasVariants: true,
+};
+
+// When a variant still exists, surface its own image + display fields so the
+// orders/track pages render the picked option, not the base cover. Snapshot
+// fields on OrderItem (variantLabel/Sku/Color) still describe a deleted variant.
+const orderItemVariantSelect = {
+  id: true, image: true, label: true, labelAr: true, color: true, colorAr: true,
+};
+
 exports.create = async (req, res, next) => {
   try {
     const { shippingName, shippingPhone, shippingAddress, shippingCity, shippingNotes, paymentMethod, cartItems: clientCart } = req.body;
 
-    // Accept cart items from request body (local cart)
     if (!clientCart || clientCart.length === 0) {
       return res.status(400).json({ message: 'Cart is empty.' });
     }
 
-    // Fetch book details and validate stock
-    const bookIds = clientCart.map((item) => item.bookId);
-    const books = await prisma.book.findMany({ where: { id: { in: bookIds }, isActive: true } });
+    // Fetch every referenced book + its variants in one round-trip. The client's
+    // {bookId, variantId, quantity} payload is treated as INTENT only — the
+    // server reads the canonical price/stock here and never trusts client price.
+    const bookIds = [...new Set(clientCart.map((item) => item.bookId).filter(Boolean))];
+    const books = await prisma.book.findMany({
+      where: { id: { in: bookIds }, isActive: true },
+      include: { variants: true },
+    });
     const bookMap = {};
     books.forEach((b) => { bookMap[b.id] = b; });
 
-    const validItems = [];
-    for (const item of clientCart) {
-      const book = bookMap[item.bookId];
+    // Resolve and validate every line.
+    const resolved = [];
+    for (const raw of clientCart) {
+      const book = bookMap[raw.bookId];
       if (!book) {
-        return res.status(404).json({ message: `Book not found: ${item.bookId}` });
+        return res.status(404).json({ message: `Book not found: ${raw.bookId}` });
       }
-      if (book.isOutOfStock) {
-        return res.status(400).json({
-          message: `"${book.title}" is currently out of stock`,
-        });
+
+      const qty = parseInt(raw.quantity, 10);
+      if (!Number.isFinite(qty) || qty < 1) {
+        return res.status(400).json({ message: `Invalid quantity for "${book.title}".` });
       }
-      validItems.push({ book, quantity: item.quantity });
+
+      // The base product is always purchasable. Variants are ALTERNATIVE
+      // options. variantId=null/undefined means buying the base — block only
+      // on book.isOutOfStock then. With a variantId, validate the variant.
+      let variant = null;
+      if (book.hasVariants && raw.variantId) {
+        variant = book.variants.find((v) => v.id === raw.variantId);
+        if (!variant) {
+          return res.status(400).json({
+            message: `Selected option for "${book.title}" is not available.`,
+            code: 'VARIANT_INVALID',
+          });
+        }
+        if (!variant.isActive || variant.isOutOfStock) {
+          return res.status(400).json({
+            message: `Selected option for "${book.title}" is not available.`,
+            code: 'VARIANT_UNAVAILABLE',
+          });
+        }
+      } else {
+        if (book.isOutOfStock) {
+          return res.status(400).json({ message: `"${book.title}" is currently out of stock` });
+        }
+      }
+
+      // Server-sourced price — NEVER from the request body.
+      const unitPrice = variant ? parseFloat(variant.price) : parseFloat(book.price);
+      resolved.push({ book, variant, quantity: qty, unitPrice });
     }
 
     // Read shipping settings from DB
@@ -40,19 +83,14 @@ exports.create = async (req, res, next) => {
     const freeShippingThreshold = parseFloat(settingsMap.shippingThreshold) || 100;
     const flatShippingCost = parseFloat(settingsMap.shippingCost) || 15;
 
-    // Calculate totals
-    const subtotal = validItems.reduce(
-      (sum, item) => sum + parseFloat(item.book.price) * item.quantity, 0
-    );
+    // Calculate totals from server-trusted prices
+    const subtotal = resolved.reduce((sum, r) => sum + r.unitPrice * r.quantity, 0);
     const shippingCost = subtotal >= freeShippingThreshold ? 0 : flatShippingCost;
     const total = subtotal + shippingCost;
 
     // Generate order number
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
     const orderCount = await prisma.order.count({
       where: { createdAt: { gte: todayStart, lte: todayEnd } },
     });
@@ -68,7 +106,7 @@ exports.create = async (req, res, next) => {
       if (matchedUser) userId = matchedUser.id;
     }
 
-    // Create order in transaction
+    // Atomic order creation + per-line stock decrement + inventory log
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
@@ -86,34 +124,59 @@ exports.create = async (req, res, next) => {
           status: 'CONFIRMED',
           statusHistory: [{ status: 'CONFIRMED', timestamp: new Date().toISOString() }],
           items: {
-            create: validItems.map((item) => ({
-              bookId: item.book.id,
-              quantity: item.quantity,
-              price: item.book.price,
-              title: item.book.title,
+            create: resolved.map(({ book, variant, quantity, unitPrice }) => ({
+              bookId: book.id,
+              variantId: variant ? variant.id : null,
+              quantity,
+              price: unitPrice,
+              title: book.title,
+              variantLabel: variant ? variant.label : null,
+              variantSku: variant ? variant.sku : null,
+              variantColor: variant ? variant.color : null,
             })),
           },
         },
         include: { items: true },
       });
 
-      // Decrement stock
-      for (const item of validItems) {
-        await tx.book.update({
-          where: { id: item.book.id },
-          data: {
-            stock: { decrement: item.quantity },
-            salesCount: { increment: item.quantity },
-          },
-        });
+      // Per-line atomic decrement. Postgres `decrement` runs in a single
+      // UPDATE so two concurrent orders against the same row can't both
+      // see the same pre-decrement stock.
+      for (const { book, variant, quantity } of resolved) {
+        const previousStock = variant ? variant.stock : book.stock;
+        const newStock = previousStock - quantity;
+
+        if (variant) {
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stock: { decrement: quantity } },
+          });
+        } else {
+          await tx.book.update({
+            where: { id: book.id },
+            data: {
+              stock: { decrement: quantity },
+              salesCount: { increment: quantity },
+            },
+          });
+        }
+
+        // Always increment book salesCount even when variant-keyed (book stock untouched).
+        if (variant) {
+          await tx.book.update({
+            where: { id: book.id },
+            data: { salesCount: { increment: quantity } },
+          });
+        }
 
         await tx.inventoryLog.create({
           data: {
-            bookId: item.book.id,
+            bookId: book.id,
+            variantId: variant ? variant.id : null,
             action: 'SALE',
-            quantity: -item.quantity,
-            previousStock: item.book.stock,
-            newStock: item.book.stock - item.quantity,
+            quantity: -quantity,
+            previousStock,
+            newStock,
             note: `Order ${orderNumber}`,
           },
         });
@@ -122,7 +185,7 @@ exports.create = async (req, res, next) => {
       return newOrder;
     });
 
-    // Create admin notification for new order
+    // Notifications + low-stock checks (best-effort, outside the transaction)
     try {
       const { createNotification } = require('./notificationController');
       await createNotification({
@@ -132,15 +195,23 @@ exports.create = async (req, res, next) => {
         metadata: { orderId: order.id, orderNumber: order.orderNumber },
       });
 
-      // Check for low stock after order
-      for (const item of validItems) {
-        const newStock = item.book.stock - item.quantity;
-        if (newStock >= 0 && newStock <= item.book.lowStockThreshold) {
+      for (const { book, variant, quantity } of resolved) {
+        const previousStock = variant ? variant.stock : book.stock;
+        const newStock = previousStock - quantity;
+        const threshold = variant ? variant.lowStockThreshold : book.lowStockThreshold;
+        if (newStock >= 0 && newStock <= threshold) {
           await createNotification({
             type: 'LOW_STOCK',
             title: 'Low Stock Alert',
-            message: `"${item.book.title}" is low on stock (${newStock} remaining)`,
-            metadata: { bookId: item.book.id, currentStock: newStock, threshold: item.book.lowStockThreshold },
+            message: variant
+              ? `"${book.title}" — ${variant.label} is low on stock (${newStock} remaining)`
+              : `"${book.title}" is low on stock (${newStock} remaining)`,
+            metadata: {
+              bookId: book.id,
+              variantId: variant?.id || null,
+              currentStock: newStock,
+              threshold,
+            },
           });
         }
       }
@@ -164,7 +235,10 @@ exports.track = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
       include: {
         items: {
-          include: { book: { select: { id: true, slug: true, coverImage: true, titleAr: true, authorAr: true } } },
+          include: {
+            book: { select: orderItemBookSelect },
+            variant: { select: orderItemVariantSelect },
+          },
         },
       },
     });
@@ -187,7 +261,10 @@ exports.list = async (req, res, next) => {
         take: limit,
         include: {
           items: {
-            include: { book: { select: { id: true, slug: true, coverImage: true } } },
+            include: {
+            book: { select: orderItemBookSelect },
+            variant: { select: orderItemVariantSelect },
+          },
           },
         },
       }),
@@ -206,12 +283,15 @@ exports.getById = async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         items: {
-          include: { book: { select: { id: true, slug: true, coverImage: true, titleAr: true, authorAr: true } } },
+          include: {
+            book: { select: orderItemBookSelect },
+            variant: { select: orderItemVariantSelect },
+          },
         },
       },
     });
 
-    if (!order || (order.userId && order.userId !== req.user.id)) {
+    if (!order || order.userId !== req.user.id) {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
@@ -225,10 +305,10 @@ exports.cancel = async (req, res, next) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
-      include: { items: { include: { book: true } } },
+      include: { items: { include: { book: true, variant: true } } },
     });
 
-    if (!order || (order.userId && order.userId !== req.user.id)) {
+    if (!order || order.userId !== req.user.id) {
       return res.status(404).json({ message: 'Order not found.' });
     }
 
@@ -237,26 +317,64 @@ exports.cancel = async (req, res, next) => {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Restore stock
+      // Restore stock — variant-aware. When a variant has been deleted since
+      // the order was placed (FK SetNull), `item.variant` is null even though
+      // the snapshot fields on the OrderItem still describe what was bought —
+      // skip stock restoration in that case but log the return regardless.
       for (const item of order.items) {
-        await tx.book.update({
-          where: { id: item.bookId },
-          data: {
-            stock: { increment: item.quantity },
-            salesCount: { decrement: item.quantity },
-          },
-        });
+        const variantStillExists = item.variantId && item.variant;
+        const variantWasDeleted = item.variantId && !item.variant;
 
-        await tx.inventoryLog.create({
-          data: {
-            bookId: item.bookId,
-            action: 'RETURN',
-            quantity: item.quantity,
-            previousStock: item.book.stock,
-            newStock: item.book.stock + item.quantity,
-            note: `Cancelled order ${order.orderNumber}`,
-          },
-        });
+        if (variantStillExists) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { increment: item.quantity } },
+          });
+          if (item.bookId) {
+            await tx.book.update({
+              where: { id: item.bookId },
+              data: { salesCount: { decrement: item.quantity } },
+            });
+          }
+        } else if (!item.variantId && item.bookId && item.book) {
+          await tx.book.update({
+            where: { id: item.bookId },
+            data: {
+              stock: { increment: item.quantity },
+              salesCount: { decrement: item.quantity },
+            },
+          });
+        } else if (variantWasDeleted && item.bookId) {
+          // Variant gone — only roll back the book's sales count
+          await tx.book.update({
+            where: { id: item.bookId },
+            data: { salesCount: { decrement: item.quantity } },
+          }).catch(() => {});
+        }
+
+        if (item.bookId) {
+          // Use the previous stock if we have it; otherwise mark as 0/0 so
+          // the audit trail still records the cancellation event.
+          const previousStock = variantStillExists
+            ? item.variant.stock
+            : (!item.variantId && item.book ? item.book.stock : 0);
+          const newStock = variantStillExists || (!item.variantId && item.book)
+            ? previousStock + item.quantity
+            : previousStock;
+          await tx.inventoryLog.create({
+            data: {
+              bookId: item.bookId,
+              variantId: variantStillExists ? item.variantId : null,
+              action: 'RETURN',
+              quantity: item.quantity,
+              previousStock,
+              newStock,
+              note: variantWasDeleted
+                ? `Cancelled order ${order.orderNumber} — variant no longer exists, stock not restored`
+                : `Cancelled order ${order.orderNumber}`,
+            },
+          });
+        }
       }
 
       const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];

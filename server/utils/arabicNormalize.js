@@ -64,6 +64,12 @@ function buildSearchIndex(book) {
     book.isbn,
     book.sku,
   ];
+  // Variant SKUs and labels also resolve via search.
+  if (Array.isArray(book.variants)) {
+    book.variants.forEach((v) => {
+      parts.push(v.sku, v.label, v.labelAr, v.color, v.colorAr);
+    });
+  }
   return parts
     .filter((p) => p != null && p !== '')
     .map((p) => normalize(p))

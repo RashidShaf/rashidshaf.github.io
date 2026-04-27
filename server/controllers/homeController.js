@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const { variantListSelect, decorateBook, decorateBooks } = require('../utils/bookDecorator');
 
 const BOOK_INCLUDE = {
   category: {
@@ -7,6 +8,7 @@ const BOOK_INCLUDE = {
       parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true, parent: { select: { placeholderImage: true } } } } } },
     },
   },
+  variants: { select: variantListSelect, orderBy: { sortOrder: 'asc' } },
 };
 
 const DEFAULT_GLOBAL_ORDER = ['featured', 'newArrivals', 'bestsellers', 'trending', 'comingSoon'];
@@ -110,12 +112,14 @@ async function cornerSectionBooks(cornerId, sectionType, cornerCategoryIds) {
   ];
 
   // Stable sort: out-of-stock to the bottom, otherwise preserve merged order.
-  return merged
-    .sort((a, b) => (a.isOutOfStock ? 1 : 0) - (b.isOutOfStock ? 1 : 0))
-    .slice(0, 24);
+  return decorateBooks(
+    merged
+      .sort((a, b) => (a.isOutOfStock ? 1 : 0) - (b.isOutOfStock ? 1 : 0))
+      .slice(0, 24)
+  );
 }
 
-// Build a corner block for the home layout: metadata + L2 children + the 5 per-section carousels.
+// Build a corner block for the home layout: metadata + L2 children + ad tiles + the 5 per-section carousels.
 async function corner(cornerId, cornerSectionConfig) {
   const cat = await prisma.category.findUnique({
     where: { id: cornerId },
@@ -125,6 +129,13 @@ async function corner(cornerId, cornerSectionConfig) {
         where: { isActive: true },
         orderBy: { displayOrder: 'asc' },
         include: { _count: { select: { books: { where: { isActive: true } } } } },
+      },
+      adGridTiles: {
+        where: { isActive: true },
+        orderBy: { position: 'asc' },
+        include: {
+          book: { select: { id: true, slug: true, title: true, titleAr: true } },
+        },
       },
     },
   });
@@ -153,6 +164,7 @@ async function corner(cornerId, cornerSectionConfig) {
   return {
     type: 'corner',
     corner: { id: cat.id, name: cat.name, nameAr: cat.nameAr, slug: cat.slug, children: cat.children, _count: cat._count },
+    adTiles: cat.adGridTiles || [],
     cornerSections,
   };
 }
@@ -168,7 +180,7 @@ async function globalSection(type) {
     take: 8,
     include: BOOK_INCLUDE,
   });
-  return { type, books };
+  return { type, books: decorateBooks(books) };
 }
 
 // ---------- Public endpoints ----------

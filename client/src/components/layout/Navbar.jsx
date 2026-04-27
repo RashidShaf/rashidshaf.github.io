@@ -97,17 +97,20 @@ const Navbar = () => {
               </div>
 
               {/* Cart */}
-              <Link to="/cart" className="relative p-2 text-foreground hover:text-accent transition-colors">
-                <FiShoppingCart className="w-5 h-5 3xl:w-6 3xl:h-6" />
-                {cartCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -right-0.5 ltr:-right-0.5 rtl:-left-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center"
-                  >
-                    {cartCount > 99 ? '99+' : cartCount}
-                  </motion.span>
-                )}
+              <Link to="/cart" className="relative flex items-center gap-1.5 p-2 text-foreground hover:text-accent transition-colors">
+                <span className="relative inline-flex">
+                  <FiShoppingCart className="w-5 h-5 3xl:w-6 3xl:h-6" />
+                  {cartCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-2 ltr:-right-2 rtl:-left-2 bg-accent text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none"
+                    >
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </motion.span>
+                  )}
+                </span>
+                <span className="hidden sm:inline text-sm 3xl:text-base font-medium">{t('nav.cart')}</span>
               </Link>
 
               {/* My Account — hover dropdown */}

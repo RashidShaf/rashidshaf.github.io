@@ -40,6 +40,10 @@ const Checkout = () => {
 
   const total = getTotal();
   const shipping = total >= shippingConfig.threshold ? 0 : shippingConfig.cost;
+  const hasUnavailable = items.some((item) => (
+    item.book?.isOutOfStock
+    || (item.variant && (item.variant.isActive === false || item.variant.isOutOfStock))
+  ));
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const inputClass = 'w-full ps-11 pe-4 py-3 bg-background border border-gray-300 rounded-xl text-foreground text-sm focus:outline-none focus:border-accent transition-colors';
 
@@ -55,7 +59,11 @@ const Checkout = () => {
       const res = await api.post('/orders', {
         ...form,
         paymentMethod,
-        cartItems: items.map((item) => ({ bookId: item.bookId, quantity: item.quantity })),
+        cartItems: items.map((item) => ({
+          bookId: item.bookId,
+          variantId: item.variantId || null,
+          quantity: item.quantity,
+        })),
       });
       setSuccess(res.data.order);
       clearCart();
@@ -194,9 +202,16 @@ const Checkout = () => {
 
                 <div className="space-y-3 mb-5">
                   {items.map((item) => {
-                    const coverPath = item.book.coverImage || null;
+                    const coverPath = item.variant?.image || item.book.coverImage || null;
+                    const variantLabel = item.variant
+                      ? (language === 'ar' && item.variant.labelAr ? item.variant.labelAr : item.variant.label)
+                      : null;
+                    const variantColor = item.variant
+                      ? (language === 'ar' && item.variant.colorAr ? item.variant.colorAr : item.variant.color)
+                      : null;
+                    const unitPrice = parseFloat(item.variant?.price ?? item.book.price);
                     return (
-                      <div key={item.bookId} className="flex items-center gap-3">
+                      <div key={`${item.bookId}__${item.variantId || ''}`} className="flex items-center gap-3">
                         <div className="w-10 h-13 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
                           {coverPath ? <Image src={coverPath} alt="" width={40} height={52} sizes="40px" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-accent/30">{item.book.title?.[0]}</div>}
                         </div>
@@ -204,9 +219,14 @@ const Checkout = () => {
                           <p className="text-sm text-foreground font-medium line-clamp-1">
                             {language === 'ar' && item.book.titleAr ? item.book.titleAr : item.book.title}
                           </p>
+                          {variantLabel && (
+                            <p className="text-[11px] text-foreground/55 line-clamp-1">
+                              {variantLabel}{variantColor ? ` · ${variantColor}` : ''}
+                            </p>
+                          )}
                           <p className="text-xs text-foreground/40">x{item.quantity}</p>
                         </div>
-                        <p className="text-sm font-bold text-foreground flex-shrink-0">{formatPrice(parseFloat(item.book.price) * item.quantity)}</p>
+                        <p className="text-sm font-bold text-foreground flex-shrink-0">{formatPrice(unitPrice * item.quantity)}</p>
                       </div>
                     );
                   })}
@@ -255,12 +275,15 @@ const Checkout = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full mt-4 py-3.5 bg-accent text-white font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={loading || hasUnavailable}
+                  className="w-full mt-4 py-3.5 bg-accent text-white font-bold rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <FiShoppingBag size={18} />
                   {loading ? t('common.loading') : t('checkout.placeOrder')}
                 </button>
+                {hasUnavailable && (
+                  <p className="text-xs text-red-500 mt-2 text-center">{t('cart.removeUnavailableFirst')}</p>
+                )}
 
                 {shipping > 0 && (
                   <p className="text-xs text-foreground/40 text-center mt-3">

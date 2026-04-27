@@ -19,6 +19,11 @@ const Cart = () => {
 
   const total = getTotal();
 
+  const hasUnavailable = items.some((item) => (
+    item.book.isOutOfStock
+    || (item.variant && (item.variant.isActive === false || item.variant.isOutOfStock))
+  ));
+
   if (items.length === 0) {
     return (
       <>
@@ -49,15 +54,25 @@ const Cart = () => {
             {items.map((item) => {
               const title = language === 'ar' && item.book.titleAr ? item.book.titleAr : item.book.title;
               const author = language === 'ar' && item.book.authorAr ? item.book.authorAr : item.book.author;
-              const coverPath = item.book.coverImage || null;
+              const coverPath = item.variant?.image || item.book.coverImage || null;
+              const variantLabel = item.variant
+                ? (language === 'ar' && item.variant.labelAr ? item.variant.labelAr : item.variant.label)
+                : null;
+              const variantColor = item.variant
+                ? (language === 'ar' && item.variant.colorAr ? item.variant.colorAr : item.variant.color)
+                : null;
+              const unitPrice = parseFloat(item.variant?.price ?? item.book.price);
+              const unavailable = item.book.isOutOfStock
+                || (item.variant && (item.variant.isActive === false || item.variant.isOutOfStock));
+              const rowKey = `${item.bookId}__${item.variantId || ''}`;
 
               return (
                 <div
-                  key={item.bookId}
+                  key={rowKey}
                   className="flex gap-4 p-4 bg-surface rounded-xl border border-muted/10"
                 >
                   {/* Cover */}
-                  <Link to={`/books/${item.book.slug}`} className="w-20 h-28 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
+                  <Link to={`/books/${item.book.slug}${item.variantId ? `?v=${item.variantId}` : ''}`} className="w-20 h-28 rounded-lg overflow-hidden bg-surface-alt flex-shrink-0">
                     {coverPath ? (
                       <Image src={coverPath} alt={title} width={80} height={112} sizes="80px" className="w-full h-full object-cover" />
                     ) : (
@@ -69,16 +84,35 @@ const Cart = () => {
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
-                    <Link to={`/books/${item.book.slug}`} className="text-sm 3xl:text-lg font-semibold text-foreground hover:text-accent transition-colors line-clamp-1">
+                    <Link to={`/books/${item.book.slug}${item.variantId ? `?v=${item.variantId}` : ''}`} className="text-sm 3xl:text-lg font-semibold text-foreground hover:text-accent transition-colors line-clamp-1">
                       {title}
                     </Link>
-                    <p className="text-xs text-foreground/60 mt-0.5">{author}</p>
+                    {author && <p className="text-xs text-foreground/60 mt-0.5">{author}</p>}
+
+                    {/* Variant sub-line */}
+                    {variantLabel && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-foreground/70">
+                        {item.variant?.color && (
+                          <span
+                            className="inline-block w-3 h-3 rounded-full border border-muted/30"
+                            style={{ backgroundColor: item.variant.color }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span>{variantLabel}</span>
+                        {variantColor && <span>· {variantColor}</span>}
+                      </div>
+                    )}
+
+                    {unavailable && (
+                      <p className="text-[11px] text-red-500 mt-1">{t('books.outOfStock')}</p>
+                    )}
 
                     <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                       {/* Quantity */}
                       <div className="flex items-center border border-muted/20 rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.bookId, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.bookId, item.variantId, item.quantity - 1)}
                           className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
                         >
                           <FiMinus size={14} />
@@ -87,7 +121,7 @@ const Cart = () => {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.bookId, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.bookId, item.variantId, item.quantity + 1)}
                           className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-foreground transition-colors"
                         >
                           <FiPlus size={14} />
@@ -97,10 +131,10 @@ const Cart = () => {
                       {/* Price + Remove */}
                       <div className="flex items-center gap-3">
                         <span className="text-sm 3xl:text-lg font-bold text-foreground">
-                          {formatPrice(parseFloat(item.book.price) * item.quantity)}
+                          {formatPrice(unitPrice * item.quantity)}
                         </span>
                         <button
-                          onClick={() => removeItem(item.bookId)}
+                          onClick={() => removeItem(item.bookId, item.variantId)}
                           className="p-1.5 text-foreground/60 hover:text-red-500 transition-colors"
                         >
                           <FiTrash2 size={16} />
@@ -195,12 +229,26 @@ const Cart = () => {
                 </button>
               </div>
 
-              <Link
-                to="/checkout"
-                className="block w-full mt-4 py-3 bg-accent text-white text-center font-semibold rounded-xl hover:bg-accent-light transition-colors"
-              >
-                {t('cart.checkout')}
-              </Link>
+              {hasUnavailable ? (
+                <button
+                  type="button"
+                  disabled
+                  className="block w-full mt-4 py-3 bg-muted/30 text-foreground/50 text-center font-semibold rounded-xl cursor-not-allowed"
+                  title={t('cart.removeUnavailableFirst')}
+                >
+                  {t('cart.checkout')}
+                </button>
+              ) : (
+                <Link
+                  to="/checkout"
+                  className="block w-full mt-4 py-3 bg-accent text-white text-center font-semibold rounded-xl hover:bg-accent-light transition-colors"
+                >
+                  {t('cart.checkout')}
+                </Link>
+              )}
+              {hasUnavailable && (
+                <p className="text-xs text-red-500 mt-2 text-center">{t('cart.removeUnavailableFirst')}</p>
+              )}
 
             </div>
           </div>
