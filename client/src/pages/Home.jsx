@@ -231,6 +231,9 @@ const Home = () => {
               )}
               {hasChildren && (
                 <div className={(section.adTiles && section.adTiles.length > 0) ? 'mt-6 3xl:mt-10' : ''}>
+                {/* Gold-tinted backdrop section that visually groups the L2
+                    category cards as "categories within this corner". */}
+                <div className="bg-[#C9A961] rounded-xl p-3 sm:p-4 3xl:p-5">
                 <BookCarousel>
                   {l1.children.map((cat) => {
                     const coverPath = cat.image || null;
@@ -262,6 +265,7 @@ const Home = () => {
                     );
                   })}
                 </BookCarousel>
+                </div>
                 </div>
               )}
               {hasCornerSections && (

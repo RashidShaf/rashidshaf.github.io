@@ -1,11 +1,21 @@
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('crypto');
 
 const createStorage = (destination) => {
   return multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '..', 'uploads', destination));
+      const dir = path.join(__dirname, '..', 'uploads', destination);
+      // Ensure the destination directory exists. Otherwise multer's
+      // underlying fs.createWriteStream errors with ENOENT and the request
+      // ends up as a 500. Idempotent — no-op if the directory exists.
+      try {
+        fs.mkdirSync(dir, { recursive: true });
+      } catch (err) {
+        return cb(err);
+      }
+      cb(null, dir);
     },
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname);
