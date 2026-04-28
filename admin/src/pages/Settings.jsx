@@ -21,7 +21,16 @@ const defaultSettings = {
   twitter: '',
   linkedin: '',
   pinterest: '',
+  // Editable footer + content blocks
+  footerTagline: '',
+  footerTaglineAr: '',
+  newsletterDescription: '',
+  newsletterDescriptionAr: '',
+  returnPolicy: '',
+  returnPolicyAr: '',
 };
+
+const textareaClass = 'w-full px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent resize-y min-h-[100px]';
 
 const inputClass = 'w-full px-4 py-2.5 3xl:px-5 3xl:py-3 bg-admin-bg border border-admin-input-border rounded-lg text-sm 3xl:text-base text-admin-text focus:outline-none focus:border-admin-accent';
 
@@ -169,6 +178,89 @@ export default function Settings() {
             <div>
               <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.pinterest')}</label>
               <input type="text" value={form.pinterest} onChange={(e) => handleChange('pinterest', e.target.value)} placeholder="https://pinterest.com/arkaan" className={inputClass} />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Content */}
+        <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+          <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">{t('settings.footerContent')}</h2>
+          <p className="text-xs text-admin-muted mb-4">{t('settings.footerContentHint')}</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 3xl:gap-6">
+              <div>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.footerTaglineEn')}</label>
+                <textarea
+                  value={form.footerTagline}
+                  onChange={(e) => handleChange('footerTagline', e.target.value)}
+                  placeholder="Brief tagline shown under the store name in the footer."
+                  rows={3}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.footerTaglineAr')}</label>
+                <textarea
+                  value={form.footerTaglineAr}
+                  onChange={(e) => handleChange('footerTaglineAr', e.target.value)}
+                  placeholder="جملة قصيرة تظهر تحت اسم المتجر في التذييل."
+                  rows={3}
+                  dir="rtl"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 3xl:gap-6">
+              <div>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.newsletterDescriptionEn')}</label>
+                <textarea
+                  value={form.newsletterDescription}
+                  onChange={(e) => handleChange('newsletterDescription', e.target.value)}
+                  placeholder="Description shown under the “Stay updated” heading."
+                  rows={3}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.newsletterDescriptionAr')}</label>
+                <textarea
+                  value={form.newsletterDescriptionAr}
+                  onChange={(e) => handleChange('newsletterDescriptionAr', e.target.value)}
+                  placeholder="الوصف الذي يظهر تحت عنوان «ابقَ على اطلاع»."
+                  rows={3}
+                  dir="rtl"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Return & Exchange Policy */}
+        <div className="bg-admin-card rounded-xl border border-admin-border p-6 3xl:p-8 shadow-sm">
+          <h2 className="text-lg 3xl:text-xl font-bold text-admin-text mb-1">{t('settings.returnPolicy')}</h2>
+          <p className="text-xs text-admin-muted mb-4">{t('settings.returnPolicyHint')}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 3xl:gap-6">
+            <div>
+              <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.returnPolicyEn')}</label>
+              <textarea
+                value={form.returnPolicy}
+                onChange={(e) => handleChange('returnPolicy', e.target.value)}
+                placeholder="Write the full return & exchange policy here. Use blank lines to separate paragraphs."
+                rows={10}
+                className={textareaClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm 3xl:text-base font-medium text-admin-text mb-1.5">{t('settings.returnPolicyAr')}</label>
+              <textarea
+                value={form.returnPolicyAr}
+                onChange={(e) => handleChange('returnPolicyAr', e.target.value)}
+                placeholder="اكتب سياسة الإرجاع والاستبدال كاملةً هنا. استخدم سطراً فارغاً للفصل بين الفقرات."
+                rows={10}
+                dir="rtl"
+                className={textareaClass}
+              />
             </div>
           </div>
         </div>

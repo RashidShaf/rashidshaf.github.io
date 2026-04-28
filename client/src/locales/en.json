@@ -20,7 +20,9 @@
     "more": "More",
     "results": "Results",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "close": "Close",
+    "noContentYet": "No content yet."
   },
   "nav": {
     "home": "Home",
@@ -248,7 +250,20 @@
     "contact": "Contact Us",
     "rights": "All rights reserved.",
     "address": "Doha, Qatar",
-    "followUs": "Follow Us"
+    "followUs": "Follow Us",
+    "returnPolicy": "Return & Exchange Policy"
+  },
+  "product": {
+    "returnPolicyTooltip": "Return & exchange policy"
+  },
+  "returnPolicy": {
+    "title": "Return & Exchange Policy",
+    "subtitle": "Hassle-free returns and exchanges across Qatar.",
+    "policyHeading": "Our Policy",
+    "ctaTitle": "Have a question about your order?",
+    "ctaSubtitle": "We're here to help with returns, exchanges, and anything else.",
+    "ctaButton": "Contact Us",
+    "placeholder": "Our team is finalizing the policy. Please contact us in the meantime for any return or exchange questions."
   },
   "about": {
     "title": "About Arkaan",

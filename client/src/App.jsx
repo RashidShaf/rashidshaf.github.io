@@ -25,6 +25,7 @@ import ChangePassword from './pages/ChangePassword';
 import TrackOrder from './pages/TrackOrder';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import ReturnPolicy from './pages/ReturnPolicy';
 import NotFound from './pages/NotFound';
 
 const AnimatedRoutes = () => {
@@ -87,6 +88,7 @@ const AnimatedRoutes = () => {
         <Route path="track-order" element={<TrackOrder />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
+        <Route path="return-policy" element={<ReturnPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

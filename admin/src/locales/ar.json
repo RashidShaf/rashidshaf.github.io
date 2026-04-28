@@ -488,7 +488,17 @@
     "youtube": "يوتيوب",
     "saveSettings": "حفظ الإعدادات",
     "linkedin": "لينكد إن",
-    "pinterest": "بينتريست"
+    "pinterest": "بينتريست",
+    "footerContent": "محتوى التذييل",
+    "footerContentHint": "نصوص قابلة للتعديل تظهر في تذييل المتجر.",
+    "footerTaglineEn": "الجملة التعريفية (إنجليزي) — تحت اسم المتجر",
+    "footerTaglineAr": "الجملة التعريفية (عربي) — تحت اسم المتجر",
+    "newsletterDescriptionEn": "وصف النشرة البريدية (إنجليزي)",
+    "newsletterDescriptionAr": "وصف النشرة البريدية (عربي)",
+    "returnPolicy": "سياسة الإرجاع والاستبدال",
+    "returnPolicyHint": "تظهر في صفحة مخصّصة مرتبطة من التذييل ومن كل صفحة منتج.",
+    "returnPolicyEn": "السياسة (إنجليزي)",
+    "returnPolicyAr": "السياسة (عربي)"
   },
   "reports": {
     "title": "التقارير",

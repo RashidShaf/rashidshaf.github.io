@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft, FiInfo, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import BookCard from '../components/books/BookCard';
 import ReviewSection from '../components/books/ReviewSection';
@@ -28,15 +28,41 @@ const BookDetail = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [returnPolicyOpen, setReturnPolicyOpen] = useState(false);
+  const [returnPolicyText, setReturnPolicyText] = useState('');
 
   useEffect(() => {
-    if (reviewModalOpen) {
+    if (reviewModalOpen || returnPolicyOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [reviewModalOpen]);
+  }, [reviewModalOpen, returnPolicyOpen]);
+
+  // Fetch return policy text when the modal opens. Re-fetches on language
+  // change so the user sees the right localized text after switching.
+  useEffect(() => {
+    if (!returnPolicyOpen) return;
+    let cancelled = false;
+    api.get('/settings/public').then((res) => {
+      if (cancelled) return;
+      const s = res.data || {};
+      const text = language === 'ar'
+        ? (s.returnPolicyAr || s.returnPolicy || '')
+        : (s.returnPolicy || s.returnPolicyAr || '');
+      setReturnPolicyText(text);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [returnPolicyOpen, language]);
+
+  // Close return-policy modal on Escape.
+  useEffect(() => {
+    if (!returnPolicyOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setReturnPolicyOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [returnPolicyOpen]);
 
   const refreshBook = async () => {
     try {
@@ -638,7 +664,7 @@ const BookDetail = () => {
                   toggleWishlist(book.id);
                   toast.success(inWishlist ? t('book.removedFromWishlistToast') : t('book.addedToWishlistToast'));
                 }}
-                className={`ms-auto me-6 sm:me-10 w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all active:scale-90 ${
+                className={`ms-3 sm:ms-4 3xl:ms-6 w-8 h-8 sm:w-10 sm:h-10 3xl:w-12 3xl:h-12 flex items-center justify-center rounded-lg sm:rounded-xl border-2 transition-all active:scale-90 ${
                   inWishlist
                     ? 'border-red-500 bg-red-500 text-white'
                     : 'border-gray-300 text-gray-400 hover:border-red-500 hover:text-red-500'
@@ -646,6 +672,23 @@ const BookDetail = () => {
               >
                 <FiHeart size={15} className={`sm:w-[18px] sm:h-[18px] ${inWishlist ? 'fill-white' : ''}`} />
               </button>
+
+              {/* Return & exchange policy — sits after wishlist (with a gap)
+                  as a simple round info button. Opens the policy modal.
+                  Custom tooltip on hover. */}
+              <div className="relative group ms-3 sm:ms-4 me-6 sm:me-10">
+                <button
+                  type="button"
+                  onClick={() => setReturnPolicyOpen(true)}
+                  className="w-6 h-6 sm:w-7 sm:h-7 3xl:w-9 3xl:h-9 flex items-center justify-center rounded-full border-2 border-gray-300 text-gray-400 hover:border-accent hover:text-accent transition-all active:scale-90 focus:outline-none focus-visible:border-accent focus-visible:text-accent"
+                  aria-label={t('product.returnPolicyTooltip')}
+                >
+                  <FiInfo size={12} className="sm:w-[14px] sm:h-[14px]" />
+                </button>
+                <span className="absolute bottom-full mb-2 ltr:right-0 rtl:left-0 px-2.5 py-1 bg-foreground text-background text-[11px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-150 shadow-lg">
+                  {t('product.returnPolicyTooltip')}
+                </span>
+              </div>
             </div>
 
             {/* Add to Cart + Buy Now */}
@@ -862,6 +905,36 @@ const BookDetail = () => {
           </section>
         )}
       </div>
+
+      {/* Return policy modal — opens from the icon button in the action row.
+          Lazy-loads the policy text from /settings/public the first time. */}
+      {returnPolicyOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50" onClick={() => setReturnPolicyOpen(false)}>
+          <div
+            className="relative w-full max-w-lg max-h-[80vh] overflow-y-auto bg-surface rounded-2xl shadow-xl p-6 sm:p-7"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setReturnPolicyOpen(false)}
+              className="absolute top-3 end-3 w-8 h-8 flex items-center justify-center rounded-full text-foreground/60 hover:text-foreground hover:bg-surface-alt transition-colors"
+              aria-label={t('common.close')}
+            >
+              <FiX size={18} />
+            </button>
+            <h3 className="text-lg sm:text-xl font-display font-bold text-foreground mb-4 pe-8">
+              {t('footer.returnPolicy')}
+            </h3>
+            {returnPolicyText ? (
+              <div className="text-sm sm:text-[15px] text-foreground/85 leading-relaxed whitespace-pre-line">
+                {returnPolicyText}
+              </div>
+            ) : (
+              <p className="text-sm text-foreground/50">{t('common.noContentYet')}</p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };

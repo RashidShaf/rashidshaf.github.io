@@ -18,6 +18,13 @@ const Footer = () => {
   const address = language === 'ar'
     ? (settings.storeAddressAr || settings.storeAddress || 'الدوحة، قطر')
     : (settings.storeAddress || 'Doha, Qatar');
+  // Admin-editable copy with translation fallbacks
+  const tagline = language === 'ar'
+    ? (settings.footerTaglineAr || settings.footerTagline || t('footer.about'))
+    : (settings.footerTagline || t('footer.about'));
+  const newsletterDescription = language === 'ar'
+    ? (settings.newsletterDescriptionAr || settings.newsletterDescription || t('home.heroSubtitle'))
+    : (settings.newsletterDescription || t('home.heroSubtitle'));
 
   const socialLinks = [
     { key: 'instagram', icon: FiInstagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-orange-400' },
@@ -35,6 +42,7 @@ const Footer = () => {
     { to: '/contact', label: t('nav.contact') },
     { to: '/cart', label: t('nav.cart') },
     { to: '/track-order', label: t('nav.trackOrder') },
+    { to: '/return-policy', label: t('footer.returnPolicy') },
   ];
 
   return (
@@ -49,8 +57,8 @@ const Footer = () => {
               </span>
               <div className="h-0.5 w-8 bg-background/30 rounded-full mt-1" />
             </div>
-            <p className="text-background/70 text-sm leading-relaxed max-w-xs mb-5">
-              {t('footer.about')}
+            <p className="text-background/70 text-sm leading-relaxed max-w-xs mb-5 whitespace-pre-line">
+              {tagline}
             </p>
             {socialLinks.length > 0 && (
               <>
@@ -115,8 +123,8 @@ const Footer = () => {
             <h4 className="text-sm 3xl:text-lg font-semibold uppercase tracking-wider text-background/90 mb-4">
               {t('home.newsletter')}
             </h4>
-            <p className="text-sm 3xl:text-lg text-background/70 mb-4">
-              {t('home.heroSubtitle')}
+            <p className="text-sm 3xl:text-lg text-background/70 mb-4 whitespace-pre-line">
+              {newsletterDescription}
             </p>
             <form onSubmit={(e) => e.preventDefault()} className="flex">
               <input

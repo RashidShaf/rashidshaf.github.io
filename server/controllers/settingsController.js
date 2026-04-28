@@ -16,6 +16,13 @@ const PUBLIC_KEYS = [
   'twitter',
   'linkedin',
   'pinterest',
+  // Editable footer + content blocks (admin manages copy without code changes)
+  'footerTagline',
+  'footerTaglineAr',
+  'newsletterDescription',
+  'newsletterDescriptionAr',
+  'returnPolicy',
+  'returnPolicyAr',
 ];
 
 exports.getAll = async (req, res, next) => {

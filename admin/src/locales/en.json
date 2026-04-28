@@ -488,7 +488,17 @@
     "youtube": "YouTube",
     "saveSettings": "Save Settings",
     "linkedin": "LinkedIn",
-    "pinterest": "Pinterest"
+    "pinterest": "Pinterest",
+    "footerContent": "Footer Content",
+    "footerContentHint": "Editable copy for the storefront footer.",
+    "footerTaglineEn": "Tagline (English) — under store name",
+    "footerTaglineAr": "Tagline (Arabic) — under store name",
+    "newsletterDescriptionEn": "Newsletter description (English)",
+    "newsletterDescriptionAr": "Newsletter description (Arabic)",
+    "returnPolicy": "Return & Exchange Policy",
+    "returnPolicyHint": "Shown on a dedicated page linked from the footer and from each product detail page.",
+    "returnPolicyEn": "Policy (English)",
+    "returnPolicyAr": "Policy (Arabic)"
   },
   "reports": {
     "title": "Reports",
