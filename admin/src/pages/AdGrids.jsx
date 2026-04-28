@@ -124,6 +124,8 @@ function TileCard({ tile, onChange, position }) {
     ? null
     : (tile.imagePreview || (tile.image ? `${API_BASE}/${tile.image}` : null));
   const hasImage = !!previewSrc;
+  const hasMetadata = !!(tile.bookId || tile.externalLink || tile.title || tile.titleAr);
+  const hasContent = hasImage || hasMetadata;
 
   const clearImage = () => {
     if (tile.imagePreview) {
@@ -138,9 +140,9 @@ function TileCard({ tile, onChange, position }) {
     });
   };
 
-  // Empty/placeholder slot: compact dashed-border card prompting upload.
-  // Reduces visual weight when corners have <6 tiles, matching issue 6.
-  if (!hasImage) {
+  // Truly empty slot (no image, no metadata): compact placeholder so corners
+  // with <6 tiles don't show 6 full-size empty editors.
+  if (!hasContent) {
     return (
       <div className="bg-white border border-admin-border rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
@@ -163,7 +165,9 @@ function TileCard({ tile, onChange, position }) {
     );
   }
 
-  // Filled tile — full editor.
+  // Tile with content — full editor. The image area shows either the actual
+  // image (with X to remove) or an empty dropzone when image was cleared
+  // but the tile still has link/title metadata.
   return (
     <div className="bg-white border border-admin-border rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -181,18 +185,31 @@ function TileCard({ tile, onChange, position }) {
         </label>
       </div>
 
-      <div className="relative aspect-square w-full bg-gray-100 border border-admin-border rounded-md overflow-hidden">
-        <img src={previewSrc} alt="" className="w-full h-full object-cover" />
+      {hasImage ? (
+        <div className="relative aspect-square w-full bg-gray-100 border border-admin-border rounded-md overflow-hidden">
+          <img src={previewSrc} alt="" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={clearImage}
+            className="absolute top-1.5 end-1.5 p-1 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
+            aria-label={t('books.removeImage')}
+            title={t('books.removeImage')}
+          >
+            <FiX size={14} />
+          </button>
+        </div>
+      ) : (
         <button
           type="button"
-          onClick={clearImage}
-          className="absolute top-1.5 end-1.5 p-1 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
-          aria-label={t('books.removeImage')}
-          title={t('books.removeImage')}
+          onClick={() => fileRef.current?.click()}
+          className="relative aspect-square w-full bg-gray-50 border-2 border-dashed border-admin-border rounded-md cursor-pointer hover:border-admin-accent hover:bg-gray-100 transition-colors overflow-hidden flex items-center justify-center text-admin-muted text-[11px]"
         >
-          <FiX size={14} />
+          <div className="flex flex-col items-center gap-1">
+            <FiPlus size={20} />
+            <span>{t('books.addTile')}</span>
+          </div>
         </button>
-      </div>
+      )}
       <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
 
       <div>
