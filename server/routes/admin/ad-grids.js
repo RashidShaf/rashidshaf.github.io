@@ -27,8 +27,18 @@ const upsertGridSchema = Joi.object({
   tiles: Joi.array().items(tileSchema).max(6).required(),
 });
 
+const setActiveSchema = Joi.object({
+  enabled: Joi.boolean().required(),
+});
+
 router.get('/:cornerId', [auth, admin], adminAdGridController.getByCorner);
 router.put('/:cornerId', [auth, admin], validate(upsertGridSchema), adminAdGridController.upsertGrid);
+router.patch(
+  '/:cornerId/active',
+  [auth, admin],
+  validate(setActiveSchema),
+  adminAdGridController.setCornerActive,
+);
 router.post(
   '/:cornerId/tile/:position/image',
   [auth, admin],

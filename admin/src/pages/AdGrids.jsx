@@ -108,6 +108,12 @@ function TileCard({ tile, onChange, position }) {
   const { t } = useLanguageStore();
   const fileRef = useRef(null);
 
+  // Feature tiles (T1, T3) get a near-square slot on desktop; small tiles
+  // (T2/4/5/6) get a wider/landscape slot. Hint admin accordingly.
+  const hintKey = (position === 1 || position === 3)
+    ? 'books.adGridImageHintFeature'
+    : 'books.adGridImageHintSmall';
+
   const handlePickImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -160,6 +166,7 @@ function TileCard({ tile, onChange, position }) {
             <span>{t('books.addTile')}</span>
           </div>
         </button>
+        <p className="text-[10px] text-admin-muted mt-1.5 leading-tight">{t(hintKey)}</p>
         <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
       </div>
     );
@@ -170,19 +177,10 @@ function TileCard({ tile, onChange, position }) {
   // but the tile still has link/title metadata.
   return (
     <div className="bg-white border border-admin-border rounded-lg p-3 space-y-2">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
         <span className="text-[11px] font-bold uppercase tracking-wider text-admin-muted">
           {t('books.tileLabel').replace('{{n}}', position)}
         </span>
-        <label className="flex items-center gap-1.5 text-[11px] text-admin-muted">
-          <input
-            type="checkbox"
-            checked={tile.isActive}
-            onChange={(e) => onChange({ isActive: e.target.checked })}
-            className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
-          />
-          {t('common.active')}
-        </label>
       </div>
 
       {hasImage ? (
@@ -210,6 +208,7 @@ function TileCard({ tile, onChange, position }) {
           </div>
         </button>
       )}
+      <p className="text-[10px] text-admin-muted leading-tight">{t(hintKey)}</p>
       <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
 
       <div>
@@ -266,6 +265,8 @@ export default function AdGrids() {
   const [tiles, setTiles] = useState(POSITIONS.map(blankTile));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [adGridEnabled, setAdGridEnabled] = useState(true);
+  const [togglingActive, setTogglingActive] = useState(false);
 
   // Load all parent (L1) categories — those are the corners
   useEffect(() => {
@@ -294,11 +295,14 @@ export default function AdGrids() {
         externalLink: t.externalLink || '',
         title: t.title || '',
         titleAr: t.titleAr || '',
-        isActive: t.isActive !== false,
+        // Per-tile isActive is no longer surfaced — always true so the
+        // server keeps the tile in saves.
+        isActive: true,
         isPlaceholder: !!t.isPlaceholder,
       }));
       const map = new Map(padded.map((p) => [p.position, p]));
       setTiles(POSITIONS.map((p) => map.get(p) || blankTile(p)));
+      setAdGridEnabled(res.data?.adGridEnabled !== false);
     }).catch(() => toast.error(t('books.failedLoadTiles'))).finally(() => setLoading(false));
   }, [selectedCornerId, t]);
 
@@ -310,6 +314,23 @@ export default function AdGrids() {
     setTiles((prev) => prev.map((tt) => tt.position === position
       ? { ...tt, image: serverImagePath, imageFile: null, imagePreview: null, imageMarkedForRemoval: false, isPlaceholder: false }
       : tt));
+  };
+
+  // Single corner-level on/off — admin can't toggle individual tiles, only
+  // the whole grid for that corner. Updates immediately (small, atomic).
+  const handleToggleCornerActive = async (next) => {
+    if (!selectedCornerId || togglingActive) return;
+    setTogglingActive(true);
+    const previous = adGridEnabled;
+    setAdGridEnabled(next); // optimistic
+    try {
+      await api.patch(`/admin/ad-grids/${selectedCornerId}/active`, { enabled: next });
+    } catch {
+      setAdGridEnabled(previous);
+      toast.error(t('books.failedSaveGrid'));
+    } finally {
+      setTogglingActive(false);
+    }
   };
 
   // Save: upload any pending image files, then PUT the full grid. A tile with
@@ -426,6 +447,27 @@ export default function AdGrids() {
               </div>
             ) : (
               <>
+                {/* Corner-level on/off — replaces per-tile activation. */}
+                <div className="flex items-center justify-between gap-3 pb-4 mb-4 border-b border-admin-border flex-wrap">
+                  <div>
+                    <p className="text-sm font-semibold text-admin-text">{t('books.adGridShowOnCorner')}</p>
+                    <p className="text-[11px] text-admin-muted">{t('books.adGridShowOnCornerHint')}</p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={adGridEnabled}
+                      onChange={(e) => handleToggleCornerActive(e.target.checked)}
+                      disabled={togglingActive}
+                      className="sr-only peer"
+                    />
+                    <span className="relative w-11 h-6 bg-gray-200 peer-checked:bg-admin-accent rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5"></span>
+                    <span className="text-xs font-medium text-admin-text">
+                      {adGridEnabled ? t('common.active') : t('common.inactive')}
+                    </span>
+                  </label>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {tiles.map((tile) => (
                     <TileCard

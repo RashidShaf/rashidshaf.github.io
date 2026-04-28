@@ -249,8 +249,8 @@ const Home = () => {
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                          <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
-                            <h3 className="text-[12px] sm:text-[15px] font-bold text-white line-clamp-2 leading-tight break-words">
+                          <div className="absolute bottom-1.5 left-1.5 right-1.5 sm:bottom-3 sm:left-3 sm:right-3">
+                            <h3 className="text-[11px] sm:text-[13px] lg:text-[14px] xl:text-[13px] 2xl:text-[15px] font-bold text-white line-clamp-3 leading-tight break-words">
                               {getName(cat)}
                             </h3>
                             <p className="text-[10px] sm:text-[12px] text-white/70 mt-0.5">

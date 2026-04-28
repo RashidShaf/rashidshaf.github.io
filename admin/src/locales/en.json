@@ -268,7 +268,12 @@
     "deleteFailed": "Delete failed",
     "noMatches": "No matches",
     "loadingDots": "Loading...",
-    "removeImage": "Remove image"
+    "removeImage": "Remove image",
+    "adGridImageHint": "Recommended: 1500 × 1500 px square (JPG/PNG). Center the subject.",
+    "adGridImageHintFeature": "Recommended: 1500 × 1500 px square (JPG/PNG). Center the subject.",
+    "adGridImageHintSmall": "Recommended: 1600 × 1200 px landscape (JPG/PNG). Center the subject.",
+    "adGridShowOnCorner": "Show ad grid on this corner",
+    "adGridShowOnCornerHint": "Toggle the whole grid on or off. All tiles are mandatory once enabled."
   },
   "categories": {
     "title": "Categories",

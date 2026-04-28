@@ -39,6 +39,14 @@ exports.add = async (req, res, next) => {
     });
     res.status(201).json(item);
   } catch (error) {
+    // Race: same item added in another tab between findUnique and create.
+    if (error?.code === 'P2002') {
+      return res.status(400).json({ message: 'Already in wishlist.' });
+    }
+    // Invalid bookId — FK constraint fails.
+    if (error?.code === 'P2003') {
+      return res.status(400).json({ message: 'Invalid product.' });
+    }
     next(error);
   }
 };

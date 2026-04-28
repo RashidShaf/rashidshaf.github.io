@@ -19,6 +19,78 @@ const sanitizeTileInput = (raw) => ({
   image: raw.image && raw.image !== '' ? String(raw.image) : null,
 });
 
+// Translate well-known Prisma errors into clean 4xx responses. Returning
+// the response signals "handled"; null means "let next(error) take over."
+const handlePrismaError = (err, res, slot) => {
+  if (!err) return null;
+  const msg = typeof err.message === 'string' ? err.message : '';
+  // PrismaClientValidationError ("Argument `x` must not be null", "Argument `x` is missing")
+  // — fired client-side before the DB call. Or DB-side P2011/P2012 NOT NULL violation.
+  const isMissingField =
+    err.name === 'PrismaClientValidationError'
+    || err.code === 'P2011' || err.code === 'P2012'
+    || /must not be null/i.test(msg)
+    || /null constraint/i.test(msg);
+  if (isMissingField) {
+    // Try to surface which field — Prisma's message format includes
+    // "Argument `image` must not be null" or "Argument `image` is missing".
+    const fieldMatch = msg.match(/argument `?(\w+)`?/i);
+    const field = fieldMatch ? fieldMatch[1] : null;
+    let message;
+    if (field === 'image') {
+      message = slot
+        ? `Tile at position ${slot} needs an image. Upload one before saving.`
+        : 'Tile needs an image. Upload one before saving.';
+    } else if (field) {
+      message = slot
+        ? `Tile at position ${slot} is missing a required field (${field}).`
+        : `A required field is missing (${field}).`;
+    } else {
+      message = slot
+        ? `Tile at position ${slot} is missing a required field.`
+        : 'A required field is missing.';
+    }
+    return res.status(400).json({ message, code: 'MISSING_REQUIRED_FIELD', field });
+  }
+  if (err.code === 'P2002') {
+    return res.status(400).json({ message: 'Duplicate value (unique constraint).', code: 'DUPLICATE' });
+  }
+  if (err.code === 'P2003') {
+    return res.status(400).json({ message: 'Invalid reference (foreign key).', code: 'INVALID_REFERENCE' });
+  }
+  if (err.code === 'P2025') {
+    return res.status(404).json({ message: 'Record not found.', code: 'NOT_FOUND' });
+  }
+  return null;
+};
+
+// Corner-level enable/disable lives in a single Setting row to avoid a
+// schema migration. JSON shape: { [cornerId]: boolean }. A missing entry
+// means "enabled" (default behavior — corners that have tiles render them).
+const AD_GRID_ENABLED_KEY = 'adGridEnabledByCorner';
+
+const readEnabledMap = async () => {
+  const row = await prisma.setting.findUnique({ where: { key: AD_GRID_ENABLED_KEY } });
+  if (!row?.value) return {};
+  try {
+    const parsed = JSON.parse(row.value);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch { return {}; }
+};
+
+const writeEnabledMap = async (map) => {
+  await prisma.setting.upsert({
+    where: { key: AD_GRID_ENABLED_KEY },
+    update: { value: JSON.stringify(map) },
+    create: { key: AD_GRID_ENABLED_KEY, value: JSON.stringify(map) },
+  });
+};
+
+const isCornerAdGridEnabled = (map, cornerId) => {
+  // Default to true when the corner isn't in the map yet.
+  return map[cornerId] !== false;
+};
+
 // Unlink the original image and its auto-generated WebP siblings
 // (-400/-800/-1600.webp from generateVariantsSafe). Without sibling cleanup
 // every replace/delete leaks 3 orphans per tile.
@@ -39,11 +111,14 @@ exports.getByCorner = async (req, res, next) => {
     const corner = await prisma.category.findUnique({ where: { id: req.params.cornerId } });
     if (!corner) return res.status(404).json({ message: 'Corner not found.' });
 
-    const tiles = await prisma.adGridTile.findMany({
-      where: { cornerId: corner.id },
-      orderBy: { position: 'asc' },
-      include: TILE_INCLUDE,
-    });
+    const [tiles, enabledMap] = await Promise.all([
+      prisma.adGridTile.findMany({
+        where: { cornerId: corner.id },
+        orderBy: { position: 'asc' },
+        include: TILE_INCLUDE,
+      }),
+      readEnabledMap(),
+    ]);
 
     // Pad to 6 placeholder slots so the admin form always renders 6 cards
     const byPos = new Map(tiles.map((t) => [t.position, t]));
@@ -52,8 +127,58 @@ exports.getByCorner = async (req, res, next) => {
       padded.push(byPos.get(p) || { position: p, isPlaceholder: true });
     }
 
-    res.json({ corner: { id: corner.id, name: corner.name, nameAr: corner.nameAr, slug: corner.slug }, tiles: padded });
+    res.json({
+      corner: { id: corner.id, name: corner.name, nameAr: corner.nameAr, slug: corner.slug },
+      tiles: padded,
+      adGridEnabled: isCornerAdGridEnabled(enabledMap, corner.id),
+    });
   } catch (error) { next(error); }
+};
+
+// PATCH /admin/ad-grids/:cornerId/active
+// Body: { enabled: boolean }
+// Toggles whether this corner's ad grid is rendered on the storefront.
+// Stored in the global `adGridEnabledByCorner` Setting JSON map.
+exports.setCornerActive = async (req, res, next) => {
+  try {
+    const cornerId = req.params.cornerId;
+    const corner = await prisma.category.findUnique({
+      where: { id: cornerId },
+      select: { id: true, parentId: true },
+    });
+    if (!corner) return res.status(404).json({ message: 'Corner not found.' });
+    // Only top-level categories ("corners") can have an ad grid — sub-categories
+    // shouldn't be togglable here.
+    if (corner.parentId !== null) {
+      return res.status(400).json({ message: 'Only top-level corners can have an ad grid.' });
+    }
+
+    const enabled = req.body?.enabled === true || req.body?.enabled === 'true';
+
+    // Read-modify-write the JSON map atomically. Without a transaction,
+    // simultaneous toggles on different corners could erase each other.
+    await prisma.$transaction(async (tx) => {
+      const row = await tx.setting.findUnique({ where: { key: AD_GRID_ENABLED_KEY } });
+      let map = {};
+      if (row?.value) {
+        try {
+          const parsed = JSON.parse(row.value);
+          if (parsed && typeof parsed === 'object') map = parsed;
+        } catch {}
+      }
+      map[corner.id] = enabled;
+      await tx.setting.upsert({
+        where: { key: AD_GRID_ENABLED_KEY },
+        update: { value: JSON.stringify(map) },
+        create: { key: AD_GRID_ENABLED_KEY, value: JSON.stringify(map) },
+      });
+    });
+
+    res.json({ cornerId: corner.id, adGridEnabled: enabled });
+  } catch (error) {
+    if (handlePrismaError(error, res)) return;
+    next(error);
+  }
 };
 
 // PUT /admin/ad-grids/:cornerId
@@ -123,15 +248,19 @@ exports.upsertGrid = async (req, res, next) => {
           if (prev.image && prev.image !== t.image) {
             orphans.push(prev.image);
           }
+          // Prisma v6 requires relation syntax (connect/disconnect) instead
+          // of the scalar FK on update.
           await tx.adGridTile.update({
             where: { id: prev.id },
             data: {
-              bookId: t.bookId,
               externalLink: t.externalLink,
               title: t.title,
               titleAr: t.titleAr,
               isActive: t.isActive,
               image: t.image,
+              book: t.bookId
+                ? { connect: { id: t.bookId } }
+                : { disconnect: true },
             },
           });
         } else {
@@ -166,6 +295,7 @@ exports.upsertGrid = async (req, res, next) => {
     res.json({ tiles });
   } catch (error) {
     if (error.status === 400) return res.status(400).json({ message: error.message });
+    if (handlePrismaError(error, res)) return;
     next(error);
   }
 };
@@ -213,6 +343,7 @@ exports.uploadTileImage = async (req, res, next) => {
     res.json({ id: saved.id, position: saved.position, image: saved.image });
   } catch (error) {
     if (req.file?.path) fs.unlink(req.file.path, () => {});
+    if (handlePrismaError(error, res, parseInt(req.params.position, 10))) return;
     next(error);
   }
 };
@@ -230,5 +361,8 @@ exports.deleteTile = async (req, res, next) => {
     await prisma.adGridTile.delete({ where: { id: existing.id } });
     if (existing.image) unlinkImageFiles([existing.image]);
     res.json({ message: 'Tile deleted.' });
-  } catch (error) { next(error); }
+  } catch (error) {
+    if (handlePrismaError(error, res)) return;
+    next(error);
+  }
 };

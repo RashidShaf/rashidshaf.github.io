@@ -102,7 +102,7 @@ const AdBannerGrid = ({ tiles }) => {
       className="mb-6 sm:mb-8"
     >
       <div
-        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5 aspect-[12/5] lg:aspect-[14/4] 3xl:aspect-[16/4]"
+        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5 aspect-[12/5] lg:aspect-[3/1] 3xl:aspect-[7/2]"
         style={{
           gridTemplateColumns: '1.4fr 1fr 1.4fr 1fr',
           gridTemplateRows: '1fr 1fr',

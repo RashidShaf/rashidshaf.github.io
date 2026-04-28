@@ -62,6 +62,17 @@ async function getCornerSectionConfigMap() {
   } catch { return {}; }
 }
 
+// Per-corner on/off toggle for the ad-grid block. Stored in Setting under
+// `adGridEnabledByCorner` as { [cornerId]: boolean }. Missing entry => true.
+async function getAdGridEnabledMap() {
+  const row = await prisma.setting.findUnique({ where: { key: 'adGridEnabledByCorner' } });
+  if (!row?.value) return {};
+  try {
+    const parsed = JSON.parse(row.value);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch { return {}; }
+}
+
 // ---------- Per-corner category helpers ----------
 
 async function collectCornerCategoryIds(cornerId) {
@@ -120,7 +131,7 @@ async function cornerSectionBooks(cornerId, sectionType, cornerCategoryIds) {
 }
 
 // Build a corner block for the home layout: metadata + L2 children + ad tiles + the 5 per-section carousels.
-async function corner(cornerId, cornerSectionConfig) {
+async function corner(cornerId, cornerSectionConfig, adGridEnabledMap = {}) {
   const cat = await prisma.category.findUnique({
     where: { id: cornerId },
     include: {
@@ -131,7 +142,10 @@ async function corner(cornerId, cornerSectionConfig) {
         include: { _count: { select: { books: { where: { isActive: true } } } } },
       },
       adGridTiles: {
-        where: { isActive: true },
+        // Per-tile isActive is no longer surfaced in the admin UI — corner-
+        // level toggle controls the whole grid. We still keep the column on
+        // the model but ignore it here so admins can't end up with half-shown
+        // grids (all tiles are mandatory once a corner has its grid enabled).
         orderBy: { position: 'asc' },
         include: {
           book: { select: { id: true, slug: true, title: true, titleAr: true } },
@@ -161,10 +175,14 @@ async function corner(cornerId, cornerSectionConfig) {
     }))
   );
 
+  // Admin can disable the ad grid for an individual corner — when off,
+  // suppress the tiles even if rows exist in the DB. Default (no entry) = on.
+  const adGridEnabled = adGridEnabledMap[cat.id] !== false;
+
   return {
     type: 'corner',
     corner: { id: cat.id, name: cat.name, nameAr: cat.nameAr, slug: cat.slug, children: cat.children, _count: cat._count },
-    adTiles: cat.adGridTiles || [],
+    adTiles: adGridEnabled ? (cat.adGridTiles || []) : [],
     cornerSections,
   };
 }
@@ -188,12 +206,16 @@ async function globalSection(type) {
 // Public: GET /api/home/layout
 exports.getLayout = async (req, res, next) => {
   try {
-    const [config, cornerSectionConfig] = await Promise.all([getLayoutConfig(), getCornerSectionConfigMap()]);
+    const [config, cornerSectionConfig, adGridEnabledMap] = await Promise.all([
+      getLayoutConfig(),
+      getCornerSectionConfigMap(),
+      getAdGridEnabledMap(),
+    ]);
     const sections = [];
     for (const entry of config) {
       if (entry?.enabled === false) continue;
       if (entry.type === 'corner') {
-        const s = await corner(entry.cornerId, cornerSectionConfig);
+        const s = await corner(entry.cornerId, cornerSectionConfig, adGridEnabledMap);
         if (s) sections.push(s);
       } else {
         const s = await globalSection(entry.type);

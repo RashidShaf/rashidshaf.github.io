@@ -268,7 +268,12 @@
     "deleteFailed": "فشل الحذف",
     "noMatches": "لا توجد نتائج",
     "loadingDots": "جار التحميل...",
-    "removeImage": "إزالة الصورة"
+    "removeImage": "إزالة الصورة",
+    "adGridImageHint": "يفضّل: 1500 × 1500 بكسل مربعة (JPG/PNG). ضع الموضوع في المنتصف.",
+    "adGridImageHintFeature": "يفضّل: 1500 × 1500 بكسل مربعة (JPG/PNG). ضع الموضوع في المنتصف.",
+    "adGridImageHintSmall": "يفضّل: 1600 × 1200 بكسل أفقية (JPG/PNG). ضع الموضوع في المنتصف.",
+    "adGridShowOnCorner": "عرض شبكة الإعلانات في هذا الركن",
+    "adGridShowOnCornerHint": "تشغيل أو إيقاف الشبكة بالكامل. جميع البلاطات إلزامية عند التفعيل."
   },
   "categories": {
     "title": "التصنيفات",
