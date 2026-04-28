@@ -1,9 +1,9 @@
 // Lists files under server/uploads/<dir>/ that no DB record references.
-// Currently covers two upload roots:
-//   - covers/    -> Book.coverImage, Book.images[], ProductVariant.image
-//   - ad-grids/  -> AdGridTile.image
-// (banners/ and categories/ are not yet covered — TODO when those features
-// have similar orphan risk.)
+// Covers all four upload roots:
+//   - covers/      -> Book.coverImage, Book.images[], ProductVariant.image
+//   - ad-grids/    -> AdGridTile.image
+//   - banners/     -> Banner.desktopImage, Banner.mobileImage
+//   - categories/  -> Category.image, Category.placeholderImage
 //
 // Run with:
 //   node server/scripts/find-orphan-images.js
@@ -16,8 +16,10 @@ const fs = require('fs');
 const path = require('path');
 const prisma = require('../config/database');
 
+// Match any "-<width>.webp" sibling (covers/products use 400/800/1600,
+// banners use 2400, etc.). Width must be 3-4 digits.
 const baseNameOf = (filename) => {
-  const m = filename.match(/^(.*)-(?:400|800|1600)\.webp$/i);
+  const m = filename.match(/^(.*)-(\d{3,4})\.webp$/i);
   if (!m) return null;
   return m[1];
 };
@@ -44,9 +46,31 @@ const collectAdGridRefs = async () => {
   return refs;
 };
 
+const collectBannerRefs = async () => {
+  const banners = await prisma.banner.findMany({ select: { desktopImage: true, mobileImage: true } });
+  const refs = new Set();
+  for (const b of banners) {
+    if (b.desktopImage) refs.add(path.basename(b.desktopImage));
+    if (b.mobileImage) refs.add(path.basename(b.mobileImage));
+  }
+  return refs;
+};
+
+const collectCategoryRefs = async () => {
+  const cats = await prisma.category.findMany({ select: { image: true, placeholderImage: true } });
+  const refs = new Set();
+  for (const c of cats) {
+    if (c.image) refs.add(path.basename(c.image));
+    if (c.placeholderImage) refs.add(path.basename(c.placeholderImage));
+  }
+  return refs;
+};
+
 const TARGETS = [
   { label: 'covers', dir: path.join(__dirname, '..', 'uploads', 'covers'), collect: collectCoverRefs },
   { label: 'ad-grids', dir: path.join(__dirname, '..', 'uploads', 'ad-grids'), collect: collectAdGridRefs },
+  { label: 'banners', dir: path.join(__dirname, '..', 'uploads', 'banners'), collect: collectBannerRefs },
+  { label: 'categories', dir: path.join(__dirname, '..', 'uploads', 'categories'), collect: collectCategoryRefs },
 ];
 
 const findOrphansFor = async ({ label, dir, collect }) => {
@@ -55,7 +79,7 @@ const findOrphansFor = async ({ label, dir, collect }) => {
   }
   const referenced = await collect();
   const onDisk = fs.readdirSync(dir, { withFileTypes: true })
-    .filter((d) => d.isFile())
+    .filter((d) => d.isFile() && !d.name.startsWith('.'))
     .map((d) => d.name);
   const orphans = [];
   for (const name of onDisk) {

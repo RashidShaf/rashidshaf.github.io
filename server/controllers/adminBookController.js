@@ -663,11 +663,29 @@ exports.uploadCover = async (req, res, next) => {
       where: { id: req.params.id },
       select: { coverImage: true },
     });
+    if (!existingBook) {
+      // Book deleted between page load and save — clean up the multer-written
+      // file so it doesn't become an orphan, then 404.
+      fs.unlink(req.file.path, () => {});
+      return res.status(404).json({ message: 'Book not found.' });
+    }
 
     const coverImage = `uploads/covers/${req.file.filename}`;
-    const book = await prisma.book.update({
-      where: { id: req.params.id }, data: { coverImage },
-    });
+    let book;
+    try {
+      book = await prisma.book.update({
+        where: { id: req.params.id }, data: { coverImage },
+      });
+    } catch (err) {
+      // Race: book row vanished between findUnique and update. Don't leak the
+      // upload — the file is already on disk via multer, but no DB record
+      // will reference it.
+      fs.unlink(req.file.path, () => {});
+      if (err && err.code === 'P2025') {
+        return res.status(404).json({ message: 'Book no longer exists.' });
+      }
+      throw err;
+    }
 
     // Delete old cover file (and its sized WebP siblings) if it exists
     if (existingBook?.coverImage && existingBook.coverImage !== coverImage) {
@@ -711,15 +729,40 @@ exports.removeCover = async (req, res, next) => {
 exports.uploadImages = async (req, res, next) => {
   try {
     if (!req.files || req.files.length === 0) return res.status(400).json({ message: 'No files uploaded.' });
-    const newImages = req.files.map((f) => `uploads/covers/${f.filename}`);
     const book = await prisma.book.findUnique({ where: { id: req.params.id }, select: { images: true } });
-    const images = [...(book?.images || []), ...newImages].slice(0, 3);
-    const updated = await prisma.book.update({
-      where: { id: req.params.id }, data: { images },
-    });
+    if (!book) {
+      // Book vanished between page load and save — clean up multer files.
+      req.files.forEach((f) => fs.unlink(f.path, () => {}));
+      return res.status(404).json({ message: 'Book not found.' });
+    }
 
-    // Generate variants for each new file (best-effort)
-    await Promise.all(req.files.map((f) => generateVariantsSafe(f.path)));
+    const newImages = req.files.map((f) => `uploads/covers/${f.filename}`);
+    const merged = [...(book.images || []), ...newImages];
+    const images = merged.slice(0, 3);
+    const dropped = merged.slice(3); // anything beyond the cap — never persisted
+
+    let updated;
+    try {
+      updated = await prisma.book.update({
+        where: { id: req.params.id }, data: { images },
+      });
+    } catch (err) {
+      // Race or other Prisma failure — clean up everything we just wrote.
+      req.files.forEach((f) => fs.unlink(f.path, () => {}));
+      if (err && err.code === 'P2025') {
+        return res.status(404).json({ message: 'Book no longer exists.' });
+      }
+      throw err;
+    }
+
+    // Drop any over-cap files (`.slice(0, 3)` would otherwise leak them as orphans)
+    if (dropped.length > 0) {
+      unlinkImageFiles(dropped);
+    }
+
+    // Generate variants only for files we actually kept.
+    const keptFiles = req.files.filter((f) => images.includes(`uploads/covers/${f.filename}`));
+    await Promise.all(keptFiles.map((f) => generateVariantsSafe(f.path)));
 
     res.json({ images: updated.images });
   } catch (error) {
