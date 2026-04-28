@@ -38,7 +38,7 @@ const AdBannerGrid = ({ tiles }) => {
           alt={title || ''}
           width={isFeature ? 800 : 400}
           height={isFeature ? 1000 : 400}
-          widths={[400, 800, 1200]}
+          widths={[400, 800, 1600]}
           sizes={isFeature
             ? '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 28vw'
             : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 18vw'}
@@ -83,19 +83,17 @@ const AdBannerGrid = ({ tiles }) => {
     );
   }
 
-  // 6-tile magazine layout
-  // Desktop (lg+): 4 columns × 2 rows. Tiles 1 and 3 span both rows.
+  // 6-tile magazine layout — same 4-col × 2-row grid at every breakpoint.
+  // Tiles 1 and 3 span both rows (the wider columns), tiles 2/4/5/6 fill the
+  // narrow columns. Cells scale proportionally on small screens — no separate
+  // mobile/tablet branches.
+  //
   //   col1     col2     col3     col4
   // ┌────────┬────────┬────────┬────────┐
   // │  T1    │   T2   │   T3   │   T4   │
   // │ (tall) ├────────┤ (tall) ├────────┤
   // │        │   T5   │        │   T6   │
   // └────────┴────────┴────────┴────────┘
-  //
-  // Tablet (sm-lg): 4 columns × 2 rows but all same size (no row-span) so
-  // small screens still feel ordered.
-  //
-  // Mobile (<sm): T1 full-width hero, then T2-T6 in a 2-col grid.
   const [t1, t2, t3, t4, t5, t6] = ordered;
 
   return (
@@ -103,12 +101,11 @@ const AdBannerGrid = ({ tiles }) => {
       dir={isRTL ? 'rtl' : 'ltr'}
       className="mb-6 sm:mb-8"
     >
-      {/* Desktop magazine layout */}
       <div
-        className="hidden lg:grid gap-3 lg:gap-4 3xl:gap-5"
+        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5"
         style={{
           gridTemplateColumns: '1.4fr 1fr 1.4fr 1fr',
-          gridTemplateRows: 'minmax(50px, 1fr) minmax(50px, 1fr)',
+          gridTemplateRows: 'minmax(60px, 1fr) minmax(60px, 1fr)',
         }}
       >
         <div style={{ gridColumn: '1', gridRow: '1 / span 2' }}>{renderTile(t1, true)}</div>
@@ -117,20 +114,6 @@ const AdBannerGrid = ({ tiles }) => {
         <div style={{ gridColumn: '4', gridRow: '1' }}>{renderTile(t4, false)}</div>
         <div style={{ gridColumn: '2', gridRow: '2' }}>{renderTile(t5, false)}</div>
         <div style={{ gridColumn: '4', gridRow: '2' }}>{renderTile(t6, false)}</div>
-      </div>
-
-      {/* Mobile + tablet — T1 full width hero, then 2-col grid of T2..T6 */}
-      <div className="lg:hidden">
-        <div className="aspect-[5/1] sm:aspect-[8/1] mb-3 sm:mb-4">
-          {renderTile(t1, true)}
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div className="aspect-[2/1]">{renderTile(t2, false)}</div>
-          <div className="aspect-[2/1]">{renderTile(t3, false)}</div>
-          <div className="aspect-[2/1]">{renderTile(t4, false)}</div>
-          <div className="aspect-[2/1]">{renderTile(t5, false)}</div>
-          <div className="aspect-[2/1]">{renderTile(t6, false)}</div>
-        </div>
       </div>
     </div>
   );

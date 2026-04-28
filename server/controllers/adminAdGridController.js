@@ -1,5 +1,5 @@
 const prisma = require('../config/database');
-const { generateVariantsSafe } = require('../utils/images');
+const { generateVariantsSafe, variantPath, DEFAULT_WIDTHS } = require('../utils/images');
 const fs = require('fs');
 const path = require('path');
 
@@ -19,11 +19,17 @@ const sanitizeTileInput = (raw) => ({
   image: raw.image && raw.image !== '' ? String(raw.image) : null,
 });
 
+// Unlink the original image and its auto-generated WebP siblings
+// (-400/-800/-1600.webp from generateVariantsSafe). Without sibling cleanup
+// every replace/delete leaks 3 orphans per tile.
 const unlinkImageFiles = (relativePaths) => {
   relativePaths.forEach((rel) => {
     if (!rel) return;
     const abs = path.join(__dirname, '..', rel);
     fs.unlink(abs, () => {});
+    DEFAULT_WIDTHS.forEach((w) => {
+      fs.unlink(variantPath(abs, w), () => {});
+    });
   });
 };
 

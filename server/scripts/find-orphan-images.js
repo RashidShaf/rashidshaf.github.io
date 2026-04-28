@@ -1,5 +1,11 @@
-// Lists files in server/uploads/covers/ that no Book.coverImage,
-// Book.images[], or ProductVariant.image references. Run with:
+// Lists files under server/uploads/<dir>/ that no DB record references.
+// Currently covers two upload roots:
+//   - covers/    -> Book.coverImage, Book.images[], ProductVariant.image
+//   - ad-grids/  -> AdGridTile.image
+// (banners/ and categories/ are not yet covered — TODO when those features
+// have similar orphan risk.)
+//
+// Run with:
 //   node server/scripts/find-orphan-images.js
 // Add `--delete` to actually remove the orphans (otherwise dry-run only).
 //
@@ -10,84 +16,107 @@ const fs = require('fs');
 const path = require('path');
 const prisma = require('../config/database');
 
-const COVERS_DIR = path.join(__dirname, '..', 'uploads', 'covers');
-const SIZE_SIBLING_RE = /-(400|800|1600)\.webp$/i;
-
 const baseNameOf = (filename) => {
   const m = filename.match(/^(.*)-(?:400|800|1600)\.webp$/i);
   if (!m) return null;
   return m[1];
 };
 
-(async () => {
-  const dryRun = !process.argv.includes('--delete');
-
+const collectCoverRefs = async () => {
   const [books, variants] = await Promise.all([
     prisma.book.findMany({ select: { coverImage: true, images: true } }),
     prisma.productVariant.findMany({ select: { image: true } }),
   ]);
-
-  const referenced = new Set();
-  const addRef = (p) => {
-    if (!p) return;
-    referenced.add(path.basename(p));
-  };
+  const refs = new Set();
+  const addRef = (p) => { if (p) refs.add(path.basename(p)); };
   for (const b of books) {
     addRef(b.coverImage);
     for (const img of (b.images || [])) addRef(img);
   }
   for (const v of variants) addRef(v.image);
+  return refs;
+};
 
-  if (!fs.existsSync(COVERS_DIR)) {
-    console.log(`No directory: ${COVERS_DIR}`);
-    process.exit(0);
+const collectAdGridRefs = async () => {
+  const tiles = await prisma.adGridTile.findMany({ select: { image: true } });
+  const refs = new Set();
+  for (const t of tiles) if (t.image) refs.add(path.basename(t.image));
+  return refs;
+};
+
+const TARGETS = [
+  { label: 'covers', dir: path.join(__dirname, '..', 'uploads', 'covers'), collect: collectCoverRefs },
+  { label: 'ad-grids', dir: path.join(__dirname, '..', 'uploads', 'ad-grids'), collect: collectAdGridRefs },
+];
+
+const findOrphansFor = async ({ label, dir, collect }) => {
+  if (!fs.existsSync(dir)) {
+    return { label, dir, missing: true, onDisk: 0, refs: 0, orphans: [] };
   }
-
-  const onDisk = fs.readdirSync(COVERS_DIR);
+  const referenced = await collect();
+  const onDisk = fs.readdirSync(dir, { withFileTypes: true })
+    .filter((d) => d.isFile())
+    .map((d) => d.name);
   const orphans = [];
-
   for (const name of onDisk) {
     if (referenced.has(name)) continue;
-    // If this is a sized sibling and its base file is referenced, it's owned.
     const base = baseNameOf(name);
     if (base) {
-      const baseRefs = [...referenced].filter((r) => {
+      const ownedByReferencedBase = [...referenced].some((r) => {
         const dot = r.lastIndexOf('.');
         const stem = dot > 0 ? r.slice(0, dot) : r;
         return stem === base;
       });
-      if (baseRefs.length > 0) continue;
+      if (ownedByReferencedBase) continue;
     }
     orphans.push(name);
   }
+  return { label, dir, missing: false, onDisk: onDisk.length, refs: referenced.size, orphans };
+};
 
-  console.log(`Files on disk:  ${onDisk.length}`);
-  console.log(`DB-referenced:  ${referenced.size}`);
-  console.log(`Orphans found:  ${orphans.length}`);
+(async () => {
+  const dryRun = !process.argv.includes('--delete');
 
-  if (orphans.length === 0) {
-    console.log('Clean ✓');
-    process.exit(0);
-  }
+  let totalOrphans = 0;
+  let totalDeleted = 0;
 
-  console.log('\nOrphan files:');
-  for (const name of orphans) console.log(`  ${name}`);
+  for (const target of TARGETS) {
+    const result = await findOrphansFor(target);
+    console.log(`\n[${result.label}]`);
+    if (result.missing) {
+      console.log(`  No directory: ${result.dir}`);
+      continue;
+    }
+    console.log(`  Files on disk:  ${result.onDisk}`);
+    console.log(`  DB-referenced:  ${result.refs}`);
+    console.log(`  Orphans found:  ${result.orphans.length}`);
 
-  if (dryRun) {
-    console.log('\nDry-run only. Re-run with --delete to remove them.');
-    process.exit(0);
-  }
+    if (result.orphans.length === 0) {
+      console.log('  Clean ✓');
+      continue;
+    }
+    totalOrphans += result.orphans.length;
 
-  let deleted = 0;
-  for (const name of orphans) {
-    try {
-      fs.unlinkSync(path.join(COVERS_DIR, name));
-      deleted++;
-    } catch (e) {
-      console.warn(`Failed to delete ${name}: ${e.message}`);
+    console.log('  Orphan files:');
+    for (const name of result.orphans) console.log(`    ${name}`);
+
+    if (dryRun) continue;
+
+    for (const name of result.orphans) {
+      try {
+        fs.unlinkSync(path.join(result.dir, name));
+        totalDeleted++;
+      } catch (e) {
+        console.warn(`  Failed to delete ${name}: ${e.message}`);
+      }
     }
   }
-  console.log(`\nDeleted ${deleted}/${orphans.length} orphan files.`);
+
+  if (dryRun && totalOrphans > 0) {
+    console.log('\nDry-run only. Re-run with --delete to remove them.');
+  } else if (!dryRun) {
+    console.log(`\nDeleted ${totalDeleted}/${totalOrphans} orphan files.`);
+  }
   process.exit(0);
 })().catch((err) => {
   console.error(err);
