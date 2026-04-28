@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiX, FiSearch, FiTrash2, FiImage, FiPlus } from 'react-icons/fi';
+import { FiX, FiSearch, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
-import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
@@ -105,7 +104,7 @@ function BookPicker({ value, book, onSelect, onClear }) {
   );
 }
 
-function TileCard({ tile, onChange, position, onDeleteRequest }) {
+function TileCard({ tile, onChange, position }) {
   const { t } = useLanguageStore();
   const fileRef = useRef(null);
 
@@ -125,7 +124,6 @@ function TileCard({ tile, onChange, position, onDeleteRequest }) {
     ? null
     : (tile.imagePreview || (tile.image ? `${API_BASE}/${tile.image}` : null));
   const hasImage = !!previewSrc;
-  const hasServerSavedTile = !!(tile.image && !tile.isPlaceholder);
 
   const clearImage = () => {
     if (tile.imagePreview) {
@@ -172,28 +170,15 @@ function TileCard({ tile, onChange, position, onDeleteRequest }) {
         <span className="text-[11px] font-bold uppercase tracking-wider text-admin-muted">
           {t('books.tileLabel').replace('{{n}}', position)}
         </span>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-admin-muted">
-            <input
-              type="checkbox"
-              checked={tile.isActive}
-              onChange={(e) => onChange({ isActive: e.target.checked })}
-              className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
-            />
-            {t('common.active')}
-          </label>
-          {hasServerSavedTile && (
-            <button
-              type="button"
-              onClick={() => onDeleteRequest(position)}
-              className="p-1 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-              title={t('books.deleteTile')}
-              aria-label={t('books.deleteTile')}
-            >
-              <FiTrash2 size={14} />
-            </button>
-          )}
-        </div>
+        <label className="flex items-center gap-1.5 text-[11px] text-admin-muted">
+          <input
+            type="checkbox"
+            checked={tile.isActive}
+            onChange={(e) => onChange({ isActive: e.target.checked })}
+            className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+          />
+          {t('common.active')}
+        </label>
       </div>
 
       <div className="relative aspect-square w-full bg-gray-100 border border-admin-border rounded-md overflow-hidden">
@@ -264,7 +249,6 @@ export default function AdGrids() {
   const [tiles, setTiles] = useState(POSITIONS.map(blankTile));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleteConfirmPos, setDeleteConfirmPos] = useState(null);
 
   // Load all parent (L1) categories — those are the corners
   useEffect(() => {
@@ -311,25 +295,15 @@ export default function AdGrids() {
       : tt));
   };
 
-  // Save: apply pending image removals, upload pending image files, then PUT the
-  // metadata. All persistence is deferred to this handler — picking a file or
-  // clicking the X never hits the server alone.
+  // Save: upload any pending image files, then PUT the full grid. A tile with
+  // its image cleared (X clicked, no replacement picked) is sent with image=null
+  // so the row keeps its metadata while the storefront stops rendering it.
   const handleSave = async () => {
     if (!selectedCornerId) return;
     setSaving(true);
     try {
-      // 1. Apply pending removals first (DELETE the tile entirely if its image
-      //    was cleared and not replaced).
-      const toRemove = tiles.filter((tt) => tt.imageMarkedForRemoval && !tt.imageFile);
-      for (const tt of toRemove) {
-        try {
-          await api.delete(`/admin/ad-grids/${selectedCornerId}/tile/${tt.position}`);
-        } catch {
-          toast.warning(t('books.tileDeleted').replace('{{n}}', tt.position) + ' ✗');
-        }
-      }
-
-      // 2. Upload any pending image files.
+      // Upload any pending image files first so each tile's `image` ends up
+      // pointing at the persisted path before the PUT.
       const pending = tiles.filter((tt) => tt.imageFile);
       for (const tt of pending) {
         const fd = new FormData();
@@ -341,17 +315,22 @@ export default function AdGrids() {
           onTileImageUploaded(tt.position, res.data.image);
           tt.image = res.data.image;
           tt.imageFile = null;
+          tt.imageMarkedForRemoval = false;
         } catch {
           toast.warning(t('books.uploadFailed') + ` (${tt.position})`);
         }
       }
 
-      // 3. Build payload — only tiles with a usable image survive.
+      // Build payload. Skip pure placeholder slots (no image, no metadata).
+      // Otherwise include the tile so the server keeps its metadata even
+      // when the image was cleared via the X button.
+      const hasContent = (tt) => (tt.image && !tt.imageMarkedForRemoval)
+        || tt.bookId || tt.externalLink || tt.title || tt.titleAr;
       const payload = tiles
-        .filter((tt) => tt.image && tt.image.length > 0 && !tt.imageMarkedForRemoval)
+        .filter((tt) => hasContent(tt))
         .map((tt) => ({
           position: tt.position,
-          image: tt.image,
+          image: tt.imageMarkedForRemoval ? null : (tt.image || null),
           bookId: tt.bookId || null,
           externalLink: tt.externalLink || null,
           title: tt.title || null,
@@ -385,19 +364,6 @@ export default function AdGrids() {
       toast.error(err.response?.data?.message || t('books.failedSaveGrid'));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDeleteConfirmed = async () => {
-    const position = deleteConfirmPos;
-    setDeleteConfirmPos(null);
-    if (!selectedCornerId || !position) return;
-    try {
-      await api.delete(`/admin/ad-grids/${selectedCornerId}/tile/${position}`);
-      setTiles((prev) => prev.map((tt) => tt.position === position ? blankTile(position) : tt));
-      toast.success(t('books.tileDeleted').replace('{{n}}', position));
-    } catch (err) {
-      toast.error(err.response?.data?.message || t('books.deleteFailed'));
     }
   };
 
@@ -450,7 +416,6 @@ export default function AdGrids() {
                       tile={tile}
                       position={tile.position}
                       onChange={(patch) => updateTile(tile.position, patch)}
-                      onDeleteRequest={(pos) => setDeleteConfirmPos(pos)}
                     />
                   ))}
                 </div>
@@ -471,14 +436,6 @@ export default function AdGrids() {
         </div>
       </div>
 
-      <ConfirmModal
-        open={deleteConfirmPos !== null}
-        title={t('books.deleteTileTitle').replace('{{n}}', deleteConfirmPos || '')}
-        message={t('books.deleteTileMessage')}
-        confirmText={t('common.delete')}
-        onConfirm={handleDeleteConfirmed}
-        onCancel={() => setDeleteConfirmPos(null)}
-      />
     </div>
   );
 }

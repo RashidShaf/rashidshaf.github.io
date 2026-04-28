@@ -458,7 +458,10 @@ model AdGridTile {
   id           String   @id @default(uuid())
   cornerId     String   @map("corner_id")
   position     Int
-  image        String
+  // Nullable so admin can clear the image (X button) without losing the
+  // tile's metadata (link, titles). Storefront filters out tiles with no
+  // image so they don't render until a new image is uploaded.
+  image        String?
   bookId       String?  @map("book_id")
   externalLink String?  @map("external_link")
   title        String?

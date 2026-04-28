@@ -117,7 +117,12 @@ exports.upsertGrid = async (req, res, next) => {
       for (const t of cleaned) {
         const prev = existingByPos.get(t.position);
         if (prev) {
-          // Update — keep existing image unless caller explicitly supplied a new path
+          // Update — image is always written (including null when admin
+          // cleared it via the X button). Old file becomes an orphan if the
+          // image changed.
+          if (prev.image && prev.image !== t.image) {
+            orphans.push(prev.image);
+          }
           await tx.adGridTile.update({
             where: { id: prev.id },
             data: {
@@ -126,17 +131,13 @@ exports.upsertGrid = async (req, res, next) => {
               title: t.title,
               titleAr: t.titleAr,
               isActive: t.isActive,
-              ...(t.image ? { image: t.image } : {}),
+              image: t.image,
             },
           });
         } else {
-          // Create — image path is required (caller must have uploaded one first
-          // via the per-tile image route, OR the row will be rejected here)
-          if (!t.image) {
-            const err = new Error(`Tile at position ${t.position} is missing an image.`);
-            err.status = 400;
-            throw err;
-          }
+          // Create. Image is allowed to be null so admin can scaffold a tile
+          // (link/titles) before settling on an image. Storefront skips
+          // image-less tiles.
           await tx.adGridTile.create({
             data: {
               cornerId,
