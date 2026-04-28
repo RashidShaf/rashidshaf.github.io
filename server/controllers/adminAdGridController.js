@@ -77,6 +77,17 @@ exports.upsertGrid = async (req, res, next) => {
       if (!Number.isFinite(t.position) || t.position < 1 || t.position > 6) {
         return res.status(400).json({ message: `Invalid position at slot ${i + 1}.` });
       }
+      // Reject path-traversal attempts in the image path. We only accept paths
+      // that this server itself produced (under uploads/ad-grids/). No `..`,
+      // no absolute paths, no escape via leading slash.
+      if (t.image) {
+        const safe = !t.image.includes('..')
+          && !path.isAbsolute(t.image)
+          && t.image.startsWith('uploads/ad-grids/');
+        if (!safe) {
+          return res.status(400).json({ message: `Invalid image path at slot ${i + 1}.` });
+        }
+      }
     }
 
     // Reject duplicate positions in the payload

@@ -45,7 +45,7 @@ const AdBannerGrid = ({ tiles }) => {
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {title && (
-          <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-black/65 to-transparent">
+          <div className="absolute inset-x-0 bottom-0 px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/55">
             <p className={`${isFeature ? 'text-sm sm:text-base' : 'text-[11px] sm:text-xs'} font-semibold text-white line-clamp-1`}>
               {title}
             </p>
@@ -54,7 +54,7 @@ const AdBannerGrid = ({ tiles }) => {
       </>
     );
 
-    const wrapperClass = `group relative block w-full h-full rounded-xl overflow-hidden bg-surface-alt border border-muted/10 ${target ? 'hover:ring-2 hover:ring-accent/40 transition-all' : 'pointer-events-none opacity-70'}`;
+    const wrapperClass = `group relative block w-full h-full rounded-xl overflow-hidden bg-surface-alt border border-muted/10 focus:outline-none ${target ? 'hover:ring-2 hover:ring-[#560736]/50 focus-visible:ring-2 focus-visible:ring-[#560736]/60 transition-all' : 'pointer-events-none opacity-70'}`;
 
     if (!target) return <div className={wrapperClass}>{inner}</div>;
     if (isExternal) {
@@ -102,10 +102,10 @@ const AdBannerGrid = ({ tiles }) => {
       className="mb-6 sm:mb-8"
     >
       <div
-        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5"
+        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5 aspect-[12/5] lg:aspect-[14/4] 3xl:aspect-[16/4]"
         style={{
           gridTemplateColumns: '1.4fr 1fr 1.4fr 1fr',
-          gridTemplateRows: 'minmax(60px, 1fr) minmax(60px, 1fr)',
+          gridTemplateRows: '1fr 1fr',
         }}
       >
         <div style={{ gridColumn: '1', gridRow: '1 / span 2' }}>{renderTile(t1, true)}</div>

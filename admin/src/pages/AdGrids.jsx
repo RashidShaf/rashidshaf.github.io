@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FiUpload, FiX, FiSearch, FiTrash2, FiImage } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiX, FiSearch, FiTrash2, FiImage, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import useLanguageStore from '../stores/useLanguageStore';
+import ConfirmModal from '../components/ConfirmModal';
 import api from '../utils/api';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '');
@@ -12,6 +13,7 @@ const blankTile = (position) => ({
   image: '',
   imageFile: null,
   imagePreview: null,
+  imageMarkedForRemoval: false,
   bookId: null,
   book: null,
   externalLink: '',
@@ -21,9 +23,9 @@ const blankTile = (position) => ({
   isPlaceholder: true,
 });
 
-// Inline book search/picker — wraps a small dropdown over the admin books list endpoint.
+// Inline product picker — wraps a small dropdown over the admin books endpoint.
 function BookPicker({ value, book, onSelect, onClear }) {
-  const { language } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState([]);
@@ -79,14 +81,14 @@ function BookPicker({ value, book, onSelect, onClear }) {
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          placeholder="Search product..."
+          placeholder={t('books.searchProduct')}
           className="w-full ps-7 pe-2 py-2 bg-white border border-admin-input-border rounded-md text-xs text-admin-text focus:outline-none focus:border-admin-accent"
         />
       </div>
       {open && (query.trim().length >= 2) && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
-          {loading && <p className="p-2 text-xs text-admin-muted">Loading...</p>}
-          {!loading && results.length === 0 && <p className="p-2 text-xs text-admin-muted">No matches</p>}
+          {loading && <p className="p-2 text-xs text-admin-muted">{t('books.loadingDots')}</p>}
+          {!loading && results.length === 0 && <p className="p-2 text-xs text-admin-muted">{t('books.noMatches')}</p>}
           {!loading && results.map((b) => (
             <button
               key={b.id}
@@ -103,73 +105,113 @@ function BookPicker({ value, book, onSelect, onClear }) {
   );
 }
 
-function TileCard({ tile, onChange, position, cornerId, onUploaded }) {
+function TileCard({ tile, onChange, position, onDeleteRequest }) {
+  const { t } = useLanguageStore();
   const fileRef = useRef(null);
 
   const handlePickImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    onChange({ imageFile: file, imagePreview: URL.createObjectURL(file) });
+    onChange({
+      imageFile: file,
+      imagePreview: URL.createObjectURL(file),
+      imageMarkedForRemoval: false,
+    });
+    // Allow re-picking the same file later
+    if (fileRef.current) fileRef.current.value = '';
   };
 
-  const handleUploadNow = async () => {
-    if (!tile.imageFile) return;
-    const fd = new FormData();
-    fd.append('image', tile.imageFile);
-    try {
-      const res = await api.post(`/admin/ad-grids/${cornerId}/tile/${position}/image`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      onUploaded(res.data.image);
-      toast.success(`Tile ${position} image uploaded`);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+  const previewSrc = tile.imageMarkedForRemoval
+    ? null
+    : (tile.imagePreview || (tile.image ? `${API_BASE}/${tile.image}` : null));
+  const hasImage = !!previewSrc;
+  const hasServerSavedTile = !!(tile.image && !tile.isPlaceholder);
+
+  const clearImage = () => {
+    if (tile.imagePreview) {
+      try { URL.revokeObjectURL(tile.imagePreview); } catch {}
     }
+    onChange({
+      imageFile: null,
+      imagePreview: null,
+      // If a server-saved image existed, mark it for deferred removal on Save grid.
+      // (If the tile was newly added in this session, no server cleanup needed.)
+      imageMarkedForRemoval: !!tile.image,
+    });
   };
 
-  const previewSrc = tile.imagePreview || (tile.image ? `${API_BASE}/${tile.image}` : null);
-
-  return (
-    <div className="bg-white border border-admin-border rounded-lg p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-admin-muted">Tile {position}</span>
-        <label className="flex items-center gap-1.5 text-[11px] text-admin-muted">
-          <input
-            type="checkbox"
-            checked={tile.isActive}
-            onChange={(e) => onChange({ isActive: e.target.checked })}
-            className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
-          />
-          Active
-        </label>
-      </div>
-
-      <div
-        onClick={() => fileRef.current?.click()}
-        className="relative aspect-square w-full bg-gray-100 border-2 border-dashed border-admin-border rounded-md cursor-pointer hover:border-admin-accent transition-colors overflow-hidden flex items-center justify-center"
-      >
-        {previewSrc ? (
-          <img src={previewSrc} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <div className="text-center text-admin-muted text-[11px] flex flex-col items-center gap-1">
-            <FiImage size={20} />
-            Click to upload
-          </div>
-        )}
-      </div>
-      <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
-      {tile.imageFile && (
+  // Empty/placeholder slot: compact dashed-border card prompting upload.
+  // Reduces visual weight when corners have <6 tiles, matching issue 6.
+  if (!hasImage) {
+    return (
+      <div className="bg-white border border-admin-border rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-admin-muted">
+            {t('books.tileLabel').replace('{{n}}', position)}
+          </span>
+        </div>
         <button
           type="button"
-          onClick={handleUploadNow}
-          className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-admin-success text-white rounded-md text-[11px] font-semibold hover:bg-green-600"
+          onClick={() => fileRef.current?.click()}
+          className="relative aspect-[5/3] w-full bg-gray-50 border-2 border-dashed border-admin-border rounded-md cursor-pointer hover:border-admin-accent hover:bg-gray-100 transition-colors overflow-hidden flex items-center justify-center text-admin-muted text-[11px]"
         >
-          <FiUpload size={11} /> Upload now
+          <div className="flex flex-col items-center gap-1">
+            <FiPlus size={20} />
+            <span>{t('books.addTile')}</span>
+          </div>
         </button>
-      )}
+        <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
+      </div>
+    );
+  }
+
+  // Filled tile — full editor.
+  return (
+    <div className="bg-white border border-admin-border rounded-lg p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-admin-muted">
+          {t('books.tileLabel').replace('{{n}}', position)}
+        </span>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] text-admin-muted">
+            <input
+              type="checkbox"
+              checked={tile.isActive}
+              onChange={(e) => onChange({ isActive: e.target.checked })}
+              className="w-3.5 h-3.5 rounded border-admin-input-border text-admin-accent focus:ring-admin-accent"
+            />
+            {t('common.active')}
+          </label>
+          {hasServerSavedTile && (
+            <button
+              type="button"
+              onClick={() => onDeleteRequest(position)}
+              className="p-1 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              title={t('books.deleteTile')}
+              aria-label={t('books.deleteTile')}
+            >
+              <FiTrash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="relative aspect-square w-full bg-gray-100 border border-admin-border rounded-md overflow-hidden">
+        <img src={previewSrc} alt="" className="w-full h-full object-cover" />
+        <button
+          type="button"
+          onClick={clearImage}
+          className="absolute top-1.5 end-1.5 p-1 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
+          aria-label={t('books.removeImage')}
+          title={t('books.removeImage')}
+        >
+          <FiX size={14} />
+        </button>
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
 
       <div>
-        <label className="block text-[10px] font-medium text-admin-muted mb-1">Linked product</label>
+        <label className="block text-[10px] font-medium text-admin-muted mb-1">{t('books.linkedProduct')}</label>
         <BookPicker
           value={tile.bookId}
           book={tile.book}
@@ -179,7 +221,7 @@ function TileCard({ tile, onChange, position, cornerId, onUploaded }) {
       </div>
 
       <div>
-        <label className="block text-[10px] font-medium text-admin-muted mb-1">External link (fallback)</label>
+        <label className="block text-[10px] font-medium text-admin-muted mb-1">{t('books.externalLink')}</label>
         <input
           type="text"
           value={tile.externalLink || ''}
@@ -192,7 +234,7 @@ function TileCard({ tile, onChange, position, cornerId, onUploaded }) {
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] font-medium text-admin-muted mb-1">Title EN</label>
+          <label className="block text-[10px] font-medium text-admin-muted mb-1">{t('books.tileTitleEn')}</label>
           <input
             type="text"
             value={tile.title || ''}
@@ -201,7 +243,7 @@ function TileCard({ tile, onChange, position, cornerId, onUploaded }) {
           />
         </div>
         <div>
-          <label className="block text-[10px] font-medium text-admin-muted mb-1">Title AR</label>
+          <label className="block text-[10px] font-medium text-admin-muted mb-1">{t('books.tileTitleAr')}</label>
           <input
             type="text"
             value={tile.titleAr || ''}
@@ -222,6 +264,7 @@ export default function AdGrids() {
   const [tiles, setTiles] = useState(POSITIONS.map(blankTile));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmPos, setDeleteConfirmPos] = useState(null);
 
   // Load all parent (L1) categories — those are the corners
   useEffect(() => {
@@ -230,7 +273,7 @@ export default function AdGrids() {
       const parents = all.filter((c) => !c.parentId).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setCorners(parents);
       if (!selectedCornerId && parents.length > 0) setSelectedCornerId(parents[0].id);
-    }).catch(() => toast.error('Failed to load corners'));
+    }).catch(() => toast.error(t('books.failedLoadCorners')));
     // eslint-disable-next-line
   }, []);
 
@@ -244,6 +287,7 @@ export default function AdGrids() {
         image: t.image || '',
         imageFile: null,
         imagePreview: null,
+        imageMarkedForRemoval: false,
         bookId: t.bookId || null,
         book: t.book || null,
         externalLink: t.externalLink || '',
@@ -252,99 +296,108 @@ export default function AdGrids() {
         isActive: t.isActive !== false,
         isPlaceholder: !!t.isPlaceholder,
       }));
-      // Ensure exactly 6 entries 1..6 in order
       const map = new Map(padded.map((p) => [p.position, p]));
       setTiles(POSITIONS.map((p) => map.get(p) || blankTile(p)));
-    }).catch(() => toast.error('Failed to load tiles')).finally(() => setLoading(false));
-  }, [selectedCornerId]);
+    }).catch(() => toast.error(t('books.failedLoadTiles'))).finally(() => setLoading(false));
+  }, [selectedCornerId, t]);
 
   const updateTile = (position, patch) => {
-    setTiles((prev) => prev.map((t) => t.position === position ? { ...t, ...patch } : t));
+    setTiles((prev) => prev.map((tt) => tt.position === position ? { ...tt, ...patch } : tt));
   };
 
   const onTileImageUploaded = (position, serverImagePath) => {
-    setTiles((prev) => prev.map((t) => t.position === position
-      ? { ...t, image: serverImagePath, imageFile: null, imagePreview: null }
-      : t));
+    setTiles((prev) => prev.map((tt) => tt.position === position
+      ? { ...tt, image: serverImagePath, imageFile: null, imagePreview: null, imageMarkedForRemoval: false, isPlaceholder: false }
+      : tt));
   };
 
-  // Save: PUT all 6 tiles. Image must already be uploaded via "Upload now" — the
-  // PUT only persists metadata + linkage. Tiles with no image AND no existing
-  // server image are treated as empty slots (sent as inactive placeholders, or
-  // simply omitted so the server deletes them).
+  // Save: apply pending image removals, upload pending image files, then PUT the
+  // metadata. All persistence is deferred to this handler — picking a file or
+  // clicking the X never hits the server alone.
   const handleSave = async () => {
     if (!selectedCornerId) return;
     setSaving(true);
     try {
-      // Auto-upload any pending image files first
-      const pending = tiles.filter((t) => t.imageFile);
-      for (const t of pending) {
-        const fd = new FormData();
-        fd.append('image', t.imageFile);
+      // 1. Apply pending removals first (DELETE the tile entirely if its image
+      //    was cleared and not replaced).
+      const toRemove = tiles.filter((tt) => tt.imageMarkedForRemoval && !tt.imageFile);
+      for (const tt of toRemove) {
         try {
-          const res = await api.post(`/admin/ad-grids/${selectedCornerId}/tile/${t.position}/image`, fd, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          onTileImageUploaded(t.position, res.data.image);
-          // Update local copy so the PUT below has the right path
-          t.image = res.data.image;
-          t.imageFile = null;
+          await api.delete(`/admin/ad-grids/${selectedCornerId}/tile/${tt.position}`);
         } catch {
-          toast.warning(`Tile ${t.position}: image upload failed`);
+          toast.warning(t('books.tileDeleted').replace('{{n}}', tt.position) + ' ✗');
         }
       }
 
-      // Build the tiles payload — only those with an image survive
+      // 2. Upload any pending image files.
+      const pending = tiles.filter((tt) => tt.imageFile);
+      for (const tt of pending) {
+        const fd = new FormData();
+        fd.append('image', tt.imageFile);
+        try {
+          const res = await api.post(`/admin/ad-grids/${selectedCornerId}/tile/${tt.position}/image`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          onTileImageUploaded(tt.position, res.data.image);
+          tt.image = res.data.image;
+          tt.imageFile = null;
+        } catch {
+          toast.warning(t('books.uploadFailed') + ` (${tt.position})`);
+        }
+      }
+
+      // 3. Build payload — only tiles with a usable image survive.
       const payload = tiles
-        .filter((t) => t.image && t.image.length > 0)
-        .map((t) => ({
-          position: t.position,
-          image: t.image,
-          bookId: t.bookId || null,
-          externalLink: t.externalLink || null,
-          title: t.title || null,
-          titleAr: t.titleAr || null,
-          isActive: t.isActive,
+        .filter((tt) => tt.image && tt.image.length > 0 && !tt.imageMarkedForRemoval)
+        .map((tt) => ({
+          position: tt.position,
+          image: tt.image,
+          bookId: tt.bookId || null,
+          externalLink: tt.externalLink || null,
+          title: tt.title || null,
+          titleAr: tt.titleAr || null,
+          isActive: tt.isActive,
         }));
 
       const res = await api.put(`/admin/ad-grids/${selectedCornerId}`, { tiles: payload });
-      // Refresh from response so deletes/positions sync
       const fresh = res.data?.tiles || [];
       const map = new Map(fresh.map((p) => [p.position, p]));
       setTiles(POSITIONS.map((p) => {
-        const t = map.get(p);
-        if (!t) return blankTile(p);
+        const tt = map.get(p);
+        if (!tt) return blankTile(p);
         return {
-          position: t.position,
-          image: t.image || '',
+          position: tt.position,
+          image: tt.image || '',
           imageFile: null,
           imagePreview: null,
-          bookId: t.bookId || null,
-          book: t.book || null,
-          externalLink: t.externalLink || '',
-          title: t.title || '',
-          titleAr: t.titleAr || '',
-          isActive: t.isActive !== false,
+          imageMarkedForRemoval: false,
+          bookId: tt.bookId || null,
+          book: tt.book || null,
+          externalLink: tt.externalLink || '',
+          title: tt.title || '',
+          titleAr: tt.titleAr || '',
+          isActive: tt.isActive !== false,
           isPlaceholder: false,
         };
       }));
-      toast.success('Ad grid saved');
+      toast.success(t('books.adGridSaved'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Save failed');
+      toast.error(err.response?.data?.message || t('books.failedSaveGrid'));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteTile = async (position) => {
-    if (!selectedCornerId) return;
-    if (!confirm(`Delete tile ${position}?`)) return;
+  const handleDeleteConfirmed = async () => {
+    const position = deleteConfirmPos;
+    setDeleteConfirmPos(null);
+    if (!selectedCornerId || !position) return;
     try {
       await api.delete(`/admin/ad-grids/${selectedCornerId}/tile/${position}`);
-      setTiles((prev) => prev.map((t) => t.position === position ? blankTile(position) : t));
-      toast.success(`Tile ${position} deleted`);
+      setTiles((prev) => prev.map((tt) => tt.position === position ? blankTile(position) : tt));
+      toast.success(t('books.tileDeleted').replace('{{n}}', position));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || t('books.deleteFailed'));
     }
   };
 
@@ -353,17 +406,14 @@ export default function AdGrids() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">Ad Grids</h2>
-        <p className="text-sm text-admin-muted mt-1">
-          Up to 6 promotional tiles per corner. Each tile shows above that corner's section blocks on the home page.
-        </p>
+        <h2 className="text-2xl 3xl:text-3xl font-bold text-admin-text">{t('books.adGridsTitle')}</h2>
+        <p className="text-sm text-admin-muted mt-1">{t('books.adGridsHint')}</p>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6">
-        {/* Corner picker */}
         <div className="lg:col-span-1">
           <div className="bg-admin-card rounded-xl border border-admin-border p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-3">Corner</h3>
+            <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-3">{t('nav.categories')}</h3>
             <div className="space-y-1">
               {corners.map((c) => (
                 <button
@@ -383,7 +433,6 @@ export default function AdGrids() {
           </div>
         </div>
 
-        {/* Tile editor */}
         <div className="lg:col-span-3">
           <div className="bg-admin-card rounded-xl border border-admin-border p-4 sm:p-6 shadow-sm">
             {loading ? (
@@ -396,25 +445,13 @@ export default function AdGrids() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {tiles.map((tile) => (
-                    <div key={tile.position} className="relative">
-                      <TileCard
-                        tile={tile}
-                        position={tile.position}
-                        cornerId={selectedCornerId}
-                        onChange={(patch) => updateTile(tile.position, patch)}
-                        onUploaded={(path) => onTileImageUploaded(tile.position, path)}
-                      />
-                      {!tile.isPlaceholder && tile.image && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteTile(tile.position)}
-                          className="absolute top-2 end-2 p-1.5 bg-white border border-red-200 text-red-500 rounded-md hover:bg-red-50 shadow-sm"
-                          title="Delete tile"
-                        >
-                          <FiTrash2 size={12} />
-                        </button>
-                      )}
-                    </div>
+                    <TileCard
+                      key={tile.position}
+                      tile={tile}
+                      position={tile.position}
+                      onChange={(patch) => updateTile(tile.position, patch)}
+                      onDeleteRequest={(pos) => setDeleteConfirmPos(pos)}
+                    />
                   ))}
                 </div>
 
@@ -423,9 +460,9 @@ export default function AdGrids() {
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-2.5 bg-admin-accent text-white font-semibold rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm"
+                    className="px-6 py-2.5 bg-admin-accent text-white font-semibold rounded-lg hover:bg-admin-accent/90 disabled:opacity-50 text-sm"
                   >
-                    {saving ? 'Saving...' : 'Save grid'}
+                    {saving ? t('common.saving') : t('books.saveGrid')}
                   </button>
                 </div>
               </>
@@ -433,6 +470,15 @@ export default function AdGrids() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={deleteConfirmPos !== null}
+        title={t('books.deleteTileTitle').replace('{{n}}', deleteConfirmPos || '')}
+        message={t('books.deleteTileMessage')}
+        confirmText={t('common.delete')}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteConfirmPos(null)}
+      />
     </div>
   );
 }
