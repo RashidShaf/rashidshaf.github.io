@@ -4,10 +4,11 @@ import useLanguageStore from '../../stores/useLanguageStore';
 
 // Per-corner promotional ad row.
 //
-// Layout: a "magazine" grid on desktop where positions 1 & 3 are tall feature
-// tiles spanning 2 rows, and positions 2/4/5/6 are small tiles. On smaller
-// screens it gracefully degrades to a flat grid (3 cols on tablet, 2 cols on
-// mobile) so the asymmetric desktop layout never breaks on narrow viewports.
+// Layout: a "magazine" grid on md+ where positions 1 & 3 are tall feature
+// tiles spanning 2 rows, and positions 2/4/5/6 are small tiles. On mobile
+// (< md) the same 6 tiles are rearranged into a 2-col × 4-row mirror so the
+// magazine doesn't get squashed: T1 (feature) top-right with T2/T4 stacked
+// on its left, T3 (feature) bottom-left with T5/T6 stacked on its right.
 //
 // If the corner has fewer than 6 active tiles, we fall back to a simple grid
 // at every breakpoint — the magazine layout only makes sense at exactly 6.
@@ -83,17 +84,20 @@ const AdBannerGrid = ({ tiles }) => {
     );
   }
 
-  // 6-tile magazine layout — same 4-col × 2-row grid at every breakpoint.
-  // Tiles 1 and 3 span both rows (the wider columns), tiles 2/4/5/6 fill the
-  // narrow columns. Cells scale proportionally on small screens — no separate
-  // mobile/tablet branches.
+  // 6-tile layout. Mobile (< md): 2 cols × 4 rows mirror.
   //
-  //   col1     col2     col3     col4
-  // ┌────────┬────────┬────────┬────────┐
-  // │  T1    │   T2   │   T3   │   T4   │
-  // │ (tall) ├────────┤ (tall) ├────────┤
-  // │        │   T5   │        │   T6   │
-  // └────────┴────────┴────────┴────────┘
+  //   col1       col2
+  // ┌──────────┬──────────┐
+  // │   T2     │          │
+  // ├──────────┤  T1 ★    │
+  // │   T4     │          │
+  // ├──────────┼──────────┤
+  // │          │   T5     │
+  // │  T3 ★    ├──────────┤
+  // │          │   T6     │
+  // └──────────┴──────────┘
+  //
+  // md+: original magazine — T1/T3 tall in cols 1 & 3; T2/T4/T5/T6 in 2 & 4.
   const [t1, t2, t3, t4, t5, t6] = ordered;
 
   return (
@@ -102,18 +106,17 @@ const AdBannerGrid = ({ tiles }) => {
       className="mb-6 sm:mb-8"
     >
       <div
-        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5 aspect-[12/5] lg:aspect-[3/1] 3xl:aspect-[7/2]"
-        style={{
-          gridTemplateColumns: '1.4fr 1fr 1.4fr 1fr',
-          gridTemplateRows: '1fr 1fr',
-        }}
+        className="grid gap-2 sm:gap-3 lg:gap-4 3xl:gap-5
+          grid-cols-2 grid-rows-4
+          md:grid-cols-[1.4fr_1fr_1.4fr_1fr] md:grid-rows-2
+          aspect-[2/3] md:aspect-[12/5] lg:aspect-[3/1] 3xl:aspect-[7/2]"
       >
-        <div style={{ gridColumn: '1', gridRow: '1 / span 2' }}>{renderTile(t1, true)}</div>
-        <div style={{ gridColumn: '2', gridRow: '1' }}>{renderTile(t2, false)}</div>
-        <div style={{ gridColumn: '3', gridRow: '1 / span 2' }}>{renderTile(t3, true)}</div>
-        <div style={{ gridColumn: '4', gridRow: '1' }}>{renderTile(t4, false)}</div>
-        <div style={{ gridColumn: '2', gridRow: '2' }}>{renderTile(t5, false)}</div>
-        <div style={{ gridColumn: '4', gridRow: '2' }}>{renderTile(t6, false)}</div>
+        <div className="col-start-2 row-start-1 row-span-2 md:col-start-1 md:row-start-1 md:row-span-2">{renderTile(t1, true)}</div>
+        <div className="col-start-1 row-start-1 md:col-start-2 md:row-start-1">{renderTile(t2, false)}</div>
+        <div className="col-start-1 row-start-3 row-span-2 md:col-start-3 md:row-start-1 md:row-span-2">{renderTile(t3, true)}</div>
+        <div className="col-start-1 row-start-2 md:col-start-4 md:row-start-1">{renderTile(t4, false)}</div>
+        <div className="col-start-2 row-start-3 md:col-start-2 md:row-start-2">{renderTile(t5, false)}</div>
+        <div className="col-start-2 row-start-4 md:col-start-4 md:row-start-2">{renderTile(t6, false)}</div>
       </div>
     </div>
   );
