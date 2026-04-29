@@ -231,8 +231,6 @@ const Home = () => {
               )}
               {hasChildren && (
                 <div className={(section.adTiles && section.adTiles.length > 0) ? 'mt-6 3xl:mt-10' : ''}>
-                {/* Gray-tinted backdrop visually groups the L2 category cards. */}
-                <div className="bg-[#C2C1BD] rounded-xl p-3 sm:p-4 3xl:p-5">
                 <BookCarousel>
                   {l1.children.map((cat) => {
                     const coverPath = cat.image || null;
@@ -240,7 +238,7 @@ const Home = () => {
                       <Link
                         key={cat.id}
                         to={`/books?category=${cat.slug}`}
-                        className="group bg-surface rounded-lg overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
+                        className="group block transition-all duration-300"
                       >
                         <div className="relative aspect-square bg-surface-alt overflow-hidden rounded-lg">
                           {coverPath ? (
@@ -250,18 +248,14 @@ const Home = () => {
                               <FiBookOpen className="w-10 h-10 text-accent/30" />
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                          <div className="absolute bottom-1.5 left-1.5 right-1.5 sm:bottom-3 sm:left-3 sm:right-3">
-                            <h3 className="text-[11px] sm:text-[13px] lg:text-[14px] xl:text-[13px] 2xl:text-[15px] font-bold text-white text-center line-clamp-3 leading-tight break-words min-h-[2.2em]">
-                              {getName(cat)}
-                            </h3>
-                          </div>
                         </div>
+                        <h3 className="text-[11px] sm:text-[13px] lg:text-[14px] xl:text-[13px] 2xl:text-[15px] font-bold text-black text-center line-clamp-2 leading-tight break-words mt-2 min-h-[2.5em] group-hover:text-accent transition-colors">
+                          {getName(cat)}
+                        </h3>
                       </Link>
                     );
                   })}
                 </BookCarousel>
-                </div>
                 </div>
               )}
               {hasCornerSections && (
