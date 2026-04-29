@@ -124,7 +124,14 @@
     "loadMore": "عرض المزيد من المراجعات",
     "published": "تاريخ النشر",
     "addedToWishlistToast": "تمت الإضافة إلى المفضلة",
-    "removedFromWishlistToast": "تمت الإزالة من المفضلة"
+    "removedFromWishlistToast": "تمت الإزالة من المفضلة",
+    "share": "مشاركة",
+    "linkCopiedFor": "تم نسخ الرابط — الصقه في {{platform}}",
+    "copyFailed": "تعذّر نسخ الرابط",
+    "linkCopied": "تم نسخ الرابط",
+    "copyLink": "نسخ الرابط",
+    "inquireOnWhatsApp": "تواصل عبر واتساب",
+    "whatsappInquiry": "مرحباً، أنا مهتم بهذا المنتج:\n{{title}}\n{{url}}"
   },
   "cart": {
     "title": "سلة التسوق",

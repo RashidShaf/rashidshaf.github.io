@@ -124,7 +124,14 @@
     "reviewUpdated": "Review updated successfully",
     "reviewDeleted": "Review deleted",
     "ratingRequired": "Please select a rating",
-    "loadMore": "Load More Reviews"
+    "loadMore": "Load More Reviews",
+    "share": "Share",
+    "linkCopiedFor": "Link copied — paste in {{platform}}",
+    "copyFailed": "Could not copy link",
+    "linkCopied": "Link copied",
+    "copyLink": "Copy link",
+    "inquireOnWhatsApp": "Inquire on WhatsApp",
+    "whatsappInquiry": "Hello, I'm interested in this product:\n{{title}}\n{{url}}"
   },
   "cart": {
     "title": "Shopping Cart",

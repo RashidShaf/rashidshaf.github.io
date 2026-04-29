@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft, FiInfo, FiX } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiStar, FiArrowLeft, FiInfo, FiX, FiShare2, FiLink } from 'react-icons/fi';
+import { FaWhatsapp, FaFacebookF, FaXTwitter, FaInstagram, FaTiktok } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 import BookCard from '../components/books/BookCard';
 import ReviewSection from '../components/books/ReviewSection';
@@ -29,6 +30,36 @@ const BookDetail = () => {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [returnPolicyOpen, setReturnPolicyOpen] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const shareMenuRef = useRef(null);
+  const [publicSettings, setPublicSettings] = useState({});
+
+  // Fetch public settings once on mount — used to build the "Inquire on
+  // WhatsApp" link with the admin's number from settings.whatsapp.
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/settings/public').then((res) => {
+      if (!cancelled) setPublicSettings(res.data || {});
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Close the share popover on outside click or ESC.
+  useEffect(() => {
+    if (!shareMenuOpen) return;
+    const onPointer = (e) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target)) {
+        setShareMenuOpen(false);
+      }
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setShareMenuOpen(false); };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [shareMenuOpen]);
   const [returnPolicyText, setReturnPolicyText] = useState('');
 
   useEffect(() => {
@@ -691,8 +722,8 @@ const BookDetail = () => {
               </div>
             </div>
 
-            {/* Add to Cart + Buy Now */}
-            <div className="flex items-center gap-2">
+            {/* Add to Cart + Buy Now + Social share */}
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleAddToCart}
                 disabled={isUnavailable}
@@ -720,6 +751,157 @@ const BookDetail = () => {
                   {t('common.buyNow')}
                 </button>
               )}
+
+              {/* Direct WhatsApp inquiry — opens WhatsApp chat with the
+                  store's number pre-filled with a product enquiry message.
+                  Uses settings.whatsapp (admin-configured); hides the button
+                  if it's not set. The generic "share to anyone" WhatsApp
+                  lives inside the share popover below. */}
+              {(() => {
+                const shareText = `${title} - ${bookUrl}`;
+                const shareTextEnc = encodeURIComponent(shareText);
+                const shareUrlEnc = encodeURIComponent(bookUrl);
+                const shareTitleEnc = encodeURIComponent(title);
+                const openShare = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+                const copyForPlatform = async (platformLabel) => {
+                  try {
+                    await navigator.clipboard.writeText(bookUrl);
+                    const tpl = t('book.linkCopiedFor') || 'Link copied — paste in {{platform}}';
+                    toast.success(tpl.replace('{{platform}}', platformLabel));
+                  } catch {
+                    toast.error(t('book.copyFailed') || 'Could not copy link');
+                  }
+                  setShareMenuOpen(false);
+                };
+
+                // Build the "Inquire on store WhatsApp" link from settings.
+                // Accepts either a raw phone number (e.g. "+974 ...") or a
+                // full https://wa.me/... URL stored by the admin.
+                const rawWhats = publicSettings.whatsapp;
+                let inquireUrl = null;
+                if (rawWhats) {
+                  const inquiryTpl = t('book.whatsappInquiry') || "Hello, I'm interested in this product:\n{{title}}\n{{url}}";
+                  const message = inquiryTpl
+                    .replace('{{title}}', title)
+                    .replace('{{url}}', bookUrl);
+                  const messageEnc = encodeURIComponent(message);
+                  if (/^https?:\/\//i.test(rawWhats)) {
+                    inquireUrl = rawWhats.includes('?')
+                      ? `${rawWhats}&text=${messageEnc}`
+                      : `${rawWhats}?text=${messageEnc}`;
+                  } else {
+                    const digits = rawWhats.replace(/[^0-9]/g, '');
+                    if (digits) inquireUrl = `https://wa.me/${digits}?text=${messageEnc}`;
+                  }
+                }
+
+                const btnBase = 'w-9 h-9 sm:w-10 sm:h-10 3xl:w-11 3xl:h-11 flex items-center justify-center rounded-full transition-colors';
+                // Default (desktop): neutral surface that tints to the platform
+                // color on hover. Below lg (mobile/tablet) each icon ALSO carries
+                // a `max-lg:` override that pins the platform color permanently —
+                // no hover state needed since touch devices can't hover.
+                const popBtn = 'w-9 h-9 flex items-center justify-center rounded-full bg-surface-alt border border-muted/15 text-foreground/70 transition-colors';
+                return (
+                  <>
+                    {inquireUrl && (
+                      <button
+                        type="button"
+                        onClick={() => openShare(inquireUrl)}
+                        aria-label={t('book.inquireOnWhatsApp') || 'Inquire on WhatsApp'}
+                        title={t('book.inquireOnWhatsApp') || 'Inquire on WhatsApp'}
+                        className={`${btnBase} bg-green-500 text-white hover:bg-green-600 active:scale-95`}
+                      >
+                        <FaWhatsapp size={18} />
+                      </button>
+                    )}
+
+                    {/* Share-more popover — WhatsApp / Facebook / X / Instagram / TikTok */}
+                    <div className="relative" ref={shareMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShareMenuOpen((o) => !o)}
+                        aria-label={t('book.share') || 'Share'}
+                        title={t('book.share') || 'Share'}
+                        aria-haspopup="menu"
+                        aria-expanded={shareMenuOpen}
+                        className={`${btnBase} bg-surface-alt border border-muted/15 text-foreground/70 hover:bg-foreground hover:text-background active:scale-95`}
+                      >
+                        <FiShare2 size={16} />
+                      </button>
+                      {shareMenuOpen && (
+                        <div
+                          role="menu"
+                          className="absolute z-30 top-full mt-2 ltr:end-0 rtl:start-0 bg-surface border border-muted/15 rounded-xl shadow-lg p-2 flex items-center gap-1.5"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => { openShare(`https://wa.me/?text=${shareTextEnc}`); setShareMenuOpen(false); }}
+                            aria-label="WhatsApp"
+                            title="WhatsApp"
+                            className={`${popBtn} max-lg:bg-green-500 max-lg:text-white max-lg:border-green-500 lg:hover:bg-green-500 lg:hover:text-white lg:hover:border-green-500`}
+                          >
+                            <FaWhatsapp size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { openShare(`https://www.facebook.com/sharer/sharer.php?u=${shareUrlEnc}`); setShareMenuOpen(false); }}
+                            aria-label="Facebook"
+                            title="Facebook"
+                            className={`${popBtn} max-lg:bg-blue-600 max-lg:text-white max-lg:border-blue-600 lg:hover:bg-blue-600 lg:hover:text-white lg:hover:border-blue-600`}
+                          >
+                            <FaFacebookF size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { openShare(`https://twitter.com/intent/tweet?url=${shareUrlEnc}&text=${shareTitleEnc}`); setShareMenuOpen(false); }}
+                            aria-label="X"
+                            title="X (Twitter)"
+                            className={`${popBtn} max-lg:bg-black max-lg:text-white max-lg:border-black lg:hover:bg-black lg:hover:text-white lg:hover:border-black`}
+                          >
+                            <FaXTwitter size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copyForPlatform('Instagram')}
+                            aria-label="Instagram"
+                            title="Instagram"
+                            className={`${popBtn} max-lg:bg-gradient-to-br max-lg:from-pink-500 max-lg:to-orange-400 max-lg:text-white max-lg:border-pink-500 lg:hover:bg-gradient-to-br lg:hover:from-pink-500 lg:hover:to-orange-400 lg:hover:text-white lg:hover:border-pink-500`}
+                          >
+                            <FaInstagram size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copyForPlatform('TikTok')}
+                            aria-label="TikTok"
+                            title="TikTok"
+                            className={`${popBtn} max-lg:bg-black max-lg:text-white max-lg:border-black lg:hover:bg-black lg:hover:text-white lg:hover:border-black`}
+                          >
+                            <FaTiktok size={13} />
+                          </button>
+                          {/* Copy link — universal fallback that works on every platform. */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(bookUrl);
+                                toast.success(t('book.linkCopied') || 'Link copied');
+                              } catch {
+                                toast.error(t('book.copyFailed') || 'Could not copy link');
+                              }
+                              setShareMenuOpen(false);
+                            }}
+                            aria-label={t('book.copyLink') || 'Copy link'}
+                            title={t('book.copyLink') || 'Copy link'}
+                            className={`${popBtn} max-lg:bg-accent max-lg:text-white max-lg:border-accent lg:hover:bg-accent lg:hover:text-white lg:hover:border-accent`}
+                          >
+                            <FiLink size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Stock info — only when the currently-selected target is out */}
