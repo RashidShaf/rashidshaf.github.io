@@ -218,10 +218,16 @@ export default function HomeLayout() {
       </div>
 
       <div className="space-y-2">
-        {sections.map((s, idx) => {
+        {(() => {
+          // Number each rendered corner sequentially (01, 02, ...) regardless of
+          // its position in the full sections array. The array can contain
+          // hidden global sections, so using the raw idx makes numbers jump.
+          let renderPos = 0;
+          return sections.map((s, idx) => {
           // Global sections (Featured / Bestsellers / etc.) were removed from the
           // storefront home page — hide them from admin too so the UI is honest.
           if (s.type !== 'corner') return null;
+          renderPos += 1;
           const isCorner = s.type === 'corner';
           const meta = !isCorner ? GLOBAL_SECTION_META[s.type] : null;
           const Icon = isCorner ? FiLayers : (meta?.icon || FiGrid);
@@ -236,7 +242,7 @@ export default function HomeLayout() {
           return (
             <div key={isCorner ? `c-${s.cornerId}` : `g-${s.type}`} className={`bg-admin-card border rounded-lg transition-colors ${s.enabled ? 'border-admin-border' : 'border-admin-border/50 opacity-70'}`}>
               <div className="flex items-center gap-3 px-4 py-3">
-                <span className="text-[11px] font-semibold text-admin-muted w-6 text-center select-none">{String(idx + 1).padStart(2, '0')}</span>
+                <span className="text-[11px] font-semibold text-admin-muted w-6 text-center select-none">{String(renderPos).padStart(2, '0')}</span>
                 <div className="flex flex-col gap-0.5">
                   <button onClick={() => moveSection(idx, -1)} disabled={idx === 0} className="p-1 text-admin-muted hover:text-admin-accent disabled:opacity-25 transition-colors"><FiChevronUp size={14} /></button>
                   <button onClick={() => moveSection(idx, 1)} disabled={idx === sections.length - 1} className="p-1 text-admin-muted hover:text-admin-accent disabled:opacity-25 transition-colors"><FiChevronDown size={14} /></button>
@@ -473,7 +479,8 @@ export default function HomeLayout() {
               )}
             </div>
           );
-        })}
+          });
+        })()}
       </div>
     </motion.div>
   );
