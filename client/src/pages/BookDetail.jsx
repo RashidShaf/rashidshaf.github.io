@@ -393,19 +393,19 @@ const BookDetail = () => {
           <div className="flex-shrink-0 mx-auto lg:mx-0">
             <div className="flex flex-col gap-3 sm:gap-4 items-center lg:items-start">
               {/* Main cover */}
-              <div className="relative w-[280px] sm:w-[320px] 3xl:w-[405px] h-[400px] sm:h-[460px] 3xl:h-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
+              <div className="relative h-[400px] sm:h-[460px] 3xl:h-[600px] max-w-[90vw] sm:max-w-[480px] 3xl:max-w-[600px] bg-surface-alt rounded-xl overflow-hidden border border-muted/10">
                 {(selectedImage || effectiveVariantImage || coverPath || placeholderPath) ? (
                   <Image
                     src={selectedImage || effectiveVariantImage || coverPath || placeholderPath}
                     alt={title}
-                    width={405}
+                    width={600}
                     height={600}
-                    sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, 405px"
+                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 480px, 600px"
                     priority
-                    className="w-full h-full object-cover"
+                    className="h-full w-auto max-w-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
+                  <div className="h-full aspect-square flex items-center justify-center bg-gradient-to-br from-accent/10 to-accent/5">
                     <span className="text-5xl font-display font-bold text-accent/20">{title.charAt(0)}</span>
                   </div>
                 )}
