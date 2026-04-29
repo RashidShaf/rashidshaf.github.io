@@ -62,4 +62,21 @@ async function generateVariantsSafe(absPath, widths) {
   }
 }
 
-module.exports = { generateVariants, generateVariantsSafe, variantPath, DEFAULT_WIDTHS };
+// Delete `absPath` and its sized webp siblings (default widths 400/800/1600;
+// banners pass their own [800, 1600, 2400]). Surfaces non-ENOENT errors via
+// console.warn so silent unlink failures stop hiding (Windows EBUSY locks,
+// EACCES permission issues, etc.).
+function unlinkWithVariants(absPath, widths = DEFAULT_WIDTHS) {
+  const log = (target) => (e) => {
+    if (e && e.code !== 'ENOENT') {
+      console.warn(`[images] unlink failed for ${target}:`, e.code, e.message);
+    }
+  };
+  fs.unlink(absPath, log(absPath));
+  widths.forEach((w) => {
+    const v = variantPath(absPath, w);
+    fs.unlink(v, log(v));
+  });
+}
+
+module.exports = { generateVariants, generateVariantsSafe, variantPath, DEFAULT_WIDTHS, unlinkWithVariants };

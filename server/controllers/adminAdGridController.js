@@ -1,5 +1,5 @@
 const prisma = require('../config/database');
-const { generateVariantsSafe, variantPath, DEFAULT_WIDTHS } = require('../utils/images');
+const { generateVariantsSafe, unlinkWithVariants } = require('../utils/images');
 const fs = require('fs');
 const path = require('path');
 
@@ -98,10 +98,7 @@ const unlinkImageFiles = (relativePaths) => {
   relativePaths.forEach((rel) => {
     if (!rel) return;
     const abs = path.join(__dirname, '..', rel);
-    fs.unlink(abs, () => {});
-    DEFAULT_WIDTHS.forEach((w) => {
-      fs.unlink(variantPath(abs, w), () => {});
-    });
+    unlinkWithVariants(abs);
   });
 };
 

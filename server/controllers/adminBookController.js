@@ -1,7 +1,7 @@
 const prisma = require('../config/database');
 const { getPagination, getPaginatedResponse } = require('../utils/pagination');
 const { generateSlug } = require('../utils/helpers');
-const { generateVariantsSafe, variantPath, DEFAULT_WIDTHS } = require('../utils/images');
+const { generateVariantsSafe, unlinkWithVariants } = require('../utils/images');
 const { normalize, buildSearchIndex } = require('../utils/arabicNormalize');
 const fs = require('fs');
 const path = require('path');
@@ -169,15 +169,12 @@ const reconcileVariants = async (tx, bookId, incoming) => {
 // Best-effort cleanup of image files. For each path, also unlinks the
 // auto-generated WebP siblings (-400.webp, -800.webp, -1600.webp) created by
 // generateVariantsSafe — otherwise replacing or deleting an image leaks the
-// resized copies forever.
+// resized copies forever. Errors surface in PM2 logs (non-ENOENT only).
 const unlinkImageFiles = (relativePaths) => {
   relativePaths.forEach((rel) => {
     if (!rel) return;
     const abs = path.join(__dirname, '..', rel);
-    fs.unlink(abs, () => {});
-    DEFAULT_WIDTHS.forEach((w) => {
-      fs.unlink(variantPath(abs, w), () => {});
-    });
+    unlinkWithVariants(abs);
   });
 };
 

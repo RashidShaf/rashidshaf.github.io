@@ -19,6 +19,8 @@ export default function CategoryEdit() {
   const [categories, setCategories] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [existingImage, setExistingImage] = useState(null);
+  const [imageMarkedForRemoval, setImageMarkedForRemoval] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isTopLevel, setIsTopLevel] = useState(false);
@@ -62,7 +64,10 @@ export default function CategoryEdit() {
             nameAr: cat.nameAr || cat.name_ar || '',
             parentId: cat.parentId || '',
           });
-          if (cat.image) setImagePreview(`${API_BASE}/${cat.image}`);
+          if (cat.image) {
+            setImagePreview(`${API_BASE}/${cat.image}`);
+            setExistingImage(cat.image);
+          }
           if (!cat.parentId) {
             if (cat.detailFields) {
               try {
@@ -120,6 +125,17 @@ export default function CategoryEdit() {
     if (!file) return;
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    // Picking a new file overrides any deferred-removal request.
+    setImageMarkedForRemoval(false);
+  };
+
+  // X on the image preview: clear local state. If a server-saved image existed,
+  // mark it for deferred removal — the actual DELETE fires inside the form's
+  // submit handler so admin can change their mind before saving.
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (existingImage) setImageMarkedForRemoval(true);
   };
 
   const handleSubmit = async (e) => {
@@ -138,6 +154,21 @@ export default function CategoryEdit() {
       if (imageFile) fd.append('image', imageFile);
 
       await api.put(`/admin/categories/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+      // Apply deferred image removal AFTER the PUT (skip if a new file replaced it).
+      // If the removal fails, surface the error and stay on the page so the
+      // admin can retry — don't toast success or navigate away.
+      if (!imageFile && imageMarkedForRemoval && existingImage) {
+        try {
+          await api.delete(`/admin/categories/${id}/image`);
+          setExistingImage(null);
+          setImageMarkedForRemoval(false);
+        } catch {
+          toast.error(t('categories.failedUpdate'));
+          return;
+        }
+      }
+
       toast.success(t('categories.updated'));
       navigate(-1);
     } catch (err) {
@@ -435,7 +466,7 @@ export default function CategoryEdit() {
                 {imagePreview ? (
                   <>
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); }} className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleRemoveImage(); }} className="absolute top-2 right-2 p-1 bg-black/60 text-white rounded-full hover:bg-black/80">
                       <FiX size={14} />
                     </button>
                   </>

@@ -20,6 +20,7 @@ router.delete('/filters/:id', [auth, admin], adminCategoryFilterController.remov
 
 router.put('/:id/placeholder', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.uploadPlaceholder);
 router.delete('/:id/placeholder', [auth, admin], adminCategoryController.removePlaceholder);
+router.delete('/:id/image', [auth, admin], adminCategoryController.removeImage);
 router.put('/:id', [auth, admin], uploadCategoryImage.single('image'), adminCategoryController.update);
 router.delete('/:id', [auth, admin], adminCategoryController.remove);
 
