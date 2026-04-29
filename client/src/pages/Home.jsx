@@ -232,7 +232,7 @@ const Home = () => {
               {hasChildren && (
                 <div className={(section.adTiles && section.adTiles.length > 0) ? 'mt-6 3xl:mt-10' : ''}>
                 {/* Gray-tinted backdrop visually groups the L2 category cards. */}
-                <div className="bg-[#BDB7AE] rounded-xl p-3 sm:p-4 3xl:p-5">
+                <div className="bg-[#C2C1BD] rounded-xl p-3 sm:p-4 3xl:p-5">
                 <BookCarousel>
                   {l1.children.map((cat) => {
                     const coverPath = cat.image || null;
