@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiStar, FiClock } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -36,6 +37,52 @@ const BookCard = ({ book, comingSoon = false }) => {
     return cat?.parent?.parent?.parent?.placeholderImage || cat?.parent?.parent?.placeholderImage || cat?.parent?.placeholderImage || cat?.placeholderImage || null;
   })();
 
+  // Gallery for hover-cycle: cover first, then additional images, deduped.
+  const gallery = useMemo(() => {
+    const raw = [coverPath, ...(Array.isArray(book.images) ? book.images : [])].filter(
+      (s) => typeof s === 'string' && s.length > 0
+    );
+    const seen = new Set();
+    return raw.filter((src) => (seen.has(src) ? false : (seen.add(src), true)));
+  }, [coverPath, book.images]);
+
+  const [imgIndex, setImgIndex] = useState(0);
+  const intervalRef = useRef(null);
+
+  // Clear any pending interval on unmount
+  useEffect(() => () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }, []);
+
+  // Snap index back to 0 if gallery shrinks below current index (live data update)
+  useEffect(() => {
+    if (imgIndex >= gallery.length) setImgIndex(0);
+  }, [gallery.length, imgIndex]);
+
+  const startCycle = () => {
+    if (gallery.length <= 1) return;
+    if (typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    // Preload non-cover images so first swap is flicker-free
+    gallery.slice(1).forEach((src) => { const im = new window.Image(); im.src = src; });
+    // Instant swap to additional[0], then advance every 1.5s
+    setImgIndex(1);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setImgIndex((i) => (i + 1) % gallery.length);
+    }, 2000);
+  };
+
+  const stopCycle = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setImgIndex(0);
+  };
+
+  const currentSrc = gallery[imgIndex] ?? gallery[0] ?? placeholderPath;
+
   // Variant-aware: if every variant is out of stock, the card behaves as out of stock.
   // If any variant is in stock, mobile/hover Add-to-Cart redirects to the detail
   // page so the customer can choose an option.
@@ -55,13 +102,15 @@ const BookCard = ({ book, comingSoon = false }) => {
 
   return (
     <div
+      onMouseEnter={startCycle}
+      onMouseLeave={stopCycle}
       className={`group bg-surface rounded-lg border border-muted/10 overflow-hidden hover:shadow-lg hover:shadow-accent/5 transition-all duration-300${isOutOfStock ? ' opacity-60' : ''}`}
     >
       {/* Cover Image */}
       <Link to={comingSoon ? '#' : `/books/${book.slug}`} className="block relative aspect-[5/6] bg-surface-alt overflow-hidden">
-        {coverPath || placeholderPath ? (
+        {currentSrc ? (
           <Image
-            src={coverPath || placeholderPath}
+            src={currentSrc}
             alt={title}
             width={500}
             height={600}
@@ -73,6 +122,20 @@ const BookCard = ({ book, comingSoon = false }) => {
             <span className="text-4xl font-display font-bold text-accent/30">
               {title.charAt(0)}
             </span>
+          </div>
+        )}
+
+        {/* Image cycle dots — only when multiple images and on hover */}
+        {gallery.length > 1 && (
+          <div className="absolute bottom-12 sm:bottom-14 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+            {gallery.map((_, i) => (
+              <span
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  i === imgIndex ? 'bg-white' : 'bg-white/40'
+                }`}
+              />
+            ))}
           </div>
         )}
 
