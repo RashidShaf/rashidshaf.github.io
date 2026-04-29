@@ -42,7 +42,7 @@ exports.getConfig = async (req, res, next) => {
     }
     const corners = await prisma.category.findMany({
       where: { isActive: true, parentId: null },
-      orderBy: { displayOrder: 'asc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
       select: { id: true, name: true, nameAr: true, slug: true },
     });
     // Drop stale entries first — corner sections whose cornerId no longer

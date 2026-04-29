@@ -15,19 +15,19 @@ const unlinkCategoryImage = (rel) => {
 exports.list = async (req, res, next) => {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { displayOrder: 'asc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
       include: {
         _count: { select: { books: true, children: true, bookCategories: true } },
         children: {
-          orderBy: { displayOrder: 'asc' },
+          orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
           include: {
             _count: { select: { books: true, children: true, bookCategories: true } },
             children: {
-              orderBy: { displayOrder: 'asc' },
+              orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
               include: {
                 _count: { select: { books: true, children: true, bookCategories: true } },
                 children: {
-                  orderBy: { displayOrder: 'asc' },
+                  orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
                   include: { _count: { select: { books: true, bookCategories: true } } },
                 },
               },

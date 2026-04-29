@@ -27,7 +27,7 @@ const FLAG_MAP = {
 async function buildDefaultLayout() {
   const corners = await prisma.category.findMany({
     where: { isActive: true, parentId: null },
-    orderBy: { displayOrder: 'asc' },
+    orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
     select: { id: true },
   });
   return [
@@ -138,7 +138,7 @@ async function corner(cornerId, cornerSectionConfig, adGridEnabledMap = {}) {
       _count: { select: { books: { where: { isActive: true } } } },
       children: {
         where: { isActive: true },
-        orderBy: { displayOrder: 'asc' },
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
         include: { _count: { select: { books: { where: { isActive: true } } } } },
       },
       adGridTiles: {

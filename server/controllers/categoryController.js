@@ -4,22 +4,22 @@ exports.list = async (req, res, next) => {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { displayOrder: 'asc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
       include: {
         _count: { select: { books: { where: { isActive: true } } } },
         children: {
           where: { isActive: true },
-          orderBy: { displayOrder: 'asc' },
+          orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
           include: {
             _count: { select: { books: { where: { isActive: true } } } },
             children: {
               where: { isActive: true },
-              orderBy: { displayOrder: 'asc' },
+              orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
               include: {
                 _count: { select: { books: { where: { isActive: true } } } },
                 children: {
                   where: { isActive: true },
-                  orderBy: { displayOrder: 'asc' },
+                  orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
                   include: {
                     _count: { select: { books: { where: { isActive: true } } } },
                   },
@@ -48,7 +48,7 @@ exports.getBySlug = async (req, res, next) => {
         _count: { select: { books: { where: { isActive: true } } } },
         children: {
           where: { isActive: true },
-          orderBy: { displayOrder: 'asc' },
+          orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
         },
       },
     });
