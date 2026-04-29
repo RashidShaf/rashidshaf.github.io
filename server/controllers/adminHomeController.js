@@ -45,6 +45,15 @@ exports.getConfig = async (req, res, next) => {
       orderBy: { displayOrder: 'asc' },
       select: { id: true, name: true, nameAr: true, slug: true },
     });
+    // Drop stale entries first — corner sections whose cornerId no longer
+    // matches an active top-level category (deleted, deactivated, or moved
+    // under a parent), and global sections whose type is no longer allowed.
+    // Without this filter the admin UI shows them as "Unknown corner".
+    const validCornerIds = new Set(corners.map((c) => c.id));
+    sections = sections.filter((s) => {
+      if (s.type === 'corner') return validCornerIds.has(s.cornerId);
+      return ALLOWED_GLOBAL_TYPES.includes(s.type);
+    });
     const knownCornerIds = new Set(sections.filter((s) => s.type === 'corner').map((s) => s.cornerId));
     corners.forEach((c) => {
       if (!knownCornerIds.has(c.id)) sections.push({ type: 'corner', cornerId: c.id, enabled: true });
