@@ -38,11 +38,14 @@ const readSpaIndex = () => {
 };
 
 // Match the User-Agents of every link-preview / search scraper we care about.
-// The trailing `bot|spider|crawler` catches the long tail (Pinterest, LINE,
-// Snapchat, Yandex, Baidu, etc.) at the cost of a few false positives — that's
-// fine, sending rich HTML to a generic curl client doesn't hurt anything.
+// The trailing `bot|spider|crawler` catches the long tail at the cost of a
+// few false positives — that's fine, sending rich HTML to a generic curl
+// client doesn't hurt anything.
 // (Avoid bare `preview` — too broad, can match browser preview tooling.)
-const CRAWLER_RE = /(facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|skypeuripreview|applebot|googlebot|bingbot|duckduckbot|yandexbot|baiduspider|pinterestbot|line.*previewer|discordbot|embedly|quora link preview|outbrain|vkshare|w3c_validator|redditbot|bot|spider|crawler)/i;
+//
+// `instagram` is included as a literal word because Instagram's link-preview
+// fetcher uses a UA like "Instagram 219.0.0.12.117" — no "bot" suffix.
+const CRAWLER_RE = /(facebookexternalhit|whatsapp|instagram|snapchat|tiktok|twitterbot|linkedinbot|slackbot|telegrambot|skypeuripreview|applebot|googlebot|bingbot|duckduckbot|yandexbot|baiduspider|pinterestbot|line.*previewer|discordbot|embedly|quora link preview|outbrain|vkshare|w3c_validator|redditbot|bot|spider|crawler)/i;
 
 // In-memory cache so repeated scrapes for the same URL don't re-hit the DB.
 // Five minutes is plenty — once a link is shared, the preview gets fetched
