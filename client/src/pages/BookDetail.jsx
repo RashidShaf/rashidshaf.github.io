@@ -835,15 +835,15 @@ const BookDetail = () => {
                 return (
                   <>
                     {inquireUrl && (
-                      <button
-                        type="button"
-                        onClick={() => openShare(inquireUrl)}
+                      <a
+                        href={inquireUrl}
+                        rel="noopener"
                         aria-label={t('book.inquireOnWhatsApp') || 'Inquire on WhatsApp'}
                         title={t('book.inquireOnWhatsApp') || 'Inquire on WhatsApp'}
                         className={`${btnBase} bg-green-500 text-white hover:bg-green-600 active:scale-95`}
                       >
                         <FaWhatsapp size={18} />
-                      </button>
+                      </a>
                     )}
 
                     {/* Share — opens the OS native share sheet on supported
