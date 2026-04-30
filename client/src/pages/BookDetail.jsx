@@ -795,6 +795,37 @@ const BookDetail = () => {
                   }
                 }
 
+                // Tap behavior for the main Share button: try the OS native
+                // share sheet first (iOS AirDrop, Android intent picker, modern
+                // desktop Chrome/Edge dialog). The receiving app fetches the
+                // product page's Open Graph tags to render its own preview
+                // (image + title + description) — no need to attach files.
+                const handleShareClick = async () => {
+                  // Short message + product title + URL. The URL goes in its
+                  // own field so receiving apps can render a rich link card
+                  // from the page's og:image / og:title meta tags.
+                  const messageTpl = t('book.shareMessage')
+                    || 'Check this out on Arkaan Bookstore';
+                  const shareData = {
+                    title,
+                    text: `${messageTpl}: ${title}`,
+                    url: bookUrl,
+                  };
+                  const canNative = typeof navigator !== 'undefined'
+                    && typeof navigator.share === 'function'
+                    && (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
+                  if (canNative) {
+                    try {
+                      await navigator.share(shareData);
+                      return;
+                    } catch (err) {
+                      if (err && err.name === 'AbortError') return;
+                      // any other failure → fall through to the popover
+                    }
+                  }
+                  setShareMenuOpen((o) => !o);
+                };
+
                 const btnBase = 'w-9 h-9 sm:w-10 sm:h-10 3xl:w-11 3xl:h-11 flex items-center justify-center rounded-full transition-colors';
                 // Default (desktop): neutral surface that tints to the platform
                 // color on hover. Below lg (mobile/tablet) each icon ALSO carries
@@ -815,11 +846,13 @@ const BookDetail = () => {
                       </button>
                     )}
 
-                    {/* Share-more popover — WhatsApp / Facebook / X / Instagram / TikTok */}
+                    {/* Share — opens the OS native share sheet on supported
+                        devices (mobile + modern desktop). Falls back to the
+                        in-page popover on browsers without Web Share API. */}
                     <div className="relative" ref={shareMenuRef}>
                       <button
                         type="button"
-                        onClick={() => setShareMenuOpen((o) => !o)}
+                        onClick={handleShareClick}
                         aria-label={t('book.share') || 'Share'}
                         title={t('book.share') || 'Share'}
                         aria-haspopup="menu"

@@ -130,6 +130,7 @@
     "copyFailed": "Could not copy link",
     "linkCopied": "Link copied",
     "copyLink": "Copy link",
+    "shareMessage": "Check this out on Arkaan Bookstore",
     "inquireOnWhatsApp": "Inquire on WhatsApp",
     "whatsappInquiry": "Hello, I'm interested in this product:\n{{title}}\n{{url}}"
   },

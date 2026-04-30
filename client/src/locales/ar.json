@@ -130,6 +130,7 @@
     "copyFailed": "تعذّر نسخ الرابط",
     "linkCopied": "تم نسخ الرابط",
     "copyLink": "نسخ الرابط",
+    "shareMessage": "اطلع على هذا المنتج في مكتبة أركان",
     "inquireOnWhatsApp": "تواصل عبر واتساب",
     "whatsappInquiry": "مرحباً، أنا مهتم بهذا المنتج:\n{{title}}\n{{url}}"
   },
