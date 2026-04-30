@@ -67,6 +67,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // SEO — sitemap.xml served at root (Nginx must route /sitemap.xml to API)
 app.use('/', sitemapRoutes);
 
+// Social-share meta tags for product pages. When Nginx proxies /books/* to
+// this server, link-preview crawlers (WhatsApp, Telegram, Facebook, Twitter,
+// LinkedIn, Slack, etc.) get an HTML doc with og:image/og:title pre-filled
+// from the DB so shared product links render rich preview cards. Real
+// browsers fall through to the static SPA shell from client/dist.
+const { productHandler: socialMetaProductHandler } = require('./middleware/socialMetaTags');
+app.get('/books/:slug', socialMetaProductHandler);
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
